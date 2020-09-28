@@ -1,3 +1,5 @@
 {
-  "bot_token": ""
+  "bot_token": "<BOT_TOKEN>",
+  "command_prefix": "!piper ",
+  "description": "A bot that makes it easier to communicate with friends around the world."
 }
