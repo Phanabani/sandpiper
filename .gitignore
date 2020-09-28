@@ -132,4 +132,4 @@ dmypy.json
 .idea/
 
 # Project
-/config.json
+/sandpiper/config.json
