@@ -1,16 +1,20 @@
+from decimal import Decimal as D
 import re
 from typing import Optional, Tuple
 
 from bidict import bidict as bidict_base
 from pint import UnitRegistry
 from pint.quantity import Quantity
-from pint.errors import UndefinedUnitError
 
 __all__ = ['imperial_metric', 'quantity_pattern']
 
-ureg = UnitRegistry(autoconvert_offset_to_baseunit=True)  # For temperatures
+ureg = UnitRegistry(
+    autoconvert_offset_to_baseunit=True,  # For temperatures
+    non_int_type=D
+)
 ureg.define('@alias degreeC = c = C = degreec = degc = degC')
 ureg.define('@alias degreeF = f = F = degreef = degf = degF')
+Q_ = ureg.Quantity
 
 
 # noinspection PyPep8Naming
@@ -55,16 +59,18 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
     """
 
     if height := imperial_height_pattern.match(quantity_str):
-        foot = (ureg.Quantity(int(foot), 'foot')
-                if (foot := height.group('foot')) else 0)
-        inch = (ureg.Quantity(float(inch), 'inch')
-                if (inch := height.group('inch')) else 0)
+        # Added support for imperial shorthand units for length
+        # e.g. 5' 8" == 5 feet + 8 inches
+        foot = Q_(D(foot), 'foot') if (foot := height.group('foot')) else 0
+        inch = Q_(D(inch), 'inch') if (inch := height.group('inch')) else 0
         quantity = foot + inch
     else:
+        # Regular parsing
         quantity = ureg.parse_expression(quantity_str)
 
-    if not isinstance(quantity, Quantity) or quantity.u not in unit_map:
+    if not isinstance(quantity, Quantity) or quantity.units not in unit_map:
+        # Unrecognized unit
         return None
-    conversion_unit = unit_map[quantity.u]
+    conversion_unit = unit_map[quantity.units]
 
     return quantity, quantity.to(conversion_unit)

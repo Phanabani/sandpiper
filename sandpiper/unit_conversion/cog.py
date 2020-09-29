@@ -32,18 +32,17 @@ class UnitConversion(commands.Cog):
 
         perms = msg.channel.permissions_for(msg.guild.me)
         if not perms.send_messages:
-            logger.debug('')
+            logger.debug(f'Lacking send_messages permission '
+                         f'(guild: {msg.guild} channel: {msg.channel})')
             return
 
+        # Create output strings for all quantities encountered in the message
         quantities = [q for qstr in quantity_strs
                       if (q := imperial_metric(qstr)) is not None]
-        # I'm not specifying a precision here for the input because it will
-        # often be an integer, and will raise a ValueError if I try to format
-        # its precision
-        conversion = '\n'.join([f'{q[0]:~P} = {q[1]:.2f~P}'
-                                for q in quantities])
-        if not conversion:
+        if not quantities:
             return
+        conversion = '\n'.join([f'{q[0]:.2f~P} = {q[1]:.2f~P}'
+                                for q in quantities])
 
         try:
             await msg.channel.send(conversion)
