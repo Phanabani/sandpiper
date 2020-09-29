@@ -1,11 +1,10 @@
-import json
 import logging
 from pathlib import Path
 import sys
 
-from . import Sandpiper
+from . import Sandpiper, Config
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('sandpiper')
 
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(sys.stdout)
@@ -13,8 +12,8 @@ handler.setFormatter(logging.Formatter(
     '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-with open(Path(__file__).parent / 'config.json') as f:
-    config = json.load(f)
+config_path = Path(__file__).parent / 'config.json'
+bot_token, config = Config.load_json(config_path)
 
-sandpiper = Sandpiper()
-sandpiper.run(config['bot_token'])
+sandpiper = Sandpiper(config)
+sandpiper.run(bot_token)
