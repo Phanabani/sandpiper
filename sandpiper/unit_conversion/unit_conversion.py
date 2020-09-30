@@ -1,12 +1,15 @@
 from decimal import Decimal as D
+import logging
 import re
 from typing import Optional, Tuple
 
 from bidict import bidict as bidict_base
-from pint import UnitRegistry
+from pint import UndefinedUnitError, UnitRegistry
 from pint.quantity import Quantity
 
-__all__ = ['imperial_metric', 'quantity_pattern']
+__all__ = ['imperial_metric']
+
+logger = logging.getLogger('sandpiper.unit_conversion')
 
 ureg = UnitRegistry(
     autoconvert_offset_to_baseunit=True,  # For temperatures
@@ -43,7 +46,6 @@ unit_map = bidict({
     ureg['°C'].u: ureg['°F'].u
 })
 
-quantity_pattern = re.compile(r'{(.+?)}')
 imperial_height_pattern = re.compile(
     r'^(?=.)(?:(?P<foot>[\d]+)\')?(?:(?(foot) |)(?P<inch>[\d.]+)\")?$')
 
@@ -58,19 +60,33 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
         otherwise a tuple of original quantity and converted quantity
     """
 
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(f"Attempting unit conversion for {quantity_str!r}")
+
     if height := imperial_height_pattern.match(quantity_str):
         # Added support for imperial shorthand units for length
         # e.g. 5' 8" == 5 feet + 8 inches
+        logger.debug('Imperial length shorthand detected')
         foot = Q_(D(foot), 'foot') if (foot := height.group('foot')) else 0
         inch = Q_(D(inch), 'inch') if (inch := height.group('inch')) else 0
         quantity = foot + inch
     else:
         # Regular parsing
-        quantity = ureg.parse_expression(quantity_str)
+        try:
+            quantity = ureg.parse_expression(quantity_str)
+        except UndefinedUnitError:
+            logger.debug('Undefined unit')
+            return None
 
-    if not isinstance(quantity, Quantity) or quantity.units not in unit_map:
-        # Unrecognized unit
+    if not isinstance(quantity, Quantity):
+        logger.debug('Not a quantity')
+        return None
+    if quantity.units not in unit_map:
+        logger.debug(f"Unit not supported {quantity.units}")
         return None
     conversion_unit = unit_map[quantity.units]
 
-    return quantity, quantity.to(conversion_unit)
+    quantity_to = quantity.to(conversion_unit)
+    logger.debug(f"Conversion successful: "
+                 f"{quantity:.2f~P} -> {quantity_to:.2f~P}")
+    return quantity, quantity_to

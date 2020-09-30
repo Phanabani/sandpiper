@@ -1,11 +1,14 @@
 import logging
+import re
 
 import discord
 import discord.ext.commands as commands
 
 from .unit_conversion import *
 
-logger = logging.getLogger('sandpiper')
+logger = logging.getLogger('sandpiper.unit_conversion')
+
+quantity_pattern = re.compile(r'{(.+?)}')
 
 
 class UnitConversion(commands.Cog):
@@ -32,7 +35,7 @@ class UnitConversion(commands.Cog):
 
         perms = msg.channel.permissions_for(msg.guild.me)
         if not perms.send_messages:
-            logger.debug(f'Lacking send_messages permission '
+            logger.info(f'Lacking send_messages permission '
                          f'(guild: {msg.guild} channel: {msg.channel})')
             return
 
