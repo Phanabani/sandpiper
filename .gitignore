@@ -133,3 +133,4 @@ dmypy.json
 
 # Project
 /sandpiper/config.json
+/sandpiper/logs
