@@ -9,12 +9,12 @@ bot_token, config = Config.load_json(config_path)
 
 # Sandpiper logging
 logger = logging.getLogger('sandpiper')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(config.logging.sandpiper_logging_level)
 logger.addHandler(config.logging.handler)
 
 # Discord logging
 logger = logging.getLogger('discord')
-logger.setLevel(logging.WARNING)
+logger.setLevel(config.logging.discord_logging_level)
 logger.addHandler(config.logging.handler)
 
 # Run bot

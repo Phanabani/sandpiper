@@ -12,6 +12,8 @@ DEFAULTS = {
   },
 
   "logging": {
+    "sandpiper_logging_level": "DEBUG",
+    "discord_logging_level": "WARNING",
     "output_file": "./logs/sandpiper.log",
     "when": "midnight",
     "interval": 1,
@@ -56,9 +58,12 @@ class Config:
 
     class _Logging:
 
-        __slots__ = ['output_path', 'when', 'interval', 'backup_count',
+        __slots__ = ['sandpiper_logging_level', 'discord_logging_level',
+                     'output_path', 'when', 'interval', 'backup_count',
                      'format', 'formatter', 'handler']
 
+        sandpiper_logging_level: str
+        discord_logging_level: str
         output_path: Path
         when: str
         interval: int
@@ -68,9 +73,22 @@ class Config:
         handler: TimedRotatingFileHandler
 
         _allowed_whens = ('S', 'M', 'H', 'D', 'midnight')
+        _allowed_logging_levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 
         def __init__(self, config: Dict[str, Any]):
             """Parse logging-specific config"""
+
+            self.sandpiper_logging_level = get_default(
+                config, 'logging', 'sandpiper_logging_level')
+            if self.sandpiper_logging_level not in self._allowed_logging_levels:
+                raise ConfigError(f"logging.sandpiper_logging_level must be "
+                                  f"one of {self._allowed_logging_levels!r}")
+
+            self.discord_logging_level = get_default(
+                config, 'logging', 'discord_logging_level')
+            if self.discord_logging_level not in self._allowed_logging_levels:
+                raise ConfigError(f"logging.discord_logging_level must be "
+                                  f"one of {self._allowed_logging_levels!r}")
 
             output_file = get_default(config, 'logging', 'output_file')
             if not isinstance(output_file, str):
