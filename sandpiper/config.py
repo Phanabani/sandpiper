@@ -96,9 +96,6 @@ class Config:
             output_file = Path(output_file)
             if not output_file.is_absolute():
                 output_file = Path(__file__).parent / output_file
-            if not output_file.parent.exists():
-                raise ConfigError(f"logging.output_file's parent directory "
-                                  f"does not exist ({output_file.parent})")
             self.output_path = output_file
 
             self.when = get_default(config, 'logging', 'when')
