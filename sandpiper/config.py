@@ -38,7 +38,7 @@ class Config:
 
     __slots__ = ['bot', 'logging']
 
-    class _Bot:
+    class Bot:
 
         __slots__ = ['command_prefix', 'description']
 
@@ -56,7 +56,7 @@ class Config:
             if not isinstance(self.description, str):
                 raise ConfigError('bot.description must be a string')
 
-    class _Logging:
+    class Logging:
 
         __slots__ = ['sandpiper_logging_level', 'discord_logging_level',
                      'output_path', 'when', 'interval', 'backup_count',
@@ -128,8 +128,8 @@ class Config:
 
     def __init__(self, config: Dict[str, Any]):
         """Parse config"""
-        self.bot = self._Bot(config)
-        self.logging = self._Logging(config)
+        self.bot = self.Bot(config)
+        self.logging = self.Logging(config)
 
     @classmethod
     def load_json(cls, config_path: Union[Path, str]) -> Tuple[str, Config]:
