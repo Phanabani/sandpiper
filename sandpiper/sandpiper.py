@@ -10,7 +10,7 @@ logger = logging.getLogger('sandpiper')
 # noinspection PyMethodMayBeStatic
 class Sandpiper(Bot):
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config.Bot):
         super().__init__(
             command_prefix=config.command_prefix,
             description=config.description
