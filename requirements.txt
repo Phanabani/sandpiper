@@ -2,3 +2,4 @@ bidict
 certifi; sys_platform == 'win32'
 discord.py
 pint
+pytz
