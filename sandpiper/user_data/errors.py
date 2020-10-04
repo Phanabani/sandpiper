@@ -1,0 +1,2 @@
+class PrivacyError(Exception):
+    pass
