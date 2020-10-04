@@ -7,6 +7,10 @@ from pytz import timezone
 class Database(metaclass=ABCMeta):
 
     @abstractmethod
+    def create_database(self):
+        pass
+
+    @abstractmethod
     def get_preferred_name(self, user_id: int) -> str:
         pass
 
