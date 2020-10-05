@@ -15,7 +15,9 @@ class Sandpiper(Bot):
             command_prefix=config.command_prefix,
             description=config.description
         )
+        self.load_extension('sandpiper.bios')
         self.load_extension('sandpiper.unit_conversion')
+        self.load_extension('sandpiper.user_data')
 
     async def on_ready(self):
         logger.info('Sandpiper client started')
