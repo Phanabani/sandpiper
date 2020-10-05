@@ -1,9 +1,9 @@
-from datetime import datetime
+import datetime
 from pathlib import Path
 import sqlite3
 from typing import NoReturn, Union
 
-from pytz import timezone
+import pytz
 
 from .database import Database
 from .enums import PrivacyType
@@ -85,7 +85,7 @@ class DatabaseSQLite(Database):
             (new_pronouns,)
         )
 
-    def get_birthday(self, user_id: int) -> datetime:
+    def get_birthday(self, user_id: int) -> datetime.date:
         self.test_privacy('birthday', user_id)
         cur = self._con.cursor()
         cur.execute(
@@ -94,7 +94,7 @@ class DatabaseSQLite(Database):
         )
         return cur.fetchone()[0]
 
-    def set_birthday(self, user_id: int, new_birthday: datetime):
+    def set_birthday(self, user_id: int, new_birthday: datetime.date):
         cur = self._con.cursor()
         cur.execute(
             '''
@@ -104,7 +104,7 @@ class DatabaseSQLite(Database):
             (new_birthday,)
         )
 
-    def get_timezone(self, user_id: int) -> timezone:
+    def get_timezone(self, user_id: int) -> pytz.tzinfo.BaseTzInfo:
         self.test_privacy('timezone', user_id)
         cur = self._con.cursor()
         cur.execute(
@@ -113,7 +113,7 @@ class DatabaseSQLite(Database):
         )
         return cur.fetchone()[0]
 
-    def set_timezone(self, user_id: int, new_timezone: timezone):
+    def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
         cur = self._con.cursor()
         cur.execute(
             '''
