@@ -56,30 +56,69 @@ class DatabaseSQLite(Database):
         )
         return cur.fetchone()[0]
 
-    def set_preferred_name(self, user_id: int, new_name: str):
+    def set_preferred_name(self, user_id: int, new_preferred_name: str):
         cur = self._con.cursor()
         cur.execute(
             '''
             INSERT OR REPLACE INTO user_bios
             (preferred_name) VALUES (?)
             ''',
-            (new_name,)
+            (new_preferred_name,)
         )
 
     def get_pronouns(self, user_id: int) -> str:
-        pass
+        self.test_privacy(user_id, 'pronouns')
+        cur = self._con.cursor()
+        cur.execute(
+            'SELECT pronouns FROM user_bios WHERE user_id = ?',
+            (user_id,)
+        )
+        return cur.fetchone()[0]
 
     def set_pronouns(self, user_id: int, new_pronouns: str):
-        pass
+        cur = self._con.cursor()
+        cur.execute(
+            '''
+            INSERT OR REPLACE INTO user_bios
+            (pronouns) VALUES (?)
+            ''',
+            (new_pronouns,)
+        )
 
     def get_birthday(self, user_id: int) -> datetime:
-        pass
+        self.test_privacy(user_id, 'birthday')
+        cur = self._con.cursor()
+        cur.execute(
+            'SELECT birthday FROM user_bios WHERE user_id = ?',
+            (user_id,)
+        )
+        return cur.fetchone()[0]
 
     def set_birthday(self, user_id: int, new_birthday: datetime):
-        pass
+        cur = self._con.cursor()
+        cur.execute(
+            '''
+            INSERT OR REPLACE INTO user_bios
+            (birthday) VALUES (?)
+            ''',
+            (new_birthday,)
+        )
 
     def get_timezone(self, user_id: int) -> timezone:
-        pass
+        self.test_privacy(user_id, 'timezone')
+        cur = self._con.cursor()
+        cur.execute(
+            'SELECT timezone FROM user_bios WHERE user_id = ?',
+            (user_id,)
+        )
+        return cur.fetchone()[0]
 
     def set_timezone(self, user_id: int, new_timezone: timezone):
-        pass
+        cur = self._con.cursor()
+        cur.execute(
+            '''
+            INSERT OR REPLACE INTO user_bios
+            (timezone) VALUES (?)
+            ''',
+            (new_timezone,)
+        )
