@@ -11,6 +11,14 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def connect(self):
+        pass
+
+    @abstractmethod
+    def disconnect(self):
+        pass
+
+    @abstractmethod
     def get_preferred_name(self, user_id: int) -> str:
         pass
 
