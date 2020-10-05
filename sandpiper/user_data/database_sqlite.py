@@ -37,7 +37,7 @@ class DatabaseSQLite(Database):
             """
         )
 
-    def test_privacy(self, user_id: int, field: str) -> NoReturn:
+    def test_privacy(self, field: str, user_id: int) -> NoReturn:
         cur = self._con.cursor()
         cur.execute(
             f'SELECT privacy_{field} FROM user_bios WHERE user_id = ?',
@@ -48,7 +48,7 @@ class DatabaseSQLite(Database):
             raise PrivacyError()
 
     def get_preferred_name(self, user_id: int) -> str:
-        self.test_privacy(user_id, 'preferred_name')
+        self.test_privacy('preferred_name', user_id)
         cur = self._con.cursor()
         cur.execute(
             'SELECT preferred_name FROM user_bios WHERE user_id = ?',
@@ -67,7 +67,7 @@ class DatabaseSQLite(Database):
         )
 
     def get_pronouns(self, user_id: int) -> str:
-        self.test_privacy(user_id, 'pronouns')
+        self.test_privacy('pronouns', user_id)
         cur = self._con.cursor()
         cur.execute(
             'SELECT pronouns FROM user_bios WHERE user_id = ?',
@@ -86,7 +86,7 @@ class DatabaseSQLite(Database):
         )
 
     def get_birthday(self, user_id: int) -> datetime:
-        self.test_privacy(user_id, 'birthday')
+        self.test_privacy('birthday', user_id)
         cur = self._con.cursor()
         cur.execute(
             'SELECT birthday FROM user_bios WHERE user_id = ?',
@@ -105,7 +105,7 @@ class DatabaseSQLite(Database):
         )
 
     def get_timezone(self, user_id: int) -> timezone:
-        self.test_privacy(user_id, 'timezone')
+        self.test_privacy('timezone', user_id)
         cur = self._con.cursor()
         cur.execute(
             'SELECT timezone FROM user_bios WHERE user_id = ?',
