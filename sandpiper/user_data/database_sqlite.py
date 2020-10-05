@@ -46,6 +46,7 @@ class DatabaseSQLite(Database):
                 privacy_preferred_name TINYINT, 
                 privacy_pronouns TINYINT, 
                 privacy_birthday TINYINT, 
+                privacy_age TINYINT, 
                 privacy_timezone TINYINT
             )
             """
