@@ -10,10 +10,24 @@ from .enums import PrivacyType
 from .errors import PrivacyError
 
 
+# https://docs.python.org/3.8/library/sqlite3.html#converting-sqlite-values-to-custom-python-types
+def adapt_timezone(timezone: pytz.tzinfo.BaseTzInfo) -> str:
+    return timezone.zone
+
+
+def convert_timezone(timezone_name: bytes) -> pytz.tzinfo.BaseTzInfo:
+    return pytz.timezone(timezone_name.decode('utf_8'))
+
+
+sqlite3.register_adapter(pytz.tzinfo.BaseTzInfo, adapt_timezone)
+sqlite3.register_converter('timezone', convert_timezone)
+
+
 class DatabaseSQLite(Database):
 
     def __init__(self, db_path: Union[str, Path]):
-        self._con = sqlite3.connect(db_path)
+        self._con = sqlite3.connect(
+            db_path, detect_types=sqlite3.PARSE_DECLTYPES)
         self.create_database()
 
     def close(self):
@@ -28,7 +42,7 @@ class DatabaseSQLite(Database):
                 preferred_name TEXT, 
                 pronouns TEXT, 
                 birthday DATE, 
-                timezone TEXT, 
+                timezone TIMEZONE, 
                 privacy_preferred_name TINYINT, 
                 privacy_pronouns TINYINT, 
                 privacy_birthday TINYINT, 
