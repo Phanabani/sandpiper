@@ -32,7 +32,7 @@ class DatabaseUnavailable(commands.CheckFailure):
 def is_database_available():
     async def predicate(ctx: commands.Context):
         # noinspection PyProtectedMember
-        db_connected = cast(UserData, ctx.cog)._database.connected()
+        db_connected = cast(UserData, ctx.cog).database.connected()
         if not db_connected:
             raise DatabaseUnavailable()
         return True
@@ -49,13 +49,13 @@ error_msgs: Dict[Type[Exception], str] = {
 
 class UserData(commands.Cog):
 
-    _database: Database = None
+    database: Database = None
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     def set_database_adapter(self, database: Database):
-        self._database = database
+        self.database = database
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context,
@@ -75,16 +75,16 @@ class UserData(commands.Cog):
         """Displays your personal info"""
 
         user_id: int = ctx.author.id
-        preferred_name = self._database.get_preferred_name(user_id)
-        privacy_preferred_name = self._database.get_privacy_preferred_name(user_id)
-        pronouns = self._database.get_pronouns(user_id)
-        privacy_pronouns = self._database.get_privacy_pronouns(user_id)
-        birthday = self._database.get_birthday(user_id)
-        privacy_birthday = self._database.get_privacy_birthday(user_id)
-        age = self._database.get_age(user_id)
-        privacy_age = self._database.get_privacy_age(user_id)
-        timezone = self._database.get_timezone(user_id)
-        privacy_timezone = self._database.get_privacy_timezone(user_id)
+        preferred_name = self.database.get_preferred_name(user_id)
+        privacy_preferred_name = self.database.get_privacy_preferred_name(user_id)
+        pronouns = self.database.get_pronouns(user_id)
+        privacy_pronouns = self.database.get_privacy_pronouns(user_id)
+        birthday = self.database.get_birthday(user_id)
+        privacy_birthday = self.database.get_privacy_birthday(user_id)
+        age = self.database.get_age(user_id)
+        privacy_age = self.database.get_privacy_age(user_id)
+        timezone = self.database.get_timezone(user_id)
+        privacy_timezone = self.database.get_privacy_timezone(user_id)
         embed = make_embed(
             ('Name', preferred_name, privacy_preferred_name),
             ('Pronouns', pronouns, privacy_pronouns),
@@ -100,7 +100,7 @@ class UserData(commands.Cog):
     async def clear(self, ctx: commands.Context):
         """Deletes all of your personal info"""
         user_id: int = ctx.author.id
-        self._database.clear_data(user_id)
+        self.database.clear_data(user_id)
 
     @bio.command()
     @is_database_available()
@@ -109,13 +109,13 @@ class UserData(commands.Cog):
         user_id: int = ctx.author.id
         if new_name is None:
             # Get value
-            preferred_name = self._database.get_preferred_name(user_id)
-            privacy = self._database.get_privacy_preferred_name(user_id)
+            preferred_name = self.database.get_preferred_name(user_id)
+            privacy = self.database.get_privacy_preferred_name(user_id)
             embed = make_embed(('Name', preferred_name, privacy))
             await ctx.send(embed=embed)
         else:
             # Set value
-            self._database.set_preferred_name(user_id, new_name)
+            self.database.set_preferred_name(user_id, new_name)
 
     @commands.command(name='who is')
     @is_database_available()
