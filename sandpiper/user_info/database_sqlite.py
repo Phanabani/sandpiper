@@ -8,6 +8,8 @@ import pytz
 from .database import Database
 from .enums import PrivacyType
 
+__all__ = ['DatabaseSQLite']
+
 
 # https://docs.python.org/3.8/library/sqlite3.html#converting-sqlite-values-to-custom-python-types
 def adapt_timezone(timezone: pytz.tzinfo.BaseTzInfo) -> str:
