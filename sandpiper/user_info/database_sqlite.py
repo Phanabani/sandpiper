@@ -85,7 +85,7 @@ class DatabaseSQLite(Database):
             (new_preferred_name,)
         )
 
-    def get_privacy_preferred_name(self, user_id: int) -> Optional[int]:
+    def get_privacy_preferred_name(self, user_id: int) -> int:
         cur = self._con.cursor()
         cur.execute(
             'SELECT privacy_preferred_name FROM user_info WHERE user_id = ?',
@@ -115,7 +115,7 @@ class DatabaseSQLite(Database):
             (new_pronouns,)
         )
 
-    def get_privacy_pronouns(self, user_id: int) -> Optional[int]:
+    def get_privacy_pronouns(self, user_id: int) -> int:
         cur = self._con.cursor()
         cur.execute(
             'SELECT privacy_pronouns FROM user_info WHERE user_id = ?',
@@ -145,7 +145,7 @@ class DatabaseSQLite(Database):
             (new_birthday,)
         )
 
-    def get_privacy_birthday(self, user_id: int) -> Optional[int]:
+    def get_privacy_birthday(self, user_id: int) -> int:
         cur = self._con.cursor()
         cur.execute(
             'SELECT privacy_birthday FROM user_info WHERE user_id = ?',
@@ -175,7 +175,7 @@ class DatabaseSQLite(Database):
             (new_timezone,)
         )
 
-    def get_privacy_timezone(self, user_id: int) -> Optional[int]:
+    def get_privacy_timezone(self, user_id: int) -> int:
         cur = self._con.cursor()
         cur.execute(
             'SELECT privacy_timezone FROM user_info WHERE user_id = ?',
@@ -190,7 +190,7 @@ class DatabaseSQLite(Database):
             (new_privacy,)
         )
 
-    def get_privacy_age(self, user_id: int) -> Optional[int]:
+    def get_privacy_age(self, user_id: int) -> int:
         cur = self._con.cursor()
         cur.execute(
             'SELECT privacy_age FROM user_info WHERE user_id = ?',
