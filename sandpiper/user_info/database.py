@@ -23,7 +23,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set_preferred_name(self, user_id: int, new_name: str):
+    def set_preferred_name(self, user_id: int, new_preferred_name: str):
         pass
 
     @abstractmethod
