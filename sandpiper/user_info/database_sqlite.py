@@ -26,11 +26,16 @@ sqlite3.register_converter('timezone', convert_timezone)
 class DatabaseSQLite(Database):
 
     def __init__(self, db_path: Union[str, Path]):
-        self._con = sqlite3.connect(
-            db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        self.db_path = db_path
+        self._con = None
+        self.connect()
         self.create_database()
 
-    def close(self):
+    def connect(self):
+        self._con = sqlite3.connect(
+            self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+
+    def disconnect(self):
         self._con.close()
 
     def create_database(self):
