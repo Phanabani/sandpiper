@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
-from datetime import datetime
+import datetime
+from typing import Optional
 
-from pytz import timezone
+import pytz
 
 
 class Database(metaclass=ABCMeta):
@@ -19,7 +20,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_preferred_name(self, user_id: int) -> str:
+    def get_preferred_name(self, user_id: int) -> Optional[str]:
         pass
 
     @abstractmethod
@@ -27,7 +28,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_pronouns(self, user_id: int) -> str:
+    def get_pronouns(self, user_id: int) -> Optional[str]:
         pass
 
     @abstractmethod
@@ -35,17 +36,17 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_birthday(self, user_id: int) -> datetime:
+    def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         pass
 
     @abstractmethod
-    def set_birthday(self, user_id: int, new_birthday: datetime):
+    def set_birthday(self, user_id: int, new_birthday: datetime.date):
         pass
 
     @abstractmethod
-    def get_timezone(self, user_id: int) -> timezone:
+    def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
         pass
 
     @abstractmethod
-    def set_timezone(self, user_id: int, new_timezone: timezone):
+    def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
         pass

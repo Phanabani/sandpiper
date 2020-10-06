@@ -1,7 +1,7 @@
 import datetime
 from pathlib import Path
 import sqlite3
-from typing import NoReturn, Union
+from typing import NoReturn, Optional, Union
 
 import pytz
 
@@ -62,7 +62,7 @@ class DatabaseSQLite(Database):
         if privacy == PrivacyType.PRIVATE:
             raise PrivacyError()
 
-    def get_preferred_name(self, user_id: int) -> str:
+    def get_preferred_name(self, user_id: int) -> Optional[str]:
         self.test_privacy('preferred_name', user_id)
         cur = self._con.cursor()
         cur.execute(
@@ -81,7 +81,7 @@ class DatabaseSQLite(Database):
             (new_preferred_name,)
         )
 
-    def get_pronouns(self, user_id: int) -> str:
+    def get_pronouns(self, user_id: int) -> Optional[str]:
         self.test_privacy('pronouns', user_id)
         cur = self._con.cursor()
         cur.execute(
@@ -100,7 +100,7 @@ class DatabaseSQLite(Database):
             (new_pronouns,)
         )
 
-    def get_birthday(self, user_id: int) -> datetime.date:
+    def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         self.test_privacy('birthday', user_id)
         cur = self._con.cursor()
         cur.execute(
@@ -119,7 +119,7 @@ class DatabaseSQLite(Database):
             (new_birthday,)
         )
 
-    def get_timezone(self, user_id: int) -> pytz.tzinfo.BaseTzInfo:
+    def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
         self.test_privacy('timezone', user_id)
         cur = self._con.cursor()
         cur.execute(
