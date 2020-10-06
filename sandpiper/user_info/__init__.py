@@ -9,7 +9,6 @@ DB_FILE = Path(__file__).parent.parent / 'sandpiper.db'
 
 
 def setup(bot: Bot):
-    # TODO instantiate database adapter here?
     user_data = UserData(bot)
     user_data.set_database_adapter(DatabaseSQLite(DB_FILE))
     bot.add_cog(user_data)
