@@ -1,2 +1,0 @@
-class PrivacyError(Exception):
-    pass
