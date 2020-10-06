@@ -4,6 +4,8 @@ from typing import Optional
 
 import pytz
 
+from .enums import PrivacyType
+
 
 class Database(metaclass=ABCMeta):
 
@@ -36,11 +38,27 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_privacy_preferred_name(self, user_id: int) -> Optional[PrivacyType]:
+        pass
+
+    @abstractmethod
+    def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
+        pass
+
+    @abstractmethod
     def get_pronouns(self, user_id: int) -> Optional[str]:
         pass
 
     @abstractmethod
     def set_pronouns(self, user_id: int, new_pronouns: str):
+        pass
+
+    @abstractmethod
+    def get_privacy_pronouns(self, user_id: int) -> Optional[PrivacyType]:
+        pass
+
+    @abstractmethod
+    def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
@@ -52,11 +70,27 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_privacy_birthday(self, user_id: int) -> Optional[PrivacyType]:
+        pass
+
+    @abstractmethod
+    def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
+        pass
+
+    @abstractmethod
     def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
         pass
 
     @abstractmethod
     def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
+        pass
+
+    @abstractmethod
+    def get_privacy_timezone(self, user_id: int) -> Optional[PrivacyType]:
+        pass
+
+    @abstractmethod
+    def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @staticmethod
@@ -73,3 +107,12 @@ class Database(metaclass=ABCMeta):
         if birthday is None:
             return None
         return self._calculate_age(birthday, datetime.date.today())
+
+    @abstractmethod
+    def get_privacy_age(self, user_id: int) -> Optional[PrivacyType]:
+        pass
+
+    @abstractmethod
+    def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
+        pass
+
