@@ -25,6 +25,9 @@ sqlite3.register_converter('timezone', convert_timezone)
 
 class DatabaseSQLite(Database):
 
+    _con: Optional[sqlite3.Connection]
+    db_path: Union[str, Path]
+
     def __init__(self, db_path: Union[str, Path]):
         self.db_path = db_path
         self._con = None
@@ -37,6 +40,10 @@ class DatabaseSQLite(Database):
 
     def disconnect(self):
         self._con.close()
+        self._con = None
+
+    def connected(self):
+        return self._con is not None
 
     def create_database(self):
         cur = self._con.cursor()

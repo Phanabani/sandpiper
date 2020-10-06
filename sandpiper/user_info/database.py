@@ -20,6 +20,10 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def connected(self) -> bool:
+        pass
+
+    @abstractmethod
     def clear_data(self, user_id: int):
         pass
 
