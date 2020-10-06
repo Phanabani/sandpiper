@@ -42,7 +42,7 @@ class DatabaseSQLite(Database):
         cur = self._con.cursor()
         cur.execute(
             """
-            CREATE TABLE IF NOT EXISTS user_bios (
+            CREATE TABLE IF NOT EXISTS user_info (
                 user_id INTEGER PRIMARY KEY, 
                 preferred_name TEXT, 
                 pronouns TEXT, 
@@ -60,7 +60,7 @@ class DatabaseSQLite(Database):
     def test_privacy(self, field: str, user_id: int) -> NoReturn:
         cur = self._con.cursor()
         cur.execute(
-            f'SELECT privacy_{field} FROM user_bios WHERE user_id = ?',
+            f'SELECT privacy_{field} FROM user_info WHERE user_id = ?',
             (user_id,)
         )
         privacy: PrivacyType = cur.fetchone()[0]
@@ -71,7 +71,7 @@ class DatabaseSQLite(Database):
         self.test_privacy('preferred_name', user_id)
         cur = self._con.cursor()
         cur.execute(
-            'SELECT preferred_name FROM user_bios WHERE user_id = ?',
+            'SELECT preferred_name FROM user_info WHERE user_id = ?',
             (user_id,)
         )
         return cur.fetchone()[0]
@@ -80,7 +80,7 @@ class DatabaseSQLite(Database):
         cur = self._con.cursor()
         cur.execute(
             '''
-            INSERT OR REPLACE INTO user_bios
+            INSERT OR REPLACE INTO user_info
             (preferred_name) VALUES (?)
             ''',
             (new_preferred_name,)
@@ -90,7 +90,7 @@ class DatabaseSQLite(Database):
         self.test_privacy('pronouns', user_id)
         cur = self._con.cursor()
         cur.execute(
-            'SELECT pronouns FROM user_bios WHERE user_id = ?',
+            'SELECT pronouns FROM user_info WHERE user_id = ?',
             (user_id,)
         )
         return cur.fetchone()[0]
@@ -99,7 +99,7 @@ class DatabaseSQLite(Database):
         cur = self._con.cursor()
         cur.execute(
             '''
-            INSERT OR REPLACE INTO user_bios
+            INSERT OR REPLACE INTO user_info
             (pronouns) VALUES (?)
             ''',
             (new_pronouns,)
@@ -109,7 +109,7 @@ class DatabaseSQLite(Database):
         self.test_privacy('birthday', user_id)
         cur = self._con.cursor()
         cur.execute(
-            'SELECT birthday FROM user_bios WHERE user_id = ?',
+            'SELECT birthday FROM user_info WHERE user_id = ?',
             (user_id,)
         )
         return cur.fetchone()[0]
@@ -118,7 +118,7 @@ class DatabaseSQLite(Database):
         cur = self._con.cursor()
         cur.execute(
             '''
-            INSERT OR REPLACE INTO user_bios
+            INSERT OR REPLACE INTO user_info
             (birthday) VALUES (?)
             ''',
             (new_birthday,)
@@ -128,7 +128,7 @@ class DatabaseSQLite(Database):
         self.test_privacy('timezone', user_id)
         cur = self._con.cursor()
         cur.execute(
-            'SELECT timezone FROM user_bios WHERE user_id = ?',
+            'SELECT timezone FROM user_info WHERE user_id = ?',
             (user_id,)
         )
         return cur.fetchone()[0]
@@ -137,7 +137,7 @@ class DatabaseSQLite(Database):
         cur = self._con.cursor()
         cur.execute(
             '''
-            INSERT OR REPLACE INTO user_bios
+            INSERT OR REPLACE INTO user_info
             (timezone) VALUES (?)
             ''',
             (new_timezone,)
