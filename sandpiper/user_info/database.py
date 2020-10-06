@@ -50,3 +50,18 @@ class Database(metaclass=ABCMeta):
     @abstractmethod
     def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
         pass
+
+    @staticmethod
+    def _calculate_age(birthday: datetime.date, on_day: datetime.date):
+        birthday_this_year = datetime.date(on_day.year, birthday.month,
+                                           birthday.day)
+        age = on_day.year - birthday.year
+        if on_day < birthday_this_year:
+            return age - 1
+        return age
+
+    def get_age(self, user_id: int) -> Optional[int]:
+        birthday = self.get_birthday(user_id)
+        if birthday is None:
+            return None
+        return self._calculate_age(birthday, datetime.date.today())
