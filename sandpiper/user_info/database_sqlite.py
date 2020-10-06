@@ -31,7 +31,7 @@ class DatabaseSQLite(Database):
         self.db_path = db_path
         self._con = None
         self.connect()
-        self.create_database()
+        self.create_table()
 
     def connect(self):
         self._con = sqlite3.connect(
@@ -44,7 +44,7 @@ class DatabaseSQLite(Database):
     def connected(self):
         return self._con is not None
 
-    def create_database(self):
+    def create_table(self):
         cur = self._con.cursor()
         cur.execute(
             """

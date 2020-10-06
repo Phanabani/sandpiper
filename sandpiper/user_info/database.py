@@ -10,7 +10,7 @@ from .enums import PrivacyType
 class Database(metaclass=ABCMeta):
 
     @abstractmethod
-    def create_database(self):
+    def create_table(self):
         pass
 
     @abstractmethod
