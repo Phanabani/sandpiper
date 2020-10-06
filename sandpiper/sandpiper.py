@@ -16,7 +16,7 @@ class Sandpiper(Bot):
             description=config.description
         )
         self.load_extension('sandpiper.unit_conversion')
-        self.load_extension('sandpiper.user_data')
+        self.load_extension('sandpiper.user_info')
 
     async def on_ready(self):
         logger.info('Sandpiper client started')
