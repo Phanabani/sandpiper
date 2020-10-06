@@ -67,6 +67,13 @@ class DatabaseSQLite(Database):
         if privacy == PrivacyType.PRIVATE:
             raise PrivacyError()
 
+    def clear_data(self, user_id: int):
+        cur = self._con.cursor()
+        cur.execute(
+            'DELETE FROM user_info WHERE user_id = ?',
+            (user_id,)
+        )
+
     def get_preferred_name(self, user_id: int) -> Optional[str]:
         self.test_privacy('preferred_name', user_id)
         cur = self._con.cursor()
