@@ -54,11 +54,11 @@ class DatabaseSQLite(Database):
                 pronouns TEXT, 
                 birthday DATE, 
                 timezone TIMEZONE, 
-                privacy_preferred_name TINYINT, 
-                privacy_pronouns TINYINT, 
-                privacy_birthday TINYINT, 
-                privacy_age TINYINT, 
-                privacy_timezone TINYINT
+                privacy_preferred_name TINYINT DEFAULT 0, 
+                privacy_pronouns TINYINT DEFAULT 0, 
+                privacy_birthday TINYINT DEFAULT 0, 
+                privacy_age TINYINT DEFAULT 0, 
+                privacy_timezone TINYINT DEFAULT 0
             )
             """
         )
