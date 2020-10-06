@@ -20,6 +20,10 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def clear_data(self, user_id: int):
+        pass
+
+    @abstractmethod
     def get_preferred_name(self, user_id: int) -> Optional[str]:
         pass
 
