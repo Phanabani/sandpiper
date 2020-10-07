@@ -18,7 +18,7 @@ DEFAULTS = {
     "when": "midnight",
     "interval": 1,
     "backup_count": 7,
-    "format": "%(asctime)s:%(levelname)s:%(name)s: %(message)s"
+    "format": "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
   }
 }
 
