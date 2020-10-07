@@ -26,29 +26,30 @@ sqlite3.register_converter('timezone', convert_timezone)
 
 class DatabaseSQLite(Database):
 
-    _con: Optional[sqlite3.Connection]
+    _con: Optional[sqlite3.Connection] = None
+    _cur: Optional[sqlite3.Cursor] = None
     db_path: Union[str, Path]
 
     def __init__(self, db_path: Union[str, Path]):
         self.db_path = db_path
-        self._con = None
         self.connect()
         self.create_table()
 
     def connect(self):
         self._con = sqlite3.connect(
             self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        self._cur = self._con.cursor()
 
     def disconnect(self):
         self._con.close()
         self._con = None
+        self._cur = None
 
     def connected(self):
         return self._con is not None
 
     def create_table(self):
-        cur = self._con.cursor()
-        cur.execute(
+        self._cur.execute(
             """
             CREATE TABLE IF NOT EXISTS user_info (
                 user_id INTEGER PRIMARY KEY, 
@@ -66,143 +67,102 @@ class DatabaseSQLite(Database):
         )
 
     def clear_data(self, user_id: int):
-        cur = self._con.cursor()
-        cur.execute(
+        self._cur.execute(
             'DELETE FROM user_info WHERE user_id = ?',
             (user_id,)
         )
 
+    def _safe_select(self, stmt: str, user_id: int):
+        cur = self._cur
+        result = cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            cur.execute(
+                'INSERT INTO user_info (user_id) VALUES (?)',
+                (user_id,)
+            )
+            result = cur.execute(stmt, (user_id,)).fetchone()
+            if result is None:
+                raise RuntimeError(f'Failed to intialize row for user {user_id}')
+        return result
+
+    # Preferred name
+
     def get_preferred_name(self, user_id: int) -> Optional[str]:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT preferred_name FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT preferred_name FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_preferred_name(self, user_id: int, new_preferred_name: str):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (preferred_name) VALUES (?)',
-            (new_preferred_name,)
-        )
+        stmt = 'REPLACE INTO user_info (preferred_name) VALUES (?)'
+        self._cur.execute(stmt, (new_preferred_name,))
 
     def get_privacy_preferred_name(self, user_id: int) -> int:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT privacy_preferred_name FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT privacy_preferred_name FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (privacy_preferred_name) VALUES (?)',
-            (new_privacy,)
-        )
+        stmt = 'REPLACE INTO user_info (privacy_preferred_name) VALUES (?)'
+        self._cur.execute(stmt, (new_privacy,))
+
+    # Pronouns
 
     def get_pronouns(self, user_id: int) -> Optional[str]:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT pronouns FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT pronouns FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_pronouns(self, user_id: int, new_pronouns: str):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (pronouns) VALUES (?)',
-            (new_pronouns,)
-        )
+        stmt = 'REPLACE INTO user_info (pronouns) VALUES (?)'
+        self._cur.execute(stmt, (new_pronouns,))
 
     def get_privacy_pronouns(self, user_id: int) -> int:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT privacy_pronouns FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT privacy_pronouns FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (privacy_pronouns) VALUES (?)',
-            (new_privacy,)
-        )
+        stmt = 'REPLACE INTO user_info (privacy_pronouns) VALUES (?)'
+        self._cur.execute(stmt, (new_privacy,))
+
+    # Birthday
 
     def get_birthday(self, user_id: int) -> Optional[datetime.date]:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT birthday FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT birthday FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_birthday(self, user_id: int, new_birthday: datetime.date):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (birthday) VALUES (?)',
-            (new_birthday,)
-        )
+        stmt = 'REPLACE INTO user_info (birthday) VALUES (?)'
+        self._cur.execute(stmt, (new_birthday,))
 
     def get_privacy_birthday(self, user_id: int) -> int:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT privacy_birthday FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT privacy_birthday FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (privacy_birthday) VALUES (?)',
-            (new_privacy,)
-        )
+        stmt = 'REPLACE INTO user_info (privacy_birthday) VALUES (?)'
+        self._cur.execute(stmt, (new_privacy,))
+
+    # Timezone
 
     def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT timezone FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT timezone FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (timezone) VALUES (?)',
-            (new_timezone,)
-        )
+        stmt = 'REPLACE INTO user_info (timezone) VALUES (?)'
+        self._cur.execute(stmt, (new_timezone,))
 
     def get_privacy_timezone(self, user_id: int) -> int:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT privacy_timezone FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT privacy_timezone FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (privacy_timezone) VALUES (?)',
-            (new_privacy,)
-        )
+        stmt = 'REPLACE INTO user_info (privacy_timezone) VALUES (?)'
+        self._cur.execute(stmt, (new_privacy,))
+
+    # Age
 
     def get_privacy_age(self, user_id: int) -> int:
-        cur = self._con.cursor()
-        cur.execute(
-            'SELECT privacy_age FROM user_info WHERE user_id = ?',
-            (user_id,)
-        )
-        return cur.fetchone()[0]
+        stmt = 'SELECT privacy_age FROM user_info WHERE user_id = ?'
+        return self._safe_select(stmt, user_id)[0]
 
     def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
-        cur = self._con.cursor()
-        cur.execute(
-            'REPLACE INTO user_info (privacy_age) VALUES (?)',
-            (new_privacy,)
-        )
+        stmt = 'REPLACE INTO user_info (privacy_age) VALUES (?)'
+        self._cur.execute(stmt, (new_privacy,))
