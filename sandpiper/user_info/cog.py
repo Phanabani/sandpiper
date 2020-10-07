@@ -15,14 +15,14 @@ logger = logging.getLogger('sandpiper.user_info')
 
 def make_embed(*fields: Tuple[str, Optional[Any], int]):
     """name, value, privacy"""
+    embed = discord.Embed(title=f'Your info')
     for name, value, privacy in fields:
         privacy = PrivacyType(privacy).name.capitalize()
         if value is None:
             value = '*Not set*'
-        embed = discord.Embed(title=f'Your info')
         embed.add_field(name=name, value=value, inline=True)
         embed.add_field(name='Privacy', value=privacy, inline=True)
-        return embed
+    return embed
 
 
 class DatabaseUnavailable(commands.CheckFailure):
