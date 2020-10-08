@@ -90,7 +90,7 @@ class DatabaseSQLite(Database):
     def get_privacy_preferred_name(self, user_id: int) -> int:
         stmt = 'SELECT privacy_preferred_name FROM user_info WHERE user_id = ?'
         result = self._cur.execute(stmt, (user_id,)).fetchone()
-        if result is None:
+        if result is None or result[0] is None:
             return DEFAULT_PRIVACY
         return result[0]
 
@@ -114,7 +114,7 @@ class DatabaseSQLite(Database):
     def get_privacy_pronouns(self, user_id: int) -> int:
         stmt = 'SELECT privacy_pronouns FROM user_info WHERE user_id = ?'
         result = self._cur.execute(stmt, (user_id,)).fetchone()
-        if result is None:
+        if result is None or result[0] is None:
             return DEFAULT_PRIVACY
         return result[0]
 
@@ -138,7 +138,7 @@ class DatabaseSQLite(Database):
     def get_privacy_birthday(self, user_id: int) -> int:
         stmt = 'SELECT privacy_birthday FROM user_info WHERE user_id = ?'
         result = self._cur.execute(stmt, (user_id,)).fetchone()
-        if result is None:
+        if result is None or result[0] is None:
             return DEFAULT_PRIVACY
         return result[0]
 
@@ -162,7 +162,7 @@ class DatabaseSQLite(Database):
     def get_privacy_timezone(self, user_id: int) -> int:
         stmt = 'SELECT privacy_timezone FROM user_info WHERE user_id = ?'
         result = self._cur.execute(stmt, (user_id,)).fetchone()
-        if result is None:
+        if result is None or result[0] is None:
             return DEFAULT_PRIVACY
         return result[0]
 
@@ -175,7 +175,7 @@ class DatabaseSQLite(Database):
     def get_privacy_age(self, user_id: int) -> int:
         stmt = 'SELECT privacy_age FROM user_info WHERE user_id = ?'
         result = self._cur.execute(stmt, (user_id,)).fetchone()
-        if result is None:
+        if result is None or result[0] is None:
             return DEFAULT_PRIVACY
         return result[0]
 
