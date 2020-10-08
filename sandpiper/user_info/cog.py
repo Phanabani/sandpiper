@@ -1,6 +1,6 @@
 import logging
 from textwrap import wrap
-from typing import Any, Dict, Optional, Tuple, Type, cast
+from typing import Any, Dict, Optional, Tuple, Type, Union, cast
 
 import discord
 import discord.ext.commands as commands
@@ -12,6 +12,7 @@ __all__ = ['UserData']
 
 logger = logging.getLogger('sandpiper.user_info')
 EMBED_COLOR = 0x5E5FFF
+ERROR_COLOR = 0xff0000
 
 
 def make_embed(*fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
@@ -62,11 +63,13 @@ def is_database_available():
     return commands.check(predicate)
 
 
-error_msgs: Dict[Type[Exception], str] = {
+error_msgs: Dict[Union[Type[Exception], str], str] = {
     commands.PrivateMessageOnly:
         'For your privacy, DM me to use this command.',
     DatabaseUnavailable:
         'Unable to access database.',
+    'default':
+        'Unexpected error',
 }
 
 
@@ -87,8 +90,8 @@ class UserData(commands.Cog):
             msg = error_msgs[type(error)]
         except KeyError:
             logger.warning(f'Unexpected error: {error}')
-            msg = 'Unexpected error.'
-        embed = discord.Embed(title='Error', description=msg, color=0xff0000)
+            msg = error_msgs['default']
+        embed = discord.Embed(title='Error', description=msg, color=ERROR_COLOR)
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True)
