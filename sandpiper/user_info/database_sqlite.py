@@ -10,6 +10,8 @@ from .enums import PrivacyType
 
 __all__ = ['DatabaseSQLite']
 
+DEFAULT_PRIVACY = PrivacyType.PRIVATE
+
 
 # https://docs.python.org/3.8/library/sqlite3.html#converting-sqlite-values-to-custom-python-types
 def adapt_timezone(timezone: pytz.tzinfo.BaseTzInfo) -> str:
@@ -57,11 +59,11 @@ class DatabaseSQLite(Database):
                 pronouns TEXT, 
                 birthday DATE, 
                 timezone TIMEZONE, 
-                privacy_preferred_name TINYINT DEFAULT 0, 
-                privacy_pronouns TINYINT DEFAULT 0, 
-                privacy_birthday TINYINT DEFAULT 0, 
-                privacy_age TINYINT DEFAULT 0, 
-                privacy_timezone TINYINT DEFAULT 0
+                privacy_preferred_name TINYINT, 
+                privacy_pronouns TINYINT, 
+                privacy_birthday TINYINT, 
+                privacy_age TINYINT, 
+                privacy_timezone TINYINT
             )
             """
         )
@@ -72,24 +74,14 @@ class DatabaseSQLite(Database):
             (user_id,)
         )
 
-    def _safe_select(self, stmt: str, user_id: int):
-        cur = self._cur
-        result = cur.execute(stmt, (user_id,)).fetchone()
-        if result is None:
-            cur.execute(
-                'INSERT INTO user_info (user_id) VALUES (?)',
-                (user_id,)
-            )
-            result = cur.execute(stmt, (user_id,)).fetchone()
-            if result is None:
-                raise RuntimeError(f'Failed to intialize row for user {user_id}')
-        return result
-
     # Preferred name
 
     def get_preferred_name(self, user_id: int) -> Optional[str]:
         stmt = 'SELECT preferred_name FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     def set_preferred_name(self, user_id: int, new_preferred_name: str):
         stmt = 'REPLACE INTO user_info (preferred_name) VALUES (?)'
@@ -97,7 +89,10 @@ class DatabaseSQLite(Database):
 
     def get_privacy_preferred_name(self, user_id: int) -> int:
         stmt = 'SELECT privacy_preferred_name FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return DEFAULT_PRIVACY
+        return result[0]
 
     def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
         stmt = 'REPLACE INTO user_info (privacy_preferred_name) VALUES (?)'
@@ -107,7 +102,10 @@ class DatabaseSQLite(Database):
 
     def get_pronouns(self, user_id: int) -> Optional[str]:
         stmt = 'SELECT pronouns FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     def set_pronouns(self, user_id: int, new_pronouns: str):
         stmt = 'REPLACE INTO user_info (pronouns) VALUES (?)'
@@ -115,7 +113,10 @@ class DatabaseSQLite(Database):
 
     def get_privacy_pronouns(self, user_id: int) -> int:
         stmt = 'SELECT privacy_pronouns FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return DEFAULT_PRIVACY
+        return result[0]
 
     def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
         stmt = 'REPLACE INTO user_info (privacy_pronouns) VALUES (?)'
@@ -125,7 +126,10 @@ class DatabaseSQLite(Database):
 
     def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         stmt = 'SELECT birthday FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     def set_birthday(self, user_id: int, new_birthday: datetime.date):
         stmt = 'REPLACE INTO user_info (birthday) VALUES (?)'
@@ -133,7 +137,10 @@ class DatabaseSQLite(Database):
 
     def get_privacy_birthday(self, user_id: int) -> int:
         stmt = 'SELECT privacy_birthday FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return DEFAULT_PRIVACY
+        return result[0]
 
     def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
         stmt = 'REPLACE INTO user_info (privacy_birthday) VALUES (?)'
@@ -143,7 +150,10 @@ class DatabaseSQLite(Database):
 
     def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
         stmt = 'SELECT timezone FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
         stmt = 'REPLACE INTO user_info (timezone) VALUES (?)'
@@ -151,7 +161,10 @@ class DatabaseSQLite(Database):
 
     def get_privacy_timezone(self, user_id: int) -> int:
         stmt = 'SELECT privacy_timezone FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return DEFAULT_PRIVACY
+        return result[0]
 
     def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
         stmt = 'REPLACE INTO user_info (privacy_timezone) VALUES (?)'
@@ -161,7 +174,10 @@ class DatabaseSQLite(Database):
 
     def get_privacy_age(self, user_id: int) -> int:
         stmt = 'SELECT privacy_age FROM user_info WHERE user_id = ?'
-        return self._safe_select(stmt, user_id)[0]
+        result = self._cur.execute(stmt, (user_id,)).fetchone()
+        if result is None:
+            return DEFAULT_PRIVACY
+        return result[0]
 
     def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
         stmt = 'REPLACE INTO user_info (privacy_age) VALUES (?)'
