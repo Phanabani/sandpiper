@@ -112,10 +112,23 @@ class UserData(commands.Cog):
                                error: commands.CommandError):
         await ctx.send(embed=Embeds.error(error))
 
-    @commands.group(invoke_without_command=True)
+    @commands.group()
+    async def bio(self, ctx: commands.Context):
+        """Commands regarding personal info"""
+        pass
+
+    @bio.command()
     @is_database_available()
     @commands.dm_only()
-    async def bio(self, ctx: commands.Context):
+    async def clear(self, ctx: commands.Context):
+        """Deletes all of your personal info"""
+        user_id: int = ctx.author.id
+        self.database.clear_data(user_id)
+
+    @bio.group(invoke_without_command=True)
+    @is_database_available()
+    @commands.dm_only()
+    async def show(self, ctx: commands.Context):
         """Displays your personal info"""
 
         user_id: int = ctx.author.id
@@ -129,7 +142,7 @@ class UserData(commands.Cog):
         privacy_age = self.database.get_privacy_age(user_id)
         timezone = self.database.get_timezone(user_id)
         privacy_timezone = self.database.get_privacy_timezone(user_id)
-        embed = make_embed(
+        embed = Embeds.fields(
             ('Name', preferred_name, privacy_preferred_name),
             ('Pronouns', pronouns, privacy_pronouns),
             ('Birthday', birthday, privacy_birthday),
@@ -138,28 +151,29 @@ class UserData(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @bio.command()
-    @is_database_available()
-    @commands.dm_only()
-    async def clear(self, ctx: commands.Context):
-        """Deletes all of your personal info"""
-        user_id: int = ctx.author.id
-        self.database.clear_data(user_id)
+    @bio.group(invoke_without_command=False)
+    async def set(self):
+        pass
 
-    @bio.command()
+    @show.command()
     @is_database_available()
     @commands.dm_only()
-    async def name(self, ctx: commands.Context, new_name: Optional[str]):
+    async def name(self, ctx: commands.Context):
         user_id: int = ctx.author.id
-        if new_name is None:
-            # Get value
-            preferred_name = self.database.get_preferred_name(user_id)
-            privacy = self.database.get_privacy_preferred_name(user_id)
-            embed = make_embed(('Name', preferred_name, privacy))
-            await ctx.send(embed=embed)
-        else:
-            # Set value
+        preferred_name = self.database.get_preferred_name(user_id)
+        privacy = self.database.get_privacy_preferred_name(user_id)
+        embed = Embeds.fields(('Name', preferred_name, privacy))
+        await ctx.send(embed=embed)
+
+    @set.command()
+    @is_database_available()
+    @commands.dm_only()
+    async def name(self, ctx: commands.Context, new_name: str):
+        user_id: int = ctx.author.id
+        try:
             self.database.set_preferred_name(user_id, new_name)
+        except DatabaseError:
+            await ctx.send(embed=Embeds.error(DatabaseError))
 
     @commands.command(name='who is')
     @is_database_available()
