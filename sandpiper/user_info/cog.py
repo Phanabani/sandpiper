@@ -110,13 +110,7 @@ class UserData(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context,
                                error: commands.CommandError):
-        try:
-            msg = error_msgs[type(error)]
-        except KeyError:
-            logger.warning(f'Unexpected error: {error}')
-            msg = error_msgs['default']
-        embed = discord.Embed(title='Error', description=msg, color=ERROR_COLOR)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=Embeds.error(error))
 
     @commands.group(invoke_without_command=True)
     @is_database_available()
