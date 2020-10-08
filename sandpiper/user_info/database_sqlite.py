@@ -54,7 +54,7 @@ class DatabaseSQLite(Database):
         self._cur.execute(
             """
             CREATE TABLE IF NOT EXISTS user_info (
-                user_id INTEGER PRIMARY KEY, 
+                user_id INTEGER PRIMARY KEY UNIQUE, 
                 preferred_name TEXT, 
                 pronouns TEXT, 
                 birthday DATE, 
@@ -84,8 +84,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_preferred_name(self, user_id: int, new_preferred_name: str):
-        stmt = 'REPLACE INTO user_info (preferred_name) VALUES (?)'
-        self._cur.execute(stmt, (new_preferred_name,))
+        stmt = '''
+            INSERT INTO user_info(user_id, preferred_name)
+            VALUES (:user_id, :new_preferred_name)
+            ON CONFLICT (user_id) DO
+            UPDATE SET preferred_name = :new_preferred_name
+        '''
+        args = {'user_id': user_id, 'new_preferred_name': new_preferred_name}
+        self._cur.execute(stmt, args)
 
     def get_privacy_preferred_name(self, user_id: int) -> int:
         stmt = 'SELECT privacy_preferred_name FROM user_info WHERE user_id = ?'
@@ -95,8 +101,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
-        stmt = 'REPLACE INTO user_info (privacy_preferred_name) VALUES (?)'
-        self._cur.execute(stmt, (new_privacy,))
+        stmt = '''
+            INSERT INTO user_info(user_id, privacy_preferred_name)
+            VALUES (:user_id, :new_privacy)
+            ON CONFLICT (user_id) DO
+            UPDATE SET privacy_preferred_name = :new_privacy
+        '''
+        args = {'user_id': user_id, 'new_privacy': new_privacy}
+        self._cur.execute(stmt, args)
 
     # Pronouns
 
@@ -108,8 +120,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_pronouns(self, user_id: int, new_pronouns: str):
-        stmt = 'REPLACE INTO user_info (pronouns) VALUES (?)'
-        self._cur.execute(stmt, (new_pronouns,))
+        stmt = '''
+            INSERT INTO user_info(user_id, pronouns)
+            VALUES (:user_id, :new_pronouns)
+            ON CONFLICT (user_id) DO
+            UPDATE SET pronouns = :new_pronouns
+        '''
+        args = {'user_id': user_id, 'new_pronouns': new_pronouns}
+        self._cur.execute(stmt, args)
 
     def get_privacy_pronouns(self, user_id: int) -> int:
         stmt = 'SELECT privacy_pronouns FROM user_info WHERE user_id = ?'
@@ -119,8 +137,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
-        stmt = 'REPLACE INTO user_info (privacy_pronouns) VALUES (?)'
-        self._cur.execute(stmt, (new_privacy,))
+        stmt = '''
+            INSERT INTO user_info(user_id, privacy_pronouns)
+            VALUES (:user_id, :new_privacy)
+            ON CONFLICT (user_id) DO
+            UPDATE SET privacy_pronouns = :new_privacy
+        '''
+        args = {'user_id': user_id, 'new_privacy': new_privacy}
+        self._cur.execute(stmt, args)
 
     # Birthday
 
@@ -132,8 +156,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_birthday(self, user_id: int, new_birthday: datetime.date):
-        stmt = 'REPLACE INTO user_info (birthday) VALUES (?)'
-        self._cur.execute(stmt, (new_birthday,))
+        stmt = '''
+            INSERT INTO user_info(user_id, birthday)
+            VALUES (:user_id, :new_birthday)
+            ON CONFLICT (user_id) DO
+            UPDATE SET birthday = :new_birthday
+        '''
+        args = {'user_id': user_id, 'new_birthday': new_birthday}
+        self._cur.execute(stmt, args)
 
     def get_privacy_birthday(self, user_id: int) -> int:
         stmt = 'SELECT privacy_birthday FROM user_info WHERE user_id = ?'
@@ -143,8 +173,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
-        stmt = 'REPLACE INTO user_info (privacy_birthday) VALUES (?)'
-        self._cur.execute(stmt, (new_privacy,))
+        stmt = '''
+            INSERT INTO user_info(user_id, privacy_birthday)
+            VALUES (:user_id, :new_privacy)
+            ON CONFLICT (user_id) DO
+            UPDATE SET privacy_birthday = :new_privacy
+        '''
+        args = {'user_id': user_id, 'new_privacy': new_privacy}
+        self._cur.execute(stmt, args)
 
     # Timezone
 
@@ -156,8 +192,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
-        stmt = 'REPLACE INTO user_info (timezone) VALUES (?)'
-        self._cur.execute(stmt, (new_timezone,))
+        stmt = '''
+            INSERT INTO user_info(user_id, timezone)
+            VALUES (:user_id, :new_timezone)
+            ON CONFLICT (user_id) DO
+            UPDATE SET timezone = :new_timezone
+        '''
+        args = {'user_id': user_id, 'new_timezone': new_timezone}
+        self._cur.execute(stmt, args)
 
     def get_privacy_timezone(self, user_id: int) -> int:
         stmt = 'SELECT privacy_timezone FROM user_info WHERE user_id = ?'
@@ -167,8 +209,14 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
-        stmt = 'REPLACE INTO user_info (privacy_timezone) VALUES (?)'
-        self._cur.execute(stmt, (new_privacy,))
+        stmt = '''
+            INSERT INTO user_info(user_id, privacy_birthday)
+            VALUES (:user_id, :new_privacy)
+            ON CONFLICT (user_id) DO
+            UPDATE SET privacy_birthday = :new_privacy
+        '''
+        args = {'user_id': user_id, 'new_privacy': new_privacy}
+        self._cur.execute(stmt, args)
 
     # Age
 
@@ -180,5 +228,11 @@ class DatabaseSQLite(Database):
         return result[0]
 
     def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
-        stmt = 'REPLACE INTO user_info (privacy_age) VALUES (?)'
-        self._cur.execute(stmt, (new_privacy,))
+        stmt = '''
+            INSERT INTO user_info(user_id, privacy_age)
+            VALUES (:user_id, :new_privacy)
+            ON CONFLICT (user_id) DO
+            UPDATE SET privacy_age = :new_privacy
+        '''
+        args = {'user_id': user_id, 'new_privacy': new_privacy}
+        self._cur.execute(stmt, args)
