@@ -19,7 +19,7 @@ class DatabaseUnavailable(commands.CheckFailure):
 
 class ErrorMessages:
     default_msg = 'Unexpected error.'
-    error_msgs: Dict[Type[Exception, str], str] = {
+    error_msgs: Dict[Type[Exception], str] = {
         commands.PrivateMessageOnly:
             'For your privacy, DM me to use this command.',
         DatabaseUnavailable:
