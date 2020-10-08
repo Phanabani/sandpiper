@@ -5,52 +5,86 @@ from typing import Any, Dict, Optional, Tuple, Type, Union, cast
 import discord
 import discord.ext.commands as commands
 
-from .database import Database
+from .database import Database, DatabaseError
 from .enums import PrivacyType
 
 __all__ = ['UserData']
 
 logger = logging.getLogger('sandpiper.user_info')
-EMBED_COLOR = 0x5E5FFF
-ERROR_COLOR = 0xff0000
-
-
-def make_embed(*fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
-    """
-    Creates a Discord embed to display user info.
-
-    :param fields: Tuples of (field_name, value, privacy)
-    :returns: An embed with tabulated user info
-    """
-    field_names = []
-    values = []
-    privacies = []
-    for field_name, value, privacy in fields:
-        if value is None:
-            value = '*Not set*'
-        else:
-            value = str(value)
-        privacy = PrivacyType(privacy).name.capitalize()
-
-        # Wrap the value in case it's long
-        value_wrapped = wrap(value, width=50, subsequent_indent='  ')
-        # Used to add blank lines to the other fields (so they stay lined up
-        # with wrapped values)
-        wrap_padding = [''] * (len(value_wrapped) - 1)
-
-        field_names.extend([field_name] + wrap_padding)
-        values.extend(value_wrapped)
-        privacies.extend([privacy] + wrap_padding)
-
-    embed = discord.Embed(title=f'Your info', color=EMBED_COLOR)
-    embed.add_field(name='Field', value='\n'.join(field_names), inline=True)
-    embed.add_field(name='Value', value='\n'.join(values), inline=True)
-    embed.add_field(name='Privacy', value='\n'.join(privacies), inline=True)
-    return embed
 
 
 class DatabaseUnavailable(commands.CheckFailure):
     pass
+
+
+class ErrorMessages:
+    default_msg = 'Unexpected error.'
+    error_msgs: Dict[Type[Exception, str], str] = {
+        commands.PrivateMessageOnly:
+            'For your privacy, DM me to use this command.',
+        DatabaseUnavailable:
+            'Unable to access database.',
+        DatabaseError:
+            'Error during database operation.',
+    }
+
+    @classmethod
+    def get(cls, error: Union[Type[Exception], Exception] = None):
+        if isinstance(error, Exception):
+            error = type(error)
+        try:
+            return cls.error_msgs[error]
+        except KeyError:
+            logger.error(f'Unexpected error: {error}')
+            return cls.default_msg
+
+
+class Embeds:
+
+    INFO_COLOR = 0x5E5FFF
+    SUCCESS_COLOR = 0x57FCA5
+    ERROR_COLOR = 0xFF0000
+
+    @staticmethod
+    def fields(*fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
+        """
+        Creates a Discord embed to display user info.
+
+        :param fields: Tuples of (field_name, value, privacy)
+        :returns: An embed with tabulated user info
+        """
+        field_names = []
+        values = []
+        privacies = []
+        for field_name, value, privacy in fields:
+            if value is None:
+                value = '*Not set*'
+            else:
+                value = str(value)
+            privacy = PrivacyType(privacy).name.capitalize()
+
+            # Wrap the value in case it's long
+            value_wrapped = wrap(value, width=50, subsequent_indent='  ')
+            # Used to add blank lines to the other fields (so they stay lined up
+            # with wrapped values)
+            wrap_padding = [''] * (len(value_wrapped) - 1)
+
+            field_names.extend([field_name] + wrap_padding)
+            values.extend(value_wrapped)
+            privacies.extend([privacy] + wrap_padding)
+
+        embed = discord.Embed(title=f'Your info', color=Embeds.INFO_COLOR)
+        embed.add_field(name='Field', value='\n'.join(field_names), inline=True)
+        embed.add_field(name='Value', value='\n'.join(values), inline=True)
+        embed.add_field(name='Privacy', value='\n'.join(privacies), inline=True)
+        return embed
+
+    @staticmethod
+    def error(reason: Union[Type[Exception], Exception, str]):
+        if isinstance(reason, (type, Exception)):
+            reason = ErrorMessages.get(reason)
+        return discord.Embed(title='Error', description=reason,
+                             color=Embeds.ERROR_COLOR)
 
 
 def is_database_available():
@@ -61,16 +95,6 @@ def is_database_available():
             raise DatabaseUnavailable()
         return True
     return commands.check(predicate)
-
-
-error_msgs: Dict[Union[Type[Exception], str], str] = {
-    commands.PrivateMessageOnly:
-        'For your privacy, DM me to use this command.',
-    DatabaseUnavailable:
-        'Unable to access database.',
-    'default':
-        'Unexpected error',
-}
 
 
 class UserData(commands.Cog):

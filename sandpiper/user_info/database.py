@@ -6,6 +6,12 @@ import pytz
 
 from .enums import PrivacyType
 
+__all__ = ['DatabaseError', 'Database']
+
+
+class DatabaseError(Exception):
+    pass
+
 
 class Database(metaclass=ABCMeta):
 
