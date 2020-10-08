@@ -1,5 +1,5 @@
-bidict
+bidict>=0.21
 certifi; sys_platform == 'win32'
-discord.py
-pint
-pytz
+discord.py>=1.5
+pint>0.16
+pytz>=2020.1
