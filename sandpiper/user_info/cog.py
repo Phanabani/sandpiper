@@ -10,8 +10,8 @@ from .enums import PrivacyType
 
 __all__ = ['UserData']
 
-
 logger = logging.getLogger('sandpiper.user_info')
+EMBED_COLOR = 0x5E5FFF
 
 
 def make_embed(*fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
@@ -41,7 +41,7 @@ def make_embed(*fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
         values.extend(value_wrapped)
         privacies.extend([privacy] + wrap_padding)
 
-    embed = discord.Embed(title=f'Your info')
+    embed = discord.Embed(title=f'Your info', color=EMBED_COLOR)
     embed.add_field(name='Field', value='\n'.join(field_names), inline=True)
     embed.add_field(name='Value', value='\n'.join(values), inline=True)
     embed.add_field(name='Privacy', value='\n'.join(privacies), inline=True)
