@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, when_mentioned_or
 
 from . import Config
 
@@ -19,11 +19,25 @@ class Sandpiper(Bot):
             """Allows prefix-less command invocation in DMs"""
             if isinstance(msg.channel, discord.DMChannel):
                 return ''
-            return config.command_prefix
+            return when_mentioned_or(config.command_prefix)(bot, msg)
+
+        intents = discord.Intents(
+            guilds=True,
+            members=True,
+            messages=True
+        )
+        allowed_mentions = discord.AllowedMentions(users=True)
+        activity = discord.Game(f'{config.command_prefix} help')
 
         super().__init__(
+            # Client params
+            max_messages=None,
+            intents=intents,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            # Bot params
             command_prefix=get_prefix,
-            description=config.description
+            description=config.description,
         )
         self.load_extension('sandpiper.unit_conversion')
         self.load_extension('sandpiper.user_info')
