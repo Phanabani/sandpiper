@@ -63,7 +63,7 @@ class Embeds(EmbedsBase):
         privacies = []
         for field_name, value, privacy in fields:
             if value is None:
-                value = '*Not set*'
+                value = '`Not set`'
             else:
                 value = str(value)
             privacy = PrivacyType(privacy).name.capitalize()
@@ -158,7 +158,7 @@ class UserData(commands.Cog):
             ('Name', preferred_name, privacy_preferred_name),
             ('Pronouns', pronouns, privacy_pronouns),
             ('Birthday', birthday, privacy_birthday),
-            ('Age', age, privacy_age),
+            ('Age', age or 'N/A', privacy_age),
             ('Timezone', timezone, privacy_timezone),
         )
 
