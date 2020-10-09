@@ -114,22 +114,25 @@ class UserData(commands.Cog):
 
     @commands.group()
     async def bio(self, ctx: commands.Context):
-        """Commands regarding personal info"""
+        """Commands for managing your personal info."""
         pass
 
-    @bio.command()
+    @bio.command(name='clear')
     @is_database_available()
     @commands.dm_only()
-    async def clear(self, ctx: commands.Context):
-        """Deletes all of your personal info"""
+    async def bio_clear(self, ctx: commands.Context):
+        """Deletes all of your personal info."""
         user_id: int = ctx.author.id
         self.database.clear_data(user_id)
 
-    @bio.group(invoke_without_command=True)
+    @bio.group(name='show', invoke_without_command=True)
     @is_database_available()
     @commands.dm_only()
-    async def show(self, ctx: commands.Context):
-        """Displays your personal info"""
+    async def bio_show(self, ctx: commands.Context):
+        """
+        Commands for displaying your personal info. Can be run on its own to
+        display all stored info.
+        """
 
         user_id: int = ctx.author.id
         preferred_name = self.database.get_preferred_name(user_id)
@@ -151,24 +154,29 @@ class UserData(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @bio.group(invoke_without_command=False)
-    async def set(self):
+    @bio.group(name='set', invoke_without_command=False)
+    async def bio_set(self, ctx: commands.Context):
+        """Commands for setting your personal info."""
         pass
 
-    @show.command()
+    # Name
+
+    @bio_show.command(name='name')
     @is_database_available()
     @commands.dm_only()
-    async def name(self, ctx: commands.Context):
+    async def bio_show_name(self, ctx: commands.Context):
+        """Display your preferred name."""
         user_id: int = ctx.author.id
         preferred_name = self.database.get_preferred_name(user_id)
         privacy = self.database.get_privacy_preferred_name(user_id)
         embed = Embeds.fields(('Name', preferred_name, privacy))
         await ctx.send(embed=embed)
 
-    @set.command()
+    @bio_set.command(name='name')
     @is_database_available()
     @commands.dm_only()
-    async def name(self, ctx: commands.Context, new_name: str):
+    async def bio_set_name(self, ctx: commands.Context, new_name: str):
+        """Set your preferred name."""
         user_id: int = ctx.author.id
         try:
             self.database.set_preferred_name(user_id, new_name)
