@@ -17,7 +17,12 @@ class DatabaseUnavailable(commands.CheckFailure):
     pass
 
 
+class UserFeedbackError(Exception):
+    pass
+
+
 class ErrorMessages:
+
     default_msg = 'Unexpected error.'
     error_msgs: Dict[Type[Exception], str] = {
         commands.PrivateMessageOnly:
@@ -30,13 +35,16 @@ class ErrorMessages:
 
     @classmethod
     def get(cls, error: Union[Type[Exception], Exception] = None):
+        if isinstance(error, UserFeedbackError):
+            return str(error)
+
         if isinstance(error, Exception):
             error = type(error)
-        try:
+        if error in cls.error_msgs:
             return cls.error_msgs[error]
-        except KeyError:
-            logger.error(f'Unexpected error: {error}')
-            return cls.default_msg
+
+        logger.error(f'Unexpected error {error}', exc_info=True)
+        return cls.default_msg
 
 
 class Embeds:
@@ -110,7 +118,10 @@ class UserData(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context,
                                error: commands.CommandError):
-        await ctx.send(embed=Embeds.error(error))
+        if isinstance(error, commands.CommandInvokeError):
+            await ctx.send(embed=Embeds.error(error.original))
+        else:
+            await ctx.send(embed=Embeds.error(error))
 
     @commands.group()
     async def bio(self, ctx: commands.Context):
