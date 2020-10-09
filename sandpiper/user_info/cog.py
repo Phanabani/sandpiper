@@ -53,12 +53,12 @@ class Embeds:
     SUCCESS_COLOR = 0x57FCA5
     ERROR_COLOR = 0xFF0000
 
-    @staticmethod
-    def fields(*fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
+    @classmethod
+    def fields(cls, *fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
         """
         Creates a Discord embed to display user info.
 
-        :param fields: Tuples of (field_name, value, privacy)
+        :param fields: Tuples of (col_name, value, privacy)
         :returns: An embed with tabulated user info
         """
         field_names = []
@@ -81,18 +81,28 @@ class Embeds:
             values.extend(value_wrapped)
             privacies.extend([privacy] + wrap_padding)
 
-        embed = discord.Embed(title=f'Your info', color=Embeds.INFO_COLOR)
+        embed = discord.Embed(title=f'Your info', color=cls.INFO_COLOR)
         embed.add_field(name='Field', value='\n'.join(field_names), inline=True)
         embed.add_field(name='Value', value='\n'.join(values), inline=True)
         embed.add_field(name='Privacy', value='\n'.join(privacies), inline=True)
         return embed
 
-    @staticmethod
-    def error(reason: Union[Type[Exception], Exception, str]):
+    @classmethod
+    def info(cls, message: str):
+        return discord.Embed(title='Info', description=message,
+                             color=cls.INFO_COLOR)
+
+    @classmethod
+    def success(cls, message: str):
+        return discord.Embed(title='Success', description=message,
+                             color=cls.SUCCESS_COLOR)
+
+    @classmethod
+    def error(cls, reason: Union[Type[Exception], Exception, str]):
         if isinstance(reason, (type, Exception)):
             reason = ErrorMessages.get(reason)
         return discord.Embed(title='Error', description=reason,
-                             color=Embeds.ERROR_COLOR)
+                             color=cls.ERROR_COLOR)
 
 
 def is_database_available():
