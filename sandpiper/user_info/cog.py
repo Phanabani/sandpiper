@@ -1,6 +1,6 @@
 import logging
 from textwrap import wrap
-from typing import Any, Dict, Optional, Tuple, Type, Union, cast
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import discord
 import discord.ext.commands as commands
@@ -108,8 +108,14 @@ class Embeds:
 def is_database_available():
     async def predicate(ctx: commands.Context):
         # noinspection PyProtectedMember
-        db_connected = cast(UserData, ctx.cog).database.connected()
-        if not db_connected:
+        cog: Optional[UserData] = ctx.cog
+        if cog is None:
+            logger.error(f'Command has no associated cog ('
+                         f'content={ctx.message.content} '
+                         f'msg={ctx.message} '
+                         f'command={ctx.command})')
+            raise commands.CheckFailure('Unexpected error.')
+        elif not cog.database.connected():
             raise DatabaseUnavailable()
         return True
     return commands.check(predicate)
