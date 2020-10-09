@@ -1,13 +1,12 @@
 import logging
 from textwrap import wrap
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Optional, Tuple
 
 import discord
 import discord.ext.commands as commands
+from discord.ext.commands import BadArgument
 
 from ..common.embeds import Embeds as EmbedsBase
-from ..common.errors import UserFeedbackError
-from ..common.errors import ErrorMessages as ErrorMessagesBase
 from .database import Database, DatabaseError
 from .enums import PrivacyType
 
@@ -18,28 +17,6 @@ logger = logging.getLogger('sandpiper.user_info')
 
 class DatabaseUnavailable(commands.CheckFailure):
     pass
-
-class ErrorMessages(ErrorMessagesBase):
-
-    @classmethod
-    def _get(cls, error: Exception = None):
-        if isinstance(error, DatabaseUnavailable):
-            return 'Unable to access database.'
-        if isinstance(error, DatabaseError):
-            return 'Error during database operation.'
-        return None
-
-    @classmethod
-    def get(cls, error: Exception = None):
-        super_msg = super()._get(error)
-        if super_msg is not None:
-            return super_msg
-
-        msg = cls._get(error)
-        if msg is None:
-            logger.error(f'Unexpected error {error}', exc_info=False)
-            return cls.default_msg
-        return msg
 
 
 class Embeds(EmbedsBase):
@@ -84,13 +61,11 @@ class Embeds(EmbedsBase):
 
 def is_database_available():
     async def predicate(ctx: commands.Context):
-        # noinspection PyProtectedMember
         cog: Optional[UserData] = ctx.cog
         if cog is None:
-            logger.error(f'Command has no associated cog ('
-                         f'content={ctx.message.content} '
-                         f'msg={ctx.message} '
-                         f'command={ctx.command})')
+            logger.error(
+                f'Command has no associated cog (content={ctx.message.content} '
+                f'msg={ctx.message} command={ctx.command})')
             raise commands.CheckFailure('Unexpected error.')
         elif not cog.database.connected():
             raise DatabaseUnavailable()
@@ -112,10 +87,17 @@ class UserData(commands.Cog):
     async def on_command_error(self, ctx: commands.Context,
                                error: commands.CommandError):
         if isinstance(error, commands.CommandInvokeError):
-            reason = ErrorMessages.get(error.original)
+            if isinstance(error.original, DatabaseUnavailable):
+                await Embeds.error(ctx, 'Unable to access database.')
+            elif isinstance(error.original, DatabaseError):
+                await Embeds.error(ctx, 'Error during database operation.')
+            else:
+                logger.error(
+                    f'Unexpected error (content={ctx.message.content!r} '
+                    f'message={ctx.message})', exc_info=error.original)
+                await Embeds.error(ctx, 'Unexpected error')
         else:
-            reason = ErrorMessages.get(error)
-        await Embeds.error(ctx, reason)
+            await Embeds.error(ctx, str(error))
 
     @commands.group()
     async def bio(self, ctx: commands.Context):
@@ -183,8 +165,8 @@ class UserData(commands.Cog):
         """Set your preferred name."""
         user_id: int = ctx.author.id
         if len(new_name) > 64:
-            raise UserFeedbackError(f'Name must be 64 characters or less ('
-                                    f'yours: {len(new_name)}).')
+            raise BadArgument(f'Name must be 64 characters or less '
+                              f'(yours: {len(new_name)}).')
         self.database.set_preferred_name(user_id, new_name)
         await Embeds.success(ctx, 'Name set!')
 
@@ -207,8 +189,8 @@ class UserData(commands.Cog):
         """Set your pronouns."""
         user_id: int = ctx.author.id
         if len(new_pronouns) > 64:
-            raise UserFeedbackError(f'Pronouns must be 64 characters or less ('
-                                    f'yours: {len(new_pronouns)}).')
+            raise BadArgument(f'Pronouns must be 64 characters or less '
+                              f'(yours: {len(new_pronouns)}).')
         self.database.set_pronouns(user_id, new_pronouns)
         await Embeds.success(ctx, 'Pronouns set!')
 
