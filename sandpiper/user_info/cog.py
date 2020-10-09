@@ -1,3 +1,4 @@
+from datetime import date
 import logging
 from textwrap import wrap
 from typing import Any, Optional, Tuple
@@ -71,6 +72,14 @@ def is_database_available():
             raise DatabaseUnavailable()
         return True
     return commands.check(predicate)
+
+
+def date_handler(date_str: str):
+    try:
+        return date.fromisoformat(date_str)
+    except ValueError:
+        raise commands.BadArgument(
+            'Use date format YYYY-MM-DD (example: 1997-08-27)')
 
 
 class UserData(commands.Cog):
@@ -193,6 +202,28 @@ class UserData(commands.Cog):
                               f'(yours: {len(new_pronouns)}).')
         self.database.set_pronouns(user_id, new_pronouns)
         await Embeds.success(ctx, 'Pronouns set!')
+
+    # Birthday
+
+    @bio_show.command(name='birthday')
+    @is_database_available()
+    @commands.dm_only()
+    async def bio_show_birthday(self, ctx: commands.Context):
+        """Display your birthday."""
+        user_id: int = ctx.author.id
+        birthday = str(self.database.get_birthday(user_id))
+        privacy = self.database.get_privacy_birthday(user_id)
+        await Embeds.user_info(ctx, ('Birthday', birthday, privacy))
+
+    @bio_set.command(name='birthday')
+    @is_database_available()
+    @commands.dm_only()
+    async def bio_set_birthday(self, ctx: commands.Context,
+                               new_birthday: date_handler):
+        """Set your birthday."""
+        user_id: int = ctx.author.id
+        self.database.set_birthday(user_id, new_birthday)
+        await Embeds.success(ctx, 'Birthday set!')
 
     # Other
 
