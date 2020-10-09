@@ -7,6 +7,7 @@ import discord.ext.commands as commands
 
 from ..common.embeds import Embeds as EmbedsBase
 from ..common.errors import UserFeedbackError
+from ..common.errors import ErrorMessages as ErrorMessagesBase
 from .database import Database, DatabaseError
 from .enums import PrivacyType
 
@@ -18,31 +19,27 @@ logger = logging.getLogger('sandpiper.user_info')
 class DatabaseUnavailable(commands.CheckFailure):
     pass
 
-
-class ErrorMessages:
-
-    default_msg = 'Unexpected error.'
-    error_msgs: Dict[Type[Exception], str] = {
-        commands.PrivateMessageOnly:
-            'For your privacy, DM me to use this command.',
-        DatabaseUnavailable:
-            'Unable to access database.',
-        DatabaseError:
-            'Error during database operation.',
-    }
+class ErrorMessages(ErrorMessagesBase):
 
     @classmethod
-    def get(cls, error: Union[Type[Exception], Exception] = None):
-        if isinstance(error, UserFeedbackError):
-            return str(error)
+    def _get(cls, error: Exception = None):
+        if isinstance(error, DatabaseUnavailable):
+            return 'Unable to access database.'
+        if isinstance(error, DatabaseError):
+            return 'Error during database operation.'
+        return None
 
-        if isinstance(error, Exception):
-            error = type(error)
-        if error in cls.error_msgs:
-            return cls.error_msgs[error]
+    @classmethod
+    def get(cls, error: Exception = None):
+        super_msg = super()._get(error)
+        if super_msg is not None:
+            return super_msg
 
-        logger.error(f'Unexpected error {error}', exc_info=True)
-        return cls.default_msg
+        msg = cls._get(error)
+        if msg is None:
+            logger.error(f'Unexpected error {error}', exc_info=False)
+            return cls.default_msg
+        return msg
 
 
 class Embeds(EmbedsBase):
