@@ -191,6 +191,30 @@ class UserData(commands.Cog):
         self.database.set_preferred_name(user_id, new_name)
         await Embeds.success(ctx, 'Name set!')
 
+    # Pronouns
+
+    @bio_show.command(name='pronouns')
+    @is_database_available()
+    @commands.dm_only()
+    async def bio_show_pronouns(self, ctx: commands.Context):
+        """Display your pronouns."""
+        user_id: int = ctx.author.id
+        pronouns = self.database.get_pronouns(user_id)
+        privacy = self.database.get_privacy_pronouns(user_id)
+        await Embeds.user_info(ctx, ('Pronouns', pronouns, privacy))
+
+    @bio_set.command(name='pronouns')
+    @is_database_available()
+    @commands.dm_only()
+    async def bio_set_pronouns(self, ctx: commands.Context, new_pronouns: str):
+        """Set your pronouns."""
+        user_id: int = ctx.author.id
+        if len(new_pronouns) > 64:
+            raise UserFeedbackError(f'Pronouns must be 64 characters or less ('
+                                    f'yours: {len(new_pronouns)}).')
+        self.database.set_pronouns(user_id, new_pronouns)
+        await Embeds.success(ctx, 'Pronouns set!')
+
     # Other
 
     @commands.command(name='who is')
