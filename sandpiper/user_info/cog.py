@@ -72,7 +72,7 @@ class Embeds:
             privacy = PrivacyType(privacy).name.capitalize()
 
             # Wrap the value in case it's long
-            value_wrapped = wrap(value, width=50, subsequent_indent='  ')
+            value_wrapped = wrap(value, width=40, subsequent_indent='  ')
             # Used to add blank lines to the other fields (so they stay lined up
             # with wrapped values)
             wrap_padding = [''] * (len(value_wrapped) - 1)
