@@ -1,0 +1,2 @@
+class UserFeedbackError(Exception):
+    pass

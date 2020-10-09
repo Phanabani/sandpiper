@@ -5,6 +5,8 @@ from typing import Any, Dict, Optional, Tuple, Type, Union
 import discord
 import discord.ext.commands as commands
 
+from ..common.embeds import Embeds as EmbedsBase
+from ..common.errors import UserFeedbackError
 from .database import Database, DatabaseError
 from .enums import PrivacyType
 
@@ -14,10 +16,6 @@ logger = logging.getLogger('sandpiper.user_info')
 
 
 class DatabaseUnavailable(commands.CheckFailure):
-    pass
-
-
-class UserFeedbackError(Exception):
     pass
 
 
@@ -47,20 +45,19 @@ class ErrorMessages:
         return cls.default_msg
 
 
-class Embeds:
-
-    INFO_COLOR = 0x5E5FFF
-    SUCCESS_COLOR = 0x57FCA5
-    ERROR_COLOR = 0xFF0000
+class Embeds(EmbedsBase):
 
     @classmethod
-    def fields(cls, *fields: Tuple[str, Optional[Any], int]) -> discord.Embed:
+    async def user_info(cls, messageable: discord.abc.Messageable,
+                        *fields: Tuple[str, Optional[Any], int]):
         """
-        Creates a Discord embed to display user info.
+        Sends a Discord embed displaying user info.
 
+        :param messageable: Where to send message
         :param fields: Tuples of (col_name, value, privacy)
         :returns: An embed with tabulated user info
         """
+
         field_names = []
         values = []
         privacies = []
@@ -85,24 +82,7 @@ class Embeds:
         embed.add_field(name='Field', value='\n'.join(field_names), inline=True)
         embed.add_field(name='Value', value='\n'.join(values), inline=True)
         embed.add_field(name='Privacy', value='\n'.join(privacies), inline=True)
-        return embed
-
-    @classmethod
-    def info(cls, message: str):
-        return discord.Embed(title='Info', description=message,
-                             color=cls.INFO_COLOR)
-
-    @classmethod
-    def success(cls, message: str):
-        return discord.Embed(title='Success', description=message,
-                             color=cls.SUCCESS_COLOR)
-
-    @classmethod
-    def error(cls, reason: Union[Type[Exception], Exception, str]):
-        if isinstance(reason, (type, Exception)):
-            reason = ErrorMessages.get(reason)
-        return discord.Embed(title='Error', description=reason,
-                             color=cls.ERROR_COLOR)
+        await messageable.send(embed=embed)
 
 
 def is_database_available():
@@ -135,9 +115,10 @@ class UserData(commands.Cog):
     async def on_command_error(self, ctx: commands.Context,
                                error: commands.CommandError):
         if isinstance(error, commands.CommandInvokeError):
-            await ctx.send(embed=Embeds.error(error.original))
+            reason = ErrorMessages.get(error.original)
         else:
-            await ctx.send(embed=Embeds.error(error))
+            reason = ErrorMessages.get(error)
+        await Embeds.error(ctx, reason)
 
     @commands.group()
     async def bio(self, ctx: commands.Context):
@@ -172,14 +153,14 @@ class UserData(commands.Cog):
         privacy_age = self.database.get_privacy_age(user_id)
         timezone = self.database.get_timezone(user_id)
         privacy_timezone = self.database.get_privacy_timezone(user_id)
-        embed = Embeds.fields(
+        await Embeds.user_info(
+            ctx,
             ('Name', preferred_name, privacy_preferred_name),
             ('Pronouns', pronouns, privacy_pronouns),
             ('Birthday', birthday, privacy_birthday),
             ('Age', age, privacy_age),
             ('Timezone', timezone, privacy_timezone),
         )
-        await ctx.send(embed=embed)
 
     @bio.group(name='set', invoke_without_command=False)
     async def bio_set(self, ctx: commands.Context):
@@ -196,8 +177,7 @@ class UserData(commands.Cog):
         user_id: int = ctx.author.id
         preferred_name = self.database.get_preferred_name(user_id)
         privacy = self.database.get_privacy_preferred_name(user_id)
-        embed = Embeds.fields(('Name', preferred_name, privacy))
-        await ctx.send(embed=embed)
+        await Embeds.user_info(ctx, ('Name', preferred_name, privacy))
 
     @bio_set.command(name='name')
     @is_database_available()
@@ -205,10 +185,13 @@ class UserData(commands.Cog):
     async def bio_set_name(self, ctx: commands.Context, new_name: str):
         """Set your preferred name."""
         user_id: int = ctx.author.id
-        try:
-            self.database.set_preferred_name(user_id, new_name)
-        except DatabaseError:
-            await ctx.send(embed=Embeds.error(DatabaseError))
+        if len(new_name) > 64:
+            raise UserFeedbackError(f'Name must be 64 characters or less ('
+                                    f'yours: {len(new_name)}).')
+        self.database.set_preferred_name(user_id, new_name)
+        await Embeds.success(ctx, 'Name set!')
+
+    # Other
 
     @commands.command(name='who is')
     @is_database_available()
