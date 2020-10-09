@@ -129,7 +129,7 @@ class UserData(commands.Cog):
     @is_database_available()
     @commands.dm_only()
     async def bio_clear(self, ctx: commands.Context):
-        """Deletes all of your personal info."""
+        """Delete all of your personal info."""
         user_id: int = ctx.author.id
         self.database.clear_data(user_id)
 
