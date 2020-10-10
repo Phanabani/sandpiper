@@ -146,7 +146,7 @@ class UserData(commands.Cog):
             ('Name', preferred_name, privacy_preferred_name),
             ('Pronouns', pronouns, privacy_pronouns),
             ('Birthday', birthday, privacy_birthday),
-            ('Age', age or 'N/A', privacy_age),
+            ('Age', age if age is not None else 'N/A', privacy_age),
             ('Timezone', timezone, privacy_timezone),
         )
 
