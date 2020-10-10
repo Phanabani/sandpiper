@@ -43,8 +43,17 @@ class Sandpiper(Bot):
         self.load_extension('sandpiper.unit_conversion')
         self.load_extension('sandpiper.user_info')
 
+    async def on_connect(self):
+        logger.info('Client connected')
+
+    async def on_disconnect(self):
+        logger.info('Client disconnected')
+
+    async def on_resumed(self):
+        logger.info('Session resumed')
+
     async def on_ready(self):
-        logger.info('Sandpiper client started')
+        logger.info('Client started')
 
     async def on_error(self, event_method: str, *args, **kwargs):
         if event_method == 'on_message':
