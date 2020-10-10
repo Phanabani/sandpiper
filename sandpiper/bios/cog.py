@@ -6,13 +6,13 @@ import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
-from .enums import PrivacyType
 from ..common.embeds import Embeds
-from .database import Database, DatabaseError
+from ..user_info.enums import PrivacyType
+from ..user_info.database import Database, DatabaseError
 
 __all__ = ['UserData']
 
-logger = logging.getLogger('sandpiper.user_info')
+logger = logging.getLogger('sandpiper.bios')
 
 
 class DatabaseUnavailable(commands.CheckFailure):
