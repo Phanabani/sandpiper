@@ -1,11 +1,12 @@
 from datetime import date
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
+from .enums import PrivacyType
 from ..common.embeds import Embeds
 from .database import Database, DatabaseError
 
@@ -50,6 +51,11 @@ class UserData(commands.Cog):
     def set_database_adapter(self, database: Database):
         self.database = database
 
+    @staticmethod
+    def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
+        privacy = privacy.name.capitalize()
+        return f'`{privacy}` | **{field_name}** • {value}'
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context,
                                error: commands.CommandError):
@@ -89,30 +95,27 @@ class UserData(commands.Cog):
         """
 
         user_id: int = ctx.author.id
+
         preferred_name = self.database.get_preferred_name(user_id)
         pronouns = self.database.get_pronouns(user_id)
         birthday = self.database.get_birthday(user_id)
         age = self.database.get_age(user_id)
         age = age if age is not None else 'N/A'
         timezone = self.database.get_timezone(user_id)
-        p_preferred_name = (self.database.get_privacy_preferred_name(user_id)
-                            .name.capitalize())
-        p_pronouns = (self.database.get_privacy_pronouns(user_id)
-                      .name.capitalize())
-        p_birthday = (self.database.get_privacy_birthday(user_id)
-                      .name.capitalize())
-        p_age = (self.database.get_privacy_age(user_id)
-                 .name.capitalize())
-        p_timezone = (self.database.get_privacy_timezone(user_id)
-                      .name.capitalize())
+
+        p_preferred_name = self.database.get_privacy_preferred_name(user_id)
+        p_pronouns = self.database.get_privacy_pronouns(user_id)
+        p_birthday = self.database.get_privacy_birthday(user_id)
+        p_age = self.database.get_privacy_age(user_id)
+        p_timezone = self.database.get_privacy_timezone(user_id)
+
         await Embeds.info(
-            ctx, fields=(
-                ('Name', f'{preferred_name} `({p_preferred_name})`', False),
-                ('Pronouns', f'{pronouns} `({p_pronouns})`', False),
-                ('Birthday', f'{birthday} `({p_birthday})`', False),
-                ('Age', f'{age} `({p_age})`', False),
-                ('Timezone', f'{timezone} `({p_timezone})`', False),
-            )
+            ctx,
+            f"{self.user_info_str('Name', preferred_name, p_preferred_name)}\n"
+            f"{self.user_info_str('Pronouns', pronouns, p_pronouns)}\n"
+            f"{self.user_info_str('Birthday', birthday, p_birthday)}\n"
+            f"{self.user_info_str('Age', age, p_age)}\n"
+            f"{self.user_info_str('Timezone', timezone, p_timezone)}\n"
         )
 
     @bio.group(name='set', invoke_without_command=False)
@@ -130,7 +133,8 @@ class UserData(commands.Cog):
         user_id: int = ctx.author.id
         preferred_name = self.database.get_preferred_name(user_id)
         privacy = self.database.get_privacy_preferred_name(user_id)
-        await Embeds.user_info(ctx, ('Name', preferred_name, privacy))
+        await Embeds.info(
+            ctx, self.user_info_str('Name', preferred_name, privacy))
 
     @bio_set.command(name='name')
     @is_database_available()
@@ -154,7 +158,8 @@ class UserData(commands.Cog):
         user_id: int = ctx.author.id
         pronouns = self.database.get_pronouns(user_id)
         privacy = self.database.get_privacy_pronouns(user_id)
-        await Embeds.user_info(ctx, ('Pronouns', pronouns, privacy))
+        await Embeds.info(
+            ctx, self.user_info_str('Pronouns', pronouns, privacy))
 
     @bio_set.command(name='pronouns')
     @is_database_available()
@@ -178,7 +183,8 @@ class UserData(commands.Cog):
         user_id: int = ctx.author.id
         birthday = str(self.database.get_birthday(user_id))
         privacy = self.database.get_privacy_birthday(user_id)
-        await Embeds.user_info(ctx, ('Birthday', birthday, privacy))
+        await Embeds.info(
+            ctx, self.user_info_str('Birthday', birthday, privacy))
 
     @bio_set.command(name='birthday')
     @is_database_available()
