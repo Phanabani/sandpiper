@@ -23,6 +23,8 @@ class Embeds:
         :param fields: An iterable of fields to add to the embed where each
             field is a tuple of shape (name, value, inline)
         """
+        if not (message or fields):
+            raise ValueError('You must specify at least one of message or fields')
         embed = discord.Embed(title='Info',
                               description=message or discord.Embed.Empty,
                               color=cls.INFO_COLOR)
