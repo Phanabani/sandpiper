@@ -39,6 +39,7 @@ class Sandpiper(Bot):
             command_prefix=get_prefix,
             description=config.description,
         )
+        self.load_extension('sandpiper.bios')
         self.load_extension('sandpiper.unit_conversion')
         self.load_extension('sandpiper.user_info')
 
