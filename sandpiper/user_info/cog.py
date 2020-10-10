@@ -41,6 +41,18 @@ def date_handler(date_str: str):
             'Use date format YYYY-MM-DD (example: 1997-08-27)')
 
 
+privacy_emojis = {
+    PrivacyType.PRIVATE: '⛔',
+    PrivacyType.PUBLIC: '✅'
+}
+
+
+def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
+    privacy_emoji = privacy_emojis[privacy]
+    privacy = privacy.name.capitalize()
+    return f'{privacy_emoji} `{privacy}` | **{field_name}** • {value}'
+
+
 class UserData(commands.Cog):
 
     database: Database = None
@@ -50,11 +62,6 @@ class UserData(commands.Cog):
 
     def set_database_adapter(self, database: Database):
         self.database = database
-
-    @staticmethod
-    def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
-        privacy = privacy.name.capitalize()
-        return f'`{privacy}` | **{field_name}** • {value}'
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context,
@@ -111,11 +118,11 @@ class UserData(commands.Cog):
 
         await Embeds.info(
             ctx,
-            f"{self.user_info_str('Name', preferred_name, p_preferred_name)}\n"
-            f"{self.user_info_str('Pronouns', pronouns, p_pronouns)}\n"
-            f"{self.user_info_str('Birthday', birthday, p_birthday)}\n"
-            f"{self.user_info_str('Age', age, p_age)}\n"
-            f"{self.user_info_str('Timezone', timezone, p_timezone)}\n"
+            f"{user_info_str('Name', preferred_name, p_preferred_name)}\n"
+            f"{user_info_str('Pronouns', pronouns, p_pronouns)}\n"
+            f"{user_info_str('Birthday', birthday, p_birthday)}\n"
+            f"{user_info_str('Age', age, p_age)}\n"
+            f"{user_info_str('Timezone', timezone, p_timezone)}\n"
         )
 
     @bio.group(name='set', invoke_without_command=False)
@@ -134,7 +141,7 @@ class UserData(commands.Cog):
         preferred_name = self.database.get_preferred_name(user_id)
         privacy = self.database.get_privacy_preferred_name(user_id)
         await Embeds.info(
-            ctx, self.user_info_str('Name', preferred_name, privacy))
+            ctx, user_info_str('Name', preferred_name, privacy))
 
     @bio_set.command(name='name')
     @is_database_available()
@@ -159,7 +166,7 @@ class UserData(commands.Cog):
         pronouns = self.database.get_pronouns(user_id)
         privacy = self.database.get_privacy_pronouns(user_id)
         await Embeds.info(
-            ctx, self.user_info_str('Pronouns', pronouns, privacy))
+            ctx, user_info_str('Pronouns', pronouns, privacy))
 
     @bio_set.command(name='pronouns')
     @is_database_available()
@@ -184,7 +191,7 @@ class UserData(commands.Cog):
         birthday = str(self.database.get_birthday(user_id))
         privacy = self.database.get_privacy_birthday(user_id)
         await Embeds.info(
-            ctx, self.user_info_str('Birthday', birthday, privacy))
+            ctx, user_info_str('Birthday', birthday, privacy))
 
     @bio_set.command(name='birthday')
     @is_database_available()
