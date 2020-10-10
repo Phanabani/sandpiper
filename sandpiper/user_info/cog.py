@@ -50,7 +50,7 @@ privacy_emojis = {
 def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     privacy_emoji = privacy_emojis[privacy]
     privacy = privacy.name.capitalize()
-    return f'{privacy_emoji} `{privacy}` | **{field_name}** • {value}'
+    return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
 
 
 class UserData(commands.Cog):
