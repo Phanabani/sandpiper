@@ -44,7 +44,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_privacy_preferred_name(self, user_id: int) -> int:
+    def get_privacy_preferred_name(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
@@ -60,7 +60,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_privacy_pronouns(self, user_id: int) -> int:
+    def get_privacy_pronouns(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
@@ -76,7 +76,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_privacy_birthday(self, user_id: int) -> int:
+    def get_privacy_birthday(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
@@ -92,7 +92,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_privacy_timezone(self, user_id: int) -> int:
+    def get_privacy_timezone(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
@@ -115,7 +115,7 @@ class Database(metaclass=ABCMeta):
         return self._calculate_age(birthday, datetime.date.today())
 
     @abstractmethod
-    def get_privacy_age(self, user_id: int) -> int:
+    def get_privacy_age(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
