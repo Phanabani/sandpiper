@@ -1,15 +1,13 @@
 from datetime import date
 import logging
-from textwrap import wrap
-from typing import Any, Optional, Tuple
+from typing import Optional
 
 import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
-from ..common.embeds import Embeds as EmbedsBase
+from ..common.embeds import Embeds
 from .database import Database, DatabaseError
-from .enums import PrivacyType
 
 __all__ = ['UserData']
 
@@ -18,46 +16,6 @@ logger = logging.getLogger('sandpiper.user_info')
 
 class DatabaseUnavailable(commands.CheckFailure):
     pass
-
-
-class Embeds(EmbedsBase):
-
-    @classmethod
-    async def user_info(cls, messageable: discord.abc.Messageable,
-                        *fields: Tuple[str, Optional[Any], int]):
-        """
-        Sends a Discord embed displaying user info.
-
-        :param messageable: Where to send message
-        :param fields: Tuples of (col_name, value, privacy)
-        :returns: An embed with tabulated user info
-        """
-
-        field_names = []
-        values = []
-        privacies = []
-        for field_name, value, privacy in fields:
-            if value is None:
-                value = '`Not set`'
-            else:
-                value = str(value)
-            privacy = PrivacyType(privacy).name.capitalize()
-
-            # Wrap the value in case it's long
-            value_wrapped = wrap(value, width=40, subsequent_indent='  ')
-            # Used to add blank lines to the other fields (so they stay lined up
-            # with wrapped values)
-            wrap_padding = [''] * (len(value_wrapped) - 1)
-
-            field_names.extend([field_name] + wrap_padding)
-            values.extend(value_wrapped)
-            privacies.extend([privacy] + wrap_padding)
-
-        embed = discord.Embed(title=f'Your info', color=cls.INFO_COLOR)
-        embed.add_field(name='Field', value='\n'.join(field_names), inline=True)
-        embed.add_field(name='Value', value='\n'.join(values), inline=True)
-        embed.add_field(name='Privacy', value='\n'.join(privacies), inline=True)
-        await messageable.send(embed=embed)
 
 
 def is_database_available():
@@ -132,22 +90,29 @@ class UserData(commands.Cog):
 
         user_id: int = ctx.author.id
         preferred_name = self.database.get_preferred_name(user_id)
-        privacy_preferred_name = self.database.get_privacy_preferred_name(user_id)
         pronouns = self.database.get_pronouns(user_id)
-        privacy_pronouns = self.database.get_privacy_pronouns(user_id)
         birthday = self.database.get_birthday(user_id)
-        privacy_birthday = self.database.get_privacy_birthday(user_id)
         age = self.database.get_age(user_id)
-        privacy_age = self.database.get_privacy_age(user_id)
+        age = age if age is not None else 'N/A'
         timezone = self.database.get_timezone(user_id)
-        privacy_timezone = self.database.get_privacy_timezone(user_id)
-        await Embeds.user_info(
-            ctx,
-            ('Name', preferred_name, privacy_preferred_name),
-            ('Pronouns', pronouns, privacy_pronouns),
-            ('Birthday', birthday, privacy_birthday),
-            ('Age', age if age is not None else 'N/A', privacy_age),
-            ('Timezone', timezone, privacy_timezone),
+        p_preferred_name = (self.database.get_privacy_preferred_name(user_id)
+                            .name.capitalize())
+        p_pronouns = (self.database.get_privacy_pronouns(user_id)
+                      .name.capitalize())
+        p_birthday = (self.database.get_privacy_birthday(user_id)
+                      .name.capitalize())
+        p_age = (self.database.get_privacy_age(user_id)
+                 .name.capitalize())
+        p_timezone = (self.database.get_privacy_timezone(user_id)
+                      .name.capitalize())
+        await Embeds.info(
+            ctx, fields=(
+                ('Name', f'{preferred_name} `({p_preferred_name})`', False),
+                ('Pronouns', f'{pronouns} `({p_pronouns})`', False),
+                ('Birthday', f'{birthday} `({p_birthday})`', False),
+                ('Age', f'{age} `({p_age})`', False),
+                ('Timezone', f'{timezone} `({p_timezone})`', False),
+            )
         )
 
     @bio.group(name='set', invoke_without_command=False)
