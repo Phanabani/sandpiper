@@ -28,8 +28,9 @@ class Embeds:
         embed = discord.Embed(title='Info',
                               description=message or discord.Embed.Empty,
                               color=cls.INFO_COLOR)
-        for name, value, inline in fields:
-            embed.add_field(name=name, value=value, inline=inline)
+        if fields:
+            for name, value, inline in fields:
+                embed.add_field(name=name, value=value, inline=inline)
         await messageable.send(embed=embed)
 
     @classmethod
