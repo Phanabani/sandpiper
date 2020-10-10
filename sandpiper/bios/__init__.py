@@ -1,8 +1,8 @@
 from discord.ext.commands import Bot
 
-from .cog import UserData
+from .cog import Bios
 
 
 def setup(bot: Bot):
-    user_data = UserData(bot)
-    bot.add_cog(user_data)
+    bios = Bios(bot)
+    bot.add_cog(bios)
