@@ -15,7 +15,6 @@ __all__ = ['Bios']
 
 logger = logging.getLogger('sandpiper.bios')
 
-
 privacy_emojis = {
     PrivacyType.PRIVATE: '⛔',
     PrivacyType.PUBLIC: '✅'
@@ -100,14 +99,13 @@ class Bios(commands.Cog):
         p_age = db.get_privacy_age(user_id)
         p_timezone = db.get_privacy_timezone(user_id)
 
-        await Embeds.info(
-            ctx,
-            f"{user_info_str('Name', preferred_name, p_preferred_name)}\n"
-            f"{user_info_str('Pronouns', pronouns, p_pronouns)}\n"
-            f"{user_info_str('Birthday', birthday, p_birthday)}\n"
-            f"{user_info_str('Age', age, p_age)}\n"
-            f"{user_info_str('Timezone', timezone, p_timezone)}\n"
-        )
+        await Embeds.info(ctx, message=(
+            user_info_str('Name', preferred_name, p_preferred_name),
+            user_info_str('Pronouns', pronouns, p_pronouns),
+            user_info_str('Birthday', birthday, p_birthday),
+            user_info_str('Age', age, p_age),
+            user_info_str('Timezone', timezone, p_timezone)
+        ))
 
     @bio.group(name='set', invoke_without_command=False)
     async def bio_set(self, ctx: commands.Context):
@@ -124,8 +122,7 @@ class Bios(commands.Cog):
         db = self._get_database()
         preferred_name = db.get_preferred_name(user_id)
         privacy = db.get_privacy_preferred_name(user_id)
-        await Embeds.info(
-            ctx, user_info_str('Name', preferred_name, privacy))
+        await Embeds.info(ctx, user_info_str('Name', preferred_name, privacy))
 
     @bio_set.command(name='name')
     @commands.dm_only()
@@ -149,8 +146,7 @@ class Bios(commands.Cog):
         db = self._get_database()
         pronouns = db.get_pronouns(user_id)
         privacy = db.get_privacy_pronouns(user_id)
-        await Embeds.info(
-            ctx, user_info_str('Pronouns', pronouns, privacy))
+        await Embeds.info(ctx, user_info_str('Pronouns', pronouns, privacy))
 
     @bio_set.command(name='pronouns')
     @commands.dm_only()
@@ -174,8 +170,7 @@ class Bios(commands.Cog):
         db = self._get_database()
         birthday = db.get_birthday(user_id)
         privacy = db.get_privacy_birthday(user_id)
-        await Embeds.info(
-            ctx, user_info_str('Birthday', birthday, privacy))
+        await Embeds.info(ctx, user_info_str('Birthday', birthday, privacy))
 
     @bio_set.command(name='birthday')
     @commands.dm_only()
