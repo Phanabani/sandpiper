@@ -88,6 +88,18 @@ def fuzzy_match_timezone(tz_str: str, best_match_threshold=75,
     return tz_matches
 
 
+def find_user_in_mutual_guilds(client: discord.Client, whos_looking: int,
+                               for_whom: int) -> List[discord.Member]:
+    found_members = []
+    for g in client.guilds:
+        g: discord.Guild
+        if g.get_member(whos_looking):
+            member = g.get_member(for_whom)
+            if member:
+                found_members.append(member)
+    return found_members
+
+
 class Bios(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
@@ -381,8 +393,43 @@ class Bios(commands.Cog):
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
             ))
 
-    # Other
+    # Who commands
 
-    @commands.command(name='who is')
-    async def who_is(self, ctx: commands.Context, user: discord.Member):
+    @commands.group(name='who', invoke_without_subcommand=False)
+    async def who(self, ctx: commands.Context):
+        """Commands for viewing other users' info."""
         pass
+
+    @who.command(name='is')
+    async def who_is(self, ctx: commands.Context, name: str):
+        """
+        Search for a user by one of their names. Outputs a list of matching
+        users, showing their preferred name, Discord username, and nicknames
+        in servers you share with them.
+        """
+        db = self._get_database()
+        bot: commands.Bot = ctx.bot
+
+        users = []
+        for user_id, preferred_name in db.find_users_by_name(name):
+            # Transform the database data into discord objects
+            user: discord.User = bot.get_user(user_id)
+
+            # Get the user's discord username and discriminator
+            if user is not None:
+                username = f'{user.name}#{user.discriminator}'
+            else:
+                username = '`User not found`'
+
+            # Find the user's nicknames on servers they share with the executor
+            # of the who is command
+            members = find_user_in_mutual_guilds(
+                ctx.bot, ctx.author.id, user_id)
+            display_names = ', '.join(m.display_name for m in members)
+
+            users.append((preferred_name, username, display_names))
+
+        if users:
+            await Embeds.info(ctx, message=(' • '.join(u) for u in users))
+        else:
+            await Embeds.error(ctx, 'No users found with this name.')
