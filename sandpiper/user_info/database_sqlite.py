@@ -16,19 +16,6 @@ logger = logging.getLogger('sandpiper.user_data.database_sqlite')
 DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
 
-# https://docs.python.org/3.8/library/sqlite3.html#converting-sqlite-values-to-custom-python-types
-def adapt_timezone(timezone: pytz.tzinfo.BaseTzInfo) -> str:
-    return timezone.zone
-
-
-def convert_timezone(timezone_name: bytes) -> pytz.tzinfo.BaseTzInfo:
-    return pytz.timezone(timezone_name.decode('utf_8'))
-
-
-sqlite3.register_adapter(pytz.tzinfo.BaseTzInfo, adapt_timezone)
-sqlite3.register_converter('timezone', convert_timezone)
-
-
 class DatabaseSQLite(Database):
 
     _con: Optional[sqlite3.Connection] = None
@@ -59,7 +46,7 @@ class DatabaseSQLite(Database):
                         preferred_name TEXT, 
                         pronouns TEXT, 
                         birthday DATE, 
-                        timezone TIMEZONE, 
+                        timezone TEXT, 
                         privacy_preferred_name TINYINT, 
                         privacy_pronouns TINYINT, 
                         privacy_birthday TINYINT, 
@@ -168,9 +155,13 @@ class DatabaseSQLite(Database):
     # Timezone
 
     def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
-        return self._do_execute_get('timezone', user_id)
+        timezone_name = self._do_execute_get('timezone', user_id)
+        if timezone_name:
+            return pytz.timezone(timezone_name)
+        return None
 
     def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
+        new_timezone = new_timezone.zone
         self._do_execute_set('timezone', user_id, new_timezone)
 
     def get_privacy_timezone(self, user_id: int) -> PrivacyType:
