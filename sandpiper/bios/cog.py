@@ -27,7 +27,7 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
 
 
-def date_handler(date_str: str):
+def date_handler(date_str: str) -> date:
     try:
         return date.fromisoformat(date_str)
     except ValueError:
