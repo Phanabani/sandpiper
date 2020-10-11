@@ -57,6 +57,18 @@ class DatabaseSQLite(Database):
                 self._con.execute(stmt)
         except sqlite3.Error:
             logger.error('Failed to create table', exc_info=True)
+        self.create_indices()
+
+    def create_indices(self):
+        stmt = '''
+            CREATE INDEX IF NOT EXISTS index_users_preferred_name
+            ON user_info(preferred_name)
+        '''
+        try:
+            with self._con:
+                self._con.execute(stmt)
+        except sqlite3.Error:
+            logger.error('Failed to create indices', exc_info=True)
 
     def clear_data(self, user_id: int):
         stmt = 'DELETE FROM user_info WHERE user_id = ?'
