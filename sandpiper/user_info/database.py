@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import datetime
-from typing import Optional
+from typing import List, Optional, Tuple
 
 import pytz
 
@@ -29,6 +29,10 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def connected(self) -> bool:
+        pass
+
+    @abstractmethod
+    def find_users_by_name(self, name: str) -> List[Tuple[int, str]]:
         pass
 
     @abstractmethod

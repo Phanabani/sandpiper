@@ -2,7 +2,7 @@ import datetime
 import logging
 from pathlib import Path
 import sqlite3
-from typing import Any, NoReturn, Optional, Union
+from typing import Any, List, NoReturn, Optional, Tuple, Union
 
 import pytz
 
@@ -69,6 +69,19 @@ class DatabaseSQLite(Database):
                 self._con.execute(stmt)
         except sqlite3.Error:
             logger.error('Failed to create indices', exc_info=True)
+
+    def find_users_by_name(self, name: str) -> List[Tuple[int, str]]:
+        stmt = '''
+            SELECT user_id, preferred_name FROM user_info
+            WHERE preferred_name like :name
+                AND privacy_preferred_name = :privacy
+        '''
+        args = {'name': f'%{name}%', 'privacy': PrivacyType.PUBLIC}
+        try:
+            with self._con:
+                return self._con.execute(stmt, args).fetchall()
+        except sqlite3.Error:
+            logger.error('Failed to find users by name', exc_info=True)
 
     def delete_user(self, user_id: int):
         stmt = 'DELETE FROM user_info WHERE user_id = ?'
