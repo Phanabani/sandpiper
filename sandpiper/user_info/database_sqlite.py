@@ -38,32 +38,32 @@ class DatabaseSQLite(Database):
         return self._con is not None
 
     def create_table(self):
+        stmt = '''
+            CREATE TABLE IF NOT EXISTS user_info (
+                user_id INTEGER PRIMARY KEY UNIQUE, 
+                preferred_name TEXT, 
+                pronouns TEXT, 
+                birthday DATE, 
+                timezone TEXT, 
+                privacy_preferred_name TINYINT, 
+                privacy_pronouns TINYINT, 
+                privacy_birthday TINYINT, 
+                privacy_age TINYINT, 
+                privacy_timezone TINYINT
+            )
+        '''
         try:
             with self._con:
-                self._con.execute("""
-                    CREATE TABLE IF NOT EXISTS user_info (
-                        user_id INTEGER PRIMARY KEY UNIQUE, 
-                        preferred_name TEXT, 
-                        pronouns TEXT, 
-                        birthday DATE, 
-                        timezone TEXT, 
-                        privacy_preferred_name TINYINT, 
-                        privacy_pronouns TINYINT, 
-                        privacy_birthday TINYINT, 
-                        privacy_age TINYINT, 
-                        privacy_timezone TINYINT
-                    )
-                """)
+                self._con.execute(stmt)
         except sqlite3.Error:
             logger.error('Failed to create table', exc_info=True)
 
     def clear_data(self, user_id: int):
+        stmt = 'DELETE FROM user_info WHERE user_id = ?'
+        args = (user_id,)
         try:
             with self._con:
-                self._con.execute(
-                    'DELETE FROM user_info WHERE user_id = ?',
-                    (user_id,)
-                )
+                self._con.execute(stmt, args)
         except sqlite3.Error:
             logger.error(f'Failed to delete row (user_id={user_id})',
                          exc_info=True)
@@ -78,9 +78,9 @@ class DatabaseSQLite(Database):
             with self._con:
                 result = self._con.execute(stmt, (user_id,)).fetchone()
         except sqlite3.Error:
-            logger.error(f'Failed to get value (column={col_name!r} '
-                         f'user_id={user_id})',
-                         exc_info=True)
+            logger.error(
+                f'Failed to get value (column={col_name!r} user_id={user_id})',
+                exc_info=True)
             raise DatabaseError('Failed to get value')
         if result is None or result[0] is None:
             return default
