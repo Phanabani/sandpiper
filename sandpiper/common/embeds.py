@@ -2,6 +2,8 @@ from typing import Iterable, Tuple, Union
 
 import discord
 
+from .misc import prune
+
 FieldType = Tuple[str, str, bool]
 
 
@@ -33,7 +35,7 @@ class Embeds:
         if isinstance(message, str):
             pass
         elif isinstance(message, Iterable):
-            message = '\n'.join(message)
+            message = '\n'.join(prune(message))
         elif message is None:
             message = discord.Embed.Empty
         else:
@@ -59,7 +61,7 @@ class Embeds:
             an iterable of strings to join with newlines.
         """
         if isinstance(message, Iterable):
-            message = '\n'.join(message)
+            message = '\n'.join(prune(message))
         embed = discord.Embed(
             title='Success', description=message, color=cls.SUCCESS_COLOR)
         await messageable.send(embed=embed)
@@ -75,7 +77,7 @@ class Embeds:
             iterable of strings to join with newlines.
         """
         if isinstance(message, Iterable):
-            message = '\n'.join(message)
+            message = '\n'.join(prune(message))
         embed = discord.Embed(
             title='Error', description=message, color=cls.ERROR_COLOR)
         await messageable.send(embed=embed)
