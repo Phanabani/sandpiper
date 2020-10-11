@@ -39,6 +39,15 @@ def date_handler(date_str: str) -> date:
             'Use date format YYYY-MM-DD (example: 1997-08-27)')
 
 
+def privacy_handler(privacy_str: str) -> PrivacyType:
+    privacy_str = privacy_str.upper()
+    try:
+        return PrivacyType[privacy_str]
+    except KeyError:
+        privacy_names = [n.lower() for n in PrivacyType.__members__.keys()]
+        raise BadArgument(f'Privacy must be one of {privacy_names}')
+
+
 @dataclass
 class TimezoneMatches:
     matches: List[Tuple[str, int]] = None
@@ -156,6 +165,71 @@ class Bios(commands.Cog):
     async def bio_set(self, ctx: commands.Context):
         """Commands for setting your personal info."""
         pass
+
+    # Privacy setters
+
+    @bio_set.group(name='privacy', invoke_without_command=False)
+    async def bio_set_privacy(self, ctx: commands.Context):
+        """Commands for managing the privacy of your personal info."""
+        pass
+
+    @bio_set_privacy.command(name='all')
+    async def bio_set_privacy_all(
+            self, ctx: commands.Context, new_privacy: privacy_handler):
+        """Set the privacy of all of your personal info at once."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_privacy_preferred_name(user_id, new_privacy)
+        db.set_privacy_pronouns(user_id, new_privacy)
+        db.set_privacy_birthday(user_id, new_privacy)
+        db.set_privacy_age(user_id, new_privacy)
+        db.set_privacy_timezone(user_id, new_privacy)
+        await Embeds.success(ctx, 'All privacies set!')
+
+    @bio_set_privacy.command(name='name')
+    async def bio_set_privacy_name(
+            self, ctx: commands.Context, new_privacy: privacy_handler):
+        """Set the privacy of your preferred name."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_privacy_preferred_name(user_id, new_privacy)
+        await Embeds.success(ctx, 'Name privacy set!')
+
+    @bio_set_privacy.command(name='pronouns')
+    async def bio_set_privacy_pronouns(
+            self, ctx: commands.Context, new_privacy: privacy_handler):
+        """Set the privacy of your pronouns."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_privacy_pronouns(user_id, new_privacy)
+        await Embeds.success(ctx, 'Pronouns privacy set!')
+
+    @bio_set_privacy.command(name='birthday')
+    async def bio_set_privacy_birthday(
+            self, ctx: commands.Context, new_privacy: privacy_handler):
+        """Set the privacy of your birthday."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_privacy_birthday(user_id, new_privacy)
+        await Embeds.success(ctx, 'Birthday privacy set!')
+
+    @bio_set_privacy.command(name='age')
+    async def bio_set_privacy_age(
+            self, ctx: commands.Context, new_privacy: privacy_handler):
+        """Set the privacy of your age."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_privacy_age(user_id, new_privacy)
+        await Embeds.success(ctx, 'Age privacy set!')
+
+    @bio_set_privacy.command(name='timezone')
+    async def bio_set_privacy_timezone(
+            self, ctx: commands.Context, new_privacy: privacy_handler):
+        """Set the privacy of your timezone."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_privacy_timezone(user_id, new_privacy)
+        await Embeds.success(ctx, 'Timezone privacy set!')
 
     # Name
 
