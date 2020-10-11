@@ -49,25 +49,33 @@ class Embeds:
         await messageable.send(embed=embed)
 
     @classmethod
-    async def success(cls, messageable: discord.abc.Messageable, message: str):
+    async def success(cls, messageable: discord.abc.Messageable,
+                      message: Union[str, Iterable[str]]):
         """
         Sends a success embed.
 
         :param messageable: A messageable interface to send the embed to
-        :param message: The success message
+        :param message: The success message. Can be either a single string or
+            an iterable of strings to join with newlines.
         """
+        if isinstance(message, Iterable):
+            message = '\n'.join(message)
         embed = discord.Embed(
             title='Success', description=message, color=cls.SUCCESS_COLOR)
         await messageable.send(embed=embed)
 
     @classmethod
-    async def error(cls, messageable: discord.abc.Messageable, message: str):
+    async def error(cls, messageable: discord.abc.Messageable,
+                    message: Union[str, Iterable[str]]):
         """
         Sends an error embed.
 
         :param messageable: A messageable interface to send the embed to
-        :param message: The error message
+        :param message: The error message. Can be either a single string or an
+            iterable of strings to join with newlines.
         """
+        if isinstance(message, Iterable):
+            message = '\n'.join(message)
         embed = discord.Embed(
             title='Error', description=message, color=cls.ERROR_COLOR)
         await messageable.send(embed=embed)
