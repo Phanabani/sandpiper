@@ -70,7 +70,7 @@ class DatabaseSQLite(Database):
         except sqlite3.Error:
             logger.error('Failed to create indices', exc_info=True)
 
-    def clear_data(self, user_id: int):
+    def delete_user(self, user_id: int):
         stmt = 'DELETE FROM user_info WHERE user_id = ?'
         args = (user_id,)
         try:

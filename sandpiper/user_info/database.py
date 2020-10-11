@@ -32,7 +32,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def clear_data(self, user_id: int):
+    def delete_user(self, user_id: int):
         pass
 
     @abstractmethod

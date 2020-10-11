@@ -126,7 +126,7 @@ class Bios(commands.Cog):
         """Delete all of your personal info."""
         user_id: int = ctx.author.id
         db = self._get_database()
-        db.clear_data(user_id)
+        db.delete_user(user_id)
         await Embeds.success(ctx, 'Deleted your personal data!')
 
     @bio.group(name='show', aliases=('get',), invoke_without_command=True)
