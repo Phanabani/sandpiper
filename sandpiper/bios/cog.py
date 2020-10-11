@@ -1,10 +1,14 @@
+from dataclasses import dataclass
 from datetime import date
 import logging
-from typing import Any, Optional
+from typing import Any, List, Optional, Tuple
 
 import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process as fuzzy_process
+import pytz
 
 from ..common.embeds import Embeds
 from ..user_info.cog import UserData, DatabaseUnavailable
@@ -33,6 +37,46 @@ def date_handler(date_str: str) -> date:
     except ValueError:
         raise commands.BadArgument(
             'Use date format YYYY-MM-DD (example: 1997-08-27)')
+
+
+@dataclass
+class TimezoneMatches:
+    matches: List[Tuple[str, int]] = None
+    best_match: Optional[pytz.BaseTzInfo] = False
+    has_multiple_best_matches: bool = False
+
+
+def fuzzy_match_timezone(tz_str: str, best_match_threshold=75,
+                         lower_score_cutoff=50, limit=5) -> TimezoneMatches:
+    """
+    Fuzzily match a timezone based on given timezone name.
+
+    :param tz_str: timezone name to fuzzily match in pytz's list of timezones
+    :param best_match_threshold: Score from 0-100 that the highest scoring
+        match must be greater than to qualify as the best match
+    :param lower_score_cutoff: Lower score limit from 0-100 to qualify matches
+        for storage in ``TimezoneMatches.matches``
+    :param limit: Maximum number of matches to store in
+        ``TimezoneMatches.matches``
+    """
+
+    # ratio (aka token_sort_ratio) provides the best output.
+    # partial_ratio finds substrings, which isn't really what users will be
+    # searching by, and the _set_ratio methods are totally unusable.
+    matches: List[Tuple[str, int]] = fuzzy_process.extractBests(
+        tz_str, pytz.all_timezones, scorer=fuzz.ratio,
+        score_cutoff=lower_score_cutoff, limit=limit)
+    tz_matches = TimezoneMatches(matches)
+
+    if matches and matches[0][1] >= best_match_threshold:
+        # Best match
+        tz_matches.best_match = pytz.timezone(matches[0][0])
+        if len(matches) > 1 and matches[1][1] == matches[0][1]:
+            # There are multiple best matches
+            # I think given our inputs and scoring algorithm, this shouldn't
+            # ever happen, but I'm leaving it just in case
+            tz_matches.has_multiple_best_matches = True
+    return tz_matches
 
 
 class Bios(commands.Cog):
@@ -181,6 +225,63 @@ class Bios(commands.Cog):
         db = self._get_database()
         db.set_birthday(user_id, new_birthday)
         await Embeds.success(ctx, 'Birthday set!')
+
+    # Timezone
+
+    @bio_show.command(name='timezone')
+    @commands.dm_only()
+    async def bio_show_timezone(self, ctx: commands.Context):
+        """Display your timezone."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        timezone = db.get_timezone(user_id)
+        privacy = db.get_privacy_timezone(user_id)
+        await Embeds.info(ctx, user_info_str('Timezone', timezone, privacy))
+
+    @bio_set.command(name='timezone')
+    @commands.dm_only()
+    async def bio_set_timezone(self, ctx: commands.Context,
+                               *, new_timezone: str):
+        """
+        Set your timezone. Typing the name of the nearest major city should be
+        good enough, but you can also try your state/country if that doesn't
+        work.
+
+        As a last resort, use this website to find your full timezone name:
+        http://kevalbhatt.github.io/timezone-picker/
+        """
+
+        user_id: int = ctx.author.id
+        db = self._get_database()
+
+        tz_matches = fuzzy_match_timezone(
+            new_timezone, best_match_threshold=50, lower_score_cutoff=50,
+            limit=5
+        )
+        if not tz_matches.matches:
+            # No matches
+            raise BadArgument(
+                'Timezone provided doesn\'t have any close matches. Try '
+                'typing the name of a major city near you or your '
+                'state/country name.\n\n'
+                'If you\'re stuck, try using this '
+                '[timezone picker](http://kevalbhatt.github.io/timezone-picker/).'
+            )
+        if tz_matches.best_match:
+            # Display best match with other possible matches
+            db.set_timezone(user_id, tz_matches.best_match)
+            await Embeds.success(ctx, message=(
+                f'Timezone set to **{tz_matches.best_match}**!',
+                tz_matches.matches[1:] and '\nOther possible matches:',
+                '\n'.join([f'- {name}' for name, _ in tz_matches.matches[1:]])
+            ))
+        else:
+            # No best match; display other possible matches
+            await Embeds.error(ctx, message=(
+                'Couldn\'t find a good match for the timezone you entered.',
+                '\nPossible matches:',
+                '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
+            ))
 
     # Age
 
