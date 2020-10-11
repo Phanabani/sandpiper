@@ -60,7 +60,7 @@ class Embeds:
         :param message: The success message. Can be either a single string or
             an iterable of strings to join with newlines.
         """
-        if isinstance(message, Iterable):
+        if not isinstance(message, str) and isinstance(message, Iterable):
             message = '\n'.join(prune(message))
         embed = discord.Embed(
             title='Success', description=message, color=cls.SUCCESS_COLOR)
@@ -76,7 +76,7 @@ class Embeds:
         :param message: The error message. Can be either a single string or an
             iterable of strings to join with newlines.
         """
-        if isinstance(message, Iterable):
+        if not isinstance(message, str) and isinstance(message, Iterable):
             message = '\n'.join(prune(message))
         embed = discord.Embed(
             title='Error', description=message, color=cls.ERROR_COLOR)
