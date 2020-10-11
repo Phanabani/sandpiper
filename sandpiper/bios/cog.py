@@ -182,6 +182,29 @@ class Bios(commands.Cog):
         db.set_birthday(user_id, new_birthday)
         await Embeds.success(ctx, 'Birthday set!')
 
+    # Age
+
+    @bio_show.command(name='age')
+    @commands.dm_only()
+    async def bio_show_age(self, ctx: commands.Context):
+        """Display your age (calculated automatically using your birthday)."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        age = db.get_age(user_id)
+        privacy = db.get_privacy_age(user_id)
+        await Embeds.info(ctx, user_info_str('Age', age, privacy))
+
+    # noinspection PyUnusedLocal
+    @bio_set.command(name='age')
+    @commands.dm_only()
+    async def bio_set_age(self, ctx: commands.Context, new_age: str):
+        """
+        Age is automatically calculated using your birthday. This command
+        exists only to let you know that you don't have to set it.
+        """
+        await Embeds.error(ctx, 'Age is automatically calculated using your '
+                                'birthday. You don\'t need to set it!')
+
     # Other
 
     @commands.command(name='who is')
