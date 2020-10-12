@@ -4,6 +4,8 @@ import discord
 
 from .misc import prune
 
+__all__ = ['Embeds']
+
 FieldType = Tuple[str, str, bool]
 
 

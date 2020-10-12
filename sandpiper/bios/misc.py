@@ -4,6 +4,8 @@ from typing import List, Optional, Tuple
 from fuzzywuzzy import fuzz, process as fuzzy_process
 import pytz
 
+__all__ = ['TimezoneMatches', 'fuzzy_match_timezone']
+
 
 @dataclass
 class TimezoneMatches:
