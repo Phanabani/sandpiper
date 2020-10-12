@@ -420,15 +420,10 @@ class Bios(commands.Cog):
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
             ))
 
-    # Who commands
+    # Extra commands
 
-    @commands.group(name='who', invoke_without_subcommand=False)
-    async def who(self, ctx: commands.Context):
-        """Commands for viewing other users' info."""
-        pass
-
-    @who.command(name='is')
-    async def who_is(self, ctx: commands.Context, name: str):
+    @commands.command(name='whois')
+    async def whois(self, ctx: commands.Context, name: str):
         """
         Search for a user by one of their names. Outputs a list of matching
         users, showing their preferred name, Discord username, and nicknames
