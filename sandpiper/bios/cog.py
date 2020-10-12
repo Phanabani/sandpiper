@@ -1,12 +1,13 @@
-from datetime import date
 import logging
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
 from .misc import fuzzy_match_timezone
+from ..common.discord import date_handler, find_user_in_mutual_guilds, \
+    privacy_handler
 from ..common.embeds import Embeds
 from ..common.misc import join
 from ..user_info.cog import UserData, DatabaseUnavailable
@@ -27,35 +28,6 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     privacy_emoji = privacy_emojis[privacy]
     privacy = privacy.name.capitalize()
     return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
-
-
-def date_handler(date_str: str) -> date:
-    try:
-        return date.fromisoformat(date_str)
-    except ValueError:
-        raise commands.BadArgument(
-            'Use date format YYYY-MM-DD (example: 1997-08-27)')
-
-
-def privacy_handler(privacy_str: str) -> PrivacyType:
-    privacy_str = privacy_str.upper()
-    try:
-        return PrivacyType[privacy_str]
-    except KeyError:
-        privacy_names = [n.lower() for n in PrivacyType.__members__.keys()]
-        raise BadArgument(f'Privacy must be one of {privacy_names}')
-
-
-def find_user_in_mutual_guilds(client: discord.Client, whos_looking: int,
-                               for_whom: int) -> List[discord.Member]:
-    found_members = []
-    for g in client.guilds:
-        g: discord.Guild
-        if g.get_member(whos_looking):
-            member = g.get_member(for_whom)
-            if member:
-                found_members.append(member)
-    return found_members
 
 
 class Bios(commands.Cog):
