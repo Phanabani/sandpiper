@@ -140,7 +140,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = self._get_database()
         db.delete_user(user_id)
-        await Embeds.success(ctx, 'Deleted your personal info!')
+        await Embeds.success(ctx, 'Deleted all of your personal info!')
 
     @bio.group(name='show', aliases=('get',), invoke_without_command=True)
     @commands.dm_only()
