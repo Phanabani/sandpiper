@@ -31,6 +31,14 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
 
 def user_names_str(ctx: commands.Context, db: Database, user_id: int,
                    preferred_name: str = None, username: str = None):
+    """
+    Create a string with a user's names (preferred name, Discord username,
+    guild display names). You can supply ``preferred_name`` or ``username``
+    to optimize the number of operations this function has to perform. There
+    is no display_name parameter because this function still needs to find
+    the user's display name in ALL guilds, so supplying just the one is useless.
+    """
+
     # Get pronouns
     privacy_pronouns = db.get_privacy_pronouns(user_id)
     if privacy_pronouns == PrivacyType.PUBLIC:
