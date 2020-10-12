@@ -6,8 +6,7 @@ import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
 from .misc import fuzzy_match_timezone
-from ..common.discord import date_handler, find_user_in_mutual_guilds, \
-    privacy_handler
+from ..common.discord import *
 from ..common.embeds import Embeds
 from ..common.misc import join
 from ..user_info.cog import UserData, DatabaseUnavailable
@@ -28,6 +27,45 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     privacy_emoji = privacy_emojis[privacy]
     privacy = privacy.name.capitalize()
     return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
+
+
+def user_names_str(ctx: commands.Context, db: Database, user_id: int,
+                   preferred_name: str = None, username: str = None):
+    # Get pronouns
+    privacy_pronouns = db.get_privacy_pronouns(user_id)
+    if privacy_pronouns == PrivacyType.PUBLIC:
+        pronouns = db.get_pronouns(user_id)
+    else:
+        pronouns = None
+
+    # Get preferred name
+    if preferred_name is None:
+        privacy_preferred_name = db.get_privacy_preferred_name(user_id)
+        if privacy_preferred_name == PrivacyType.PUBLIC:
+            preferred_name = db.get_preferred_name(user_id)
+            if preferred_name is None:
+                preferred_name = '`No preferred name`'
+        else:
+            preferred_name = '`No preferred name`'
+
+    # Get discord username and discriminator
+    if username is None:
+        user: discord.User = ctx.bot.get_user(user_id)
+        if user is not None:
+            username = f'{user.name}#{user.discriminator}'
+        else:
+            username = '`User not found`'
+
+    # Find the user's nicknames on servers they share with the executor
+    # of the who is command
+    members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
+    display_names = ', '.join(m.display_name for m in members)
+
+    return join(
+        join(preferred_name, pronouns and f'({pronouns})', sep=' '),
+        username, display_names,
+        sep=' • '
+    )
 
 
 class Bios(commands.Cog):
@@ -358,38 +396,36 @@ class Bios(commands.Cog):
         users, showing their preferred name, Discord username, and nicknames
         in servers you share with them.
         """
+        if len(name) < 2:
+            raise BadArgument('Name must be at least 2 characters.')
+
         db = self._get_database()
-        bot: commands.Bot = ctx.bot
 
         user_strs = []
-        # Create output strings
+        seen_users = set()
+
         for user_id, preferred_name in db.find_users_by_name(name):
+            if user_id in seen_users:
+                continue
+            seen_users.add(user_id)
+            names = user_names_str(ctx, db, user_id,
+                                   preferred_name=preferred_name)
+            user_strs.append(names)
 
-            # Get pronouns
-            privacy_pronouns = db.get_privacy_pronouns(user_id)
-            if privacy_pronouns == PrivacyType.PUBLIC:
-                pronouns = db.get_pronouns(user_id)
-            else:
-                pronouns = None
+        for user_id, __ in find_users_by_display_name(
+                ctx.bot, ctx.author.id, name):
+            if user_id in seen_users:
+                continue
+            seen_users.add(user_id)
+            names = user_names_str(ctx, db, user_id)
+            user_strs.append(names)
 
-            # Get discord username and discriminator
-            user: discord.User = bot.get_user(user_id)
-            if user is not None:
-                username = f'{user.name}#{user.discriminator}'
-            else:
-                username = '`User not found`'
-
-            # Find the user's nicknames on servers they share with the executor
-            # of the who is command
-            members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id,
-                                                 user_id)
-            display_names = ', '.join(m.display_name for m in members)
-
-            user_strs.append(join(
-                join(preferred_name, pronouns and f'({pronouns})', sep=' '),
-                username, display_names,
-                sep=' • '
-            ))
+        for user_id, username in find_users_by_username(ctx.bot, name):
+            if user_id in seen_users:
+                continue
+            seen_users.add(user_id)
+            names = user_names_str(ctx, db, user_id, username=username)
+            user_strs.append(names)
 
         if user_strs:
             await Embeds.info(ctx, message=user_strs)
