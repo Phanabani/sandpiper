@@ -11,6 +11,7 @@ from fuzzywuzzy import process as fuzzy_process
 import pytz
 
 from ..common.embeds import Embeds
+from ..common.misc import join
 from ..user_info.cog import UserData, DatabaseUnavailable
 from ..user_info.database import Database, DatabaseError
 from ..user_info.enums import PrivacyType
@@ -410,12 +411,19 @@ class Bios(commands.Cog):
         db = self._get_database()
         bot: commands.Bot = ctx.bot
 
-        users = []
+        user_strs = []
+        # Create output strings
         for user_id, preferred_name in db.find_users_by_name(name):
-            # Transform the database data into discord objects
-            user: discord.User = bot.get_user(user_id)
 
-            # Get the user's discord username and discriminator
+            # Get pronouns
+            privacy_pronouns = db.get_privacy_pronouns(user_id)
+            if privacy_pronouns == PrivacyType.PUBLIC:
+                pronouns = db.get_pronouns(user_id)
+            else:
+                pronouns = None
+
+            # Get discord username and discriminator
+            user: discord.User = bot.get_user(user_id)
             if user is not None:
                 username = f'{user.name}#{user.discriminator}'
             else:
@@ -423,13 +431,17 @@ class Bios(commands.Cog):
 
             # Find the user's nicknames on servers they share with the executor
             # of the who is command
-            members = find_user_in_mutual_guilds(
-                ctx.bot, ctx.author.id, user_id)
+            members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id,
+                                                 user_id)
             display_names = ', '.join(m.display_name for m in members)
 
-            users.append((preferred_name, username, display_names))
+            user_strs.append(join(
+                join(preferred_name, pronouns and f'({pronouns})', sep=' '),
+                username, display_names,
+                sep=' • '
+            ))
 
-        if users:
-            await Embeds.info(ctx, message=(' • '.join(u) for u in users))
+        if user_strs:
+            await Embeds.info(ctx, message=user_strs)
         else:
             await Embeds.error(ctx, 'No users found with this name.')
