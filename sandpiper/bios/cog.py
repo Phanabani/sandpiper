@@ -130,17 +130,17 @@ class Bios(commands.Cog):
 
     @commands.group()
     async def bio(self, ctx: commands.Context):
-        """Commands for managing your personal info."""
+        """Commands for displaying or deleting your personal info."""
         pass
 
-    @bio.command(name='clear', aliases=('delete',))
+    @bio.command(name='delete', aliases=('clear',))
     @commands.dm_only()
-    async def bio_clear(self, ctx: commands.Context):
+    async def bio_delete(self, ctx: commands.Context):
         """Delete all of your personal info."""
         user_id: int = ctx.author.id
         db = self._get_database()
         db.delete_user(user_id)
-        await Embeds.success(ctx, 'Deleted your personal data!')
+        await Embeds.success(ctx, 'Deleted your personal info!')
 
     @bio.group(name='show', aliases=('get',), invoke_without_command=True)
     @commands.dm_only()
