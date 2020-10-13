@@ -117,12 +117,6 @@ class Bios(commands.Cog):
             f'content={ctx.message.content!r})'
         )
 
-    @commands.Cog.listener()
-    async def on_command_completion(self, ctx: commands.Context):
-        logger.info(
-            f'Command invocation complete "{ctx.command}" (author={ctx.author})'
-        )
-
     @commands.group()
     async def bio(self, ctx: commands.Context):
         """Commands for managing all of your personal info."""
