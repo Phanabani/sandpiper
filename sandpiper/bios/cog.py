@@ -101,11 +101,27 @@ class Bios(commands.Cog):
                 await Embeds.error(ctx, 'Error during database operation.')
             else:
                 logger.error(
-                    f'Unexpected error (content={ctx.message.content!r} '
-                    f'message={ctx.message})', exc_info=error.original)
+                    f'Unexpected error in "{ctx.command}" ('
+                    f'content={ctx.message.content!r} '
+                    f'message={ctx.message!r})',
+                    exc_info=error.original
+                )
                 await Embeds.error(ctx, 'Unexpected error')
         else:
             await Embeds.error(ctx, str(error))
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx: commands.Context):
+        logger.info(
+            f'Running command "{ctx.command}" (author={ctx.author} '
+            f'content={ctx.message.content!r})'
+        )
+
+    @commands.Cog.listener()
+    async def on_command_completion(self, ctx: commands.Context):
+        logger.info(
+            f'Command invocation complete "{ctx.command}" (author={ctx.author})'
+        )
 
     @commands.group()
     async def bio(self, ctx: commands.Context):
