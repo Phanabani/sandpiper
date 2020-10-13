@@ -27,10 +27,12 @@ class DatabaseSQLite(Database):
         self.create_table()
 
     def connect(self):
+        logger.info(f'Connecting to database (path={self.db_path})')
         self._con = sqlite3.connect(
             self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
 
     def disconnect(self):
+        logger.info(f'Disconnecting from database (path={self.db_path})')
         self._con.close()
         self._con = None
 
@@ -38,6 +40,7 @@ class DatabaseSQLite(Database):
         return self._con is not None
 
     def create_table(self):
+        logger.info('Creating user_info table if not exists')
         stmt = '''
             CREATE TABLE IF NOT EXISTS user_info (
                 user_id INTEGER PRIMARY KEY UNIQUE, 
@@ -60,6 +63,7 @@ class DatabaseSQLite(Database):
         self.create_indices()
 
     def create_indices(self):
+        logger.info('Creating indices for user_info table if not exist')
         stmt = '''
             CREATE INDEX IF NOT EXISTS index_users_preferred_name
             ON user_info(preferred_name)
@@ -71,6 +75,7 @@ class DatabaseSQLite(Database):
             logger.error('Failed to create indices', exc_info=True)
 
     def find_users_by_name(self, name: str) -> List[Tuple[int, str]]:
+        logger.info(f'Finding users by preferred name (name={name!r})')
         stmt = '''
             SELECT user_id, preferred_name FROM user_info
             WHERE preferred_name like :name
@@ -84,6 +89,7 @@ class DatabaseSQLite(Database):
             logger.error('Failed to find users by name', exc_info=True)
 
     def delete_user(self, user_id: int):
+        logger.info(f'Deleting user (user_id={user_id})')
         stmt = 'DELETE FROM user_info WHERE user_id = ?'
         args = (user_id,)
         try:
@@ -98,6 +104,7 @@ class DatabaseSQLite(Database):
 
     def _do_execute_get(self, col_name: str, user_id: int,
                         default: Any = None) -> Optional[Any]:
+        logger.info(f'Getting data from column {col_name} (user_id={user_id})')
         stmt = f'SELECT {col_name} FROM user_info WHERE user_id = ?'
         try:
             with self._con:
@@ -113,6 +120,8 @@ class DatabaseSQLite(Database):
 
     def _do_execute_set(self, col_name: str, user_id: int,
                         new_value: Any) -> NoReturn:
+        logger.info(f'Setting data in column {col_name} (user_id={user_id} '
+                    f'new_value={new_value!r})')
         stmt = f'''
             INSERT INTO user_info(user_id, {col_name})
             VALUES (:user_id, :new_value)
