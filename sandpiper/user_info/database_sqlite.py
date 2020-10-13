@@ -74,7 +74,7 @@ class DatabaseSQLite(Database):
         except sqlite3.Error:
             logger.error('Failed to create indices', exc_info=True)
 
-    def find_users_by_name(self, name: str) -> List[Tuple[int, str]]:
+    def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
         logger.info(f'Finding users by preferred name (name={name!r})')
         stmt = '''
             SELECT user_id, preferred_name FROM user_info

@@ -416,7 +416,7 @@ class Bios(commands.Cog):
         user_strs = []
         seen_users = set()
 
-        for user_id, preferred_name in db.find_users_by_name(name):
+        for user_id, preferred_name in db.find_users_by_preferred_name(name):
             if user_id in seen_users:
                 continue
             seen_users.add(user_id)

@@ -32,7 +32,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def find_users_by_name(self, name: str) -> List[Tuple[int, str]]:
+    def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
         pass
 
     @abstractmethod
