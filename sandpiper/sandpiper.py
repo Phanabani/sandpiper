@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord.ext.commands import Bot, when_mentioned_or
+import discord.ext.commands as commands
 
 from . import Config
 
@@ -10,16 +10,16 @@ __all__ = ['Sandpiper']
 logger = logging.getLogger('sandpiper')
 
 
-class Sandpiper(Bot):
+class Sandpiper(commands.Bot):
 
     def __init__(self, config: Config.Bot):
 
         # noinspection PyUnusedLocal
-        def get_prefix(bot: Bot, msg: discord.Message) -> str:
+        def get_prefix(bot: commands.Bot, msg: discord.Message) -> str:
             """Allows prefix-less command invocation in DMs"""
             if isinstance(msg.channel, discord.DMChannel):
                 return ''
-            return when_mentioned_or(config.command_prefix)(bot, msg)
+            return commands.when_mentioned_or(config.command_prefix)(bot, msg)
 
         intents = discord.Intents(
             guilds=True,
@@ -39,6 +39,14 @@ class Sandpiper(Bot):
             command_prefix=get_prefix,
             description=config.description,
         )
+
+        @self.command(name=config.command_prefix.strip())
+        async def noprefix_notify(ctx: commands.Context, *, rest: str):
+            if ctx.prefix == '':
+                raise commands.BadArgument(
+                    f'You don\'t need to prefix commands here. '
+                    f'Just type "{rest}".')
+
         self.load_extension('sandpiper.bios')
         self.load_extension('sandpiper.unit_conversion')
         self.load_extension('sandpiper.user_info')
