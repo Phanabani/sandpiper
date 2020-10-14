@@ -13,6 +13,7 @@ class Embeds:
 
     INFO_COLOR = 0x5E5FFF
     SUCCESS_COLOR = 0x57FCA5
+    WARNING_COLOR = 0xE7D900
     ERROR_COLOR = 0xFF0000
 
     @classmethod
@@ -66,6 +67,22 @@ class Embeds:
             message = '\n'.join(prune(message))
         embed = discord.Embed(
             title='Success', description=message, color=cls.SUCCESS_COLOR)
+        await messageable.send(embed=embed)
+
+    @classmethod
+    async def warning(cls, messageable: discord.abc.Messageable,
+                      message: Union[str, Iterable[str]]):
+        """
+        Sends a success embed.
+
+        :param messageable: A messageable interface to send the embed to
+        :param message: The success message. Can be either a single string or
+            an iterable of strings to join with newlines.
+        """
+        if not isinstance(message, str) and isinstance(message, Iterable):
+            message = '\n'.join(prune(message))
+        embed = discord.Embed(
+            title='Warning', description=message, color=cls.WARNING_COLOR)
         await messageable.send(embed=embed)
 
     @classmethod
