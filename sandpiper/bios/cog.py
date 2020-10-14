@@ -254,6 +254,13 @@ class Bios(commands.Cog):
         db.set_preferred_name(user_id, new_name)
         await Embeds.success(ctx, 'Name set!')
 
+        if db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
+            await Embeds.warning(
+                ctx,
+                'Your preferred name is set to private. If you want others to '
+                'be able to see it through Sandpiper, set it to public with '
+                'the command `privacy name public`.')
+
     # Pronouns
 
     @commands.group(name='pronouns', invoke_without_command=False)
@@ -283,6 +290,13 @@ class Bios(commands.Cog):
         db.set_pronouns(user_id, new_pronouns)
         await Embeds.success(ctx, 'Pronouns set!')
 
+        if db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
+            await Embeds.warning(
+                ctx,
+                'Your pronouns are set to private. If you want others to be '
+                'able to see them through Sandpiper, set them to public with '
+                'the command `privacy pronouns public`.')
+
     # Birthday
 
     @commands.group(name='birthday', invoke_without_command=False)
@@ -309,6 +323,15 @@ class Bios(commands.Cog):
         db = self._get_database()
         db.set_birthday(user_id, new_birthday)
         await Embeds.success(ctx, 'Birthday set!')
+
+        if db.get_privacy_birthday(user_id) == PrivacyType.PRIVATE:
+            await Embeds.warning(
+                ctx,
+                'Your birthday is set to private. If you want others to be '
+                'able to see it through Sandpiper, set it to public with '
+                'the command `privacy birthday public`. If you want others to '
+                'know your age but not your birthday, you may set that to '
+                'public with the command `privacy age public`.')
 
     # Age
 
@@ -383,6 +406,7 @@ class Bios(commands.Cog):
                 'If you\'re stuck, try using this '
                 '[timezone picker](http://kevalbhatt.github.io/timezone-picker/).'
             )
+
         if tz_matches.best_match:
             # Display best match with other possible matches
             db.set_timezone(user_id, tz_matches.best_match)
@@ -398,6 +422,13 @@ class Bios(commands.Cog):
                 '\nPossible matches:',
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
             ))
+
+        if db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
+            await Embeds.warning(
+                ctx,
+                'Your timezone is set to private. If you want others to be '
+                'able to see it through Sandpiper, set it to public with '
+                'the command `privacy timezone public`.')
 
     # Extra commands
 
