@@ -44,7 +44,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set_preferred_name(self, user_id: int, new_preferred_name: str):
+    def set_preferred_name(self, user_id: int, new_preferred_name: Optional[str]):
         pass
 
     @abstractmethod
@@ -60,7 +60,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set_pronouns(self, user_id: int, new_pronouns: str):
+    def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
         pass
 
     @abstractmethod
@@ -76,7 +76,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set_birthday(self, user_id: int, new_birthday: datetime.date):
+    def set_birthday(self, user_id: int, new_birthday: Optional[datetime.date]):
         pass
 
     @abstractmethod
@@ -92,7 +92,8 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
+    def set_timezone(self, user_id: int,
+                     new_timezone: Optional[pytz.tzinfo.BaseTzInfo]):
         pass
 
     @abstractmethod

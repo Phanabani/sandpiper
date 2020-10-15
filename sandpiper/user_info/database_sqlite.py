@@ -143,7 +143,8 @@ class DatabaseSQLite(Database):
     def get_preferred_name(self, user_id: int) -> Optional[str]:
         return self._do_execute_get('preferred_name', user_id)
 
-    def set_preferred_name(self, user_id: int, new_preferred_name: str):
+    def set_preferred_name(self, user_id: int,
+                           new_preferred_name: Optional[str]):
         self._do_execute_set('preferred_name', user_id, new_preferred_name)
 
     def get_privacy_preferred_name(self, user_id: int) -> PrivacyType:
@@ -159,7 +160,7 @@ class DatabaseSQLite(Database):
     def get_pronouns(self, user_id: int) -> Optional[str]:
         return self._do_execute_get('pronouns', user_id)
 
-    def set_pronouns(self, user_id: int, new_pronouns: str):
+    def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
         self._do_execute_set('pronouns', user_id, new_pronouns)
 
     def get_privacy_pronouns(self, user_id: int) -> PrivacyType:
@@ -175,7 +176,7 @@ class DatabaseSQLite(Database):
     def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         return self._do_execute_get('birthday', user_id)
 
-    def set_birthday(self, user_id: int, new_birthday: datetime.date):
+    def set_birthday(self, user_id: int, new_birthday: Optional[datetime.date]):
         self._do_execute_set('birthday', user_id, new_birthday)
 
     def get_privacy_birthday(self, user_id: int) -> PrivacyType:
@@ -194,7 +195,8 @@ class DatabaseSQLite(Database):
             return pytz.timezone(timezone_name)
         return None
 
-    def set_timezone(self, user_id: int, new_timezone: pytz.tzinfo.BaseTzInfo):
+    def set_timezone(self, user_id: int,
+                     new_timezone: Optional[pytz.tzinfo.BaseTzInfo]):
         new_timezone = new_timezone.zone
         self._do_execute_set('timezone', user_id, new_timezone)
 
