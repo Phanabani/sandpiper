@@ -21,6 +21,8 @@ Her current features include:
 - [Usage](#usage)
 - [Config](#config)
 - [Commands and features](#commands-and-features)
+    - [Unit conversion](#unit-conversion)
+    - [Bios](#bios)
 - [Planned features](#planned-features)
 - [License](#license)
 
