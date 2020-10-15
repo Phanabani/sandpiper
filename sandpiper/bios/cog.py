@@ -388,6 +388,21 @@ class Bios(commands.Cog):
         await Embeds.error(ctx, 'Age is automatically calculated using your '
                                 'birthday. You don\'t need to set it!')
 
+    # noinspection PyUnusedLocal
+    @age.command(name='delete', aliases=_delete_aliases)
+    @commands.dm_only()
+    async def age_delete(self, ctx: commands.Context):
+        """
+        Age is automatically calculated using your birthday. This command
+        exists only to let you know that you can only delete your birthday.
+        """
+        await Embeds.error(
+            ctx,
+            'Age is automatically calculated using your birthday. You can '
+            'either delete your birthday with `birthday delete` or set your '
+            'age to private so others can\'t see it with '
+            '`privacy age private`.')
+
     # Timezone
 
     @commands.group(name='timezone', invoke_without_command=False)
