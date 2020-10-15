@@ -197,7 +197,8 @@ class DatabaseSQLite(Database):
 
     def set_timezone(self, user_id: int,
                      new_timezone: Optional[pytz.tzinfo.BaseTzInfo]):
-        new_timezone = new_timezone.zone
+        if new_timezone:
+            new_timezone = new_timezone.zone
         self._do_execute_set('timezone', user_id, new_timezone)
 
     def get_privacy_timezone(self, user_id: int) -> PrivacyType:
