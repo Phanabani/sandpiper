@@ -261,6 +261,15 @@ class Bios(commands.Cog):
                 'be able to see it through Sandpiper, set it to public with '
                 'the command `privacy name public`.')
 
+    @name.command(name='delete', aliases=_delete_aliases)
+    @commands.dm_only()
+    async def name_delete(self, ctx: commands.Context):
+        """Delete your stored preferred name."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_preferred_name(user_id, None)
+        await Embeds.success(ctx, 'Preferred name deleted!')
+
     # Pronouns
 
     @commands.group(name='pronouns', invoke_without_command=False)
@@ -297,6 +306,15 @@ class Bios(commands.Cog):
                 'able to see them through Sandpiper, set them to public with '
                 'the command `privacy pronouns public`.')
 
+    @pronouns.command(name='delete', aliases=_delete_aliases)
+    @commands.dm_only()
+    async def pronouns_delete(self, ctx: commands.Context):
+        """Delete your stored pronouns."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_pronouns(user_id, None)
+        await Embeds.success(ctx, 'Pronouns deleted!')
+
     # Birthday
 
     @commands.group(name='birthday', invoke_without_command=False)
@@ -332,6 +350,15 @@ class Bios(commands.Cog):
                 'the command `privacy birthday public`. If you want others to '
                 'know your age but not your birthday, you may set that to '
                 'public with the command `privacy age public`.')
+
+    @birthday.command(name='delete', aliases=_delete_aliases)
+    @commands.dm_only()
+    async def birthday_delete(self, ctx: commands.Context):
+        """Delete your stored birthday."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_birthday(user_id, None)
+        await Embeds.success(ctx, 'Birthday deleted!')
 
     # Age
 
@@ -429,6 +456,15 @@ class Bios(commands.Cog):
                 'Your timezone is set to private. If you want others to be '
                 'able to see it through Sandpiper, set it to public with '
                 'the command `privacy timezone public`.')
+
+    @timezone.command(name='delete', aliases=_delete_aliases)
+    @commands.dm_only()
+    async def timezone_delete(self, ctx: commands.Context):
+        """Delete your stored timezone."""
+        user_id: int = ctx.author.id
+        db = self._get_database()
+        db.set_timezone(user_id, None)
+        await Embeds.success(ctx, 'Timezone deleted!')
 
     # Extra commands
 
