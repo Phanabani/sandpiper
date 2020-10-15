@@ -9,6 +9,11 @@ around the world.
 
 Her current features include:
 - Unit conversion between imperial and metric quantities
+- Miniature user bios
+    - Set your preferred name, pronouns, birthday, and timezone
+    - Manage the privacy of each of these fields (private by default, but they 
+    may be set to public visibility)
+- Search for users by their preferred name, Discord username, or server nicknames
 
 ## Table of Contents
 
@@ -16,6 +21,8 @@ Her current features include:
 - [Usage](#usage)
 - [Config](#config)
 - [Commands and features](#commands-and-features)
+    - [Unit conversion](#unit-conversion)
+    - [Bios](#bios)
 - [Planned features](#planned-features)
 - [License](#license)
 
@@ -127,6 +134,9 @@ Key | Value
 
 ## Commands and features
 
+In servers, commands must be prefixed with the configured command prefix
+(default="!piper "). When DMing Sandpiper, you do not need to prefix commands.
+
 ### Unit conversion
 
 Convert measurements written in regular messages! Just surround a measurement
@@ -155,14 +165,77 @@ Centimeter `cm` | Inch `in or "`
 Kilogram `kg` | Pound `lbs`
 Celsius `C or degC or °C` | Fahrenheit `F or degF or °F`
 
+### Bios
+
+Store some info about yourself to help your friends get to know you more easily!
+Most of these commands can only be used in DMs with Sandpiper for your privacy.
+
+#### General commands
+
+Command | Description
+------- | -----------
+`bio show` | Display all your stored info and their privacy settings.
+`bio delete` | Delete all your stored info.
+
+#### Setting your info
+
+Setting a field doesn't automatically make it public. See the [privacy section](#manage-the-privacy-of-your-info)
+for more info about managing your privacy.
+
+Command | Description | Example
+------- | ----------- | -------
+`name set <new_name>` | Set your preferred name. | `name set Hawk`
+`pronouns set <new_pronouns>` | Set your pronouns. | `pronouns set She/Her`
+`birthday set <new_birthday>` | Set your birthday in format YYYY-MM-DD. | `birthday set 1997-08-27`
+`timezone set <new_timezone>` | Set your timezone. The command is pretty lenient, so you can try typing your timezone in any format. | `timezone set new york`
+
+#### Displaying your info
+
+Command | Description | Example
+------- | ----------- | -------
+`name show` | Display your preferred name. | `name show`
+`pronouns show` | Display your pronouns. | `pronouns show`
+`birthday show` | Display your birthday. | `birthday show`
+`age show` | Display your age (calculated automatically from your birthday). | `age show`
+`timezone show` | Display your timezone. | `timezone show`
+
+#### Manage the privacy of your info
+
+You can set the privacy for each field in your bio to either `public` or
+`private`. Everything is private by default. If you set a field as public,
+anyone may be able to see it as long as they are in the same server as you and
+Sandpiper.
+
+Command | Description | Example
+------- | ----------- | -------
+`privacy all <new_privacy>` | Set the privacy of all your info at once. | `privacy all public`
+`privacy name <new_privacy>` | Set the privacy of your preferred name. | `privacy name public`
+`privacy pronouns <new_privacy>` | Set the privacy of your pronouns. | `privacy pronouns public`
+`privacy birthday <new_privacy>` | Set the privacy of your birthday. | `privacy birthday private`
+`privacy age <new_privacy>` | Set the privacy of your age. | `privacy age private`
+`privacy timezone <new_privacy>` | Set the privacy of your timezone. | `privacy timezone public`
+
+#### Search for users by one of their names
+
+If you're new to a server, you might hear someone's name floating around but not
+know who they are. Sandpiper lets you search for users by either their
+preferred name (configured with the `name set` command), their Discord username,
+or their nickname in a server you are both in.
+
+You can run this command in a server or in Sandpiper DMs.
+
+Command | Description | Example
+------- | ----------- | -------
+`whois <name>` | Search for a user by one of their names on Discord. | `whois jason`
+
 ## Planned features
 
 - [X] Unit conversion
-- [ ] User bios
-  - [ ] Preferred name
-  - [ ] Pronouns
-  - [ ] Birthday
-  - [ ] Timezone
+- [X] User bios
+  - [X] Preferred name
+  - [X] Pronouns
+  - [X] Birthday
+  - [X] Timezone
 - [ ] Time conversion
 - [ ] Birthday notifications
 
