@@ -172,8 +172,8 @@ Most of these commands can only be used in DMs with Sandpiper for your privacy.
 
 Command | Description
 ------- | -----------
-`bio show` | Display all your stored info and their privacy settings
-`bio delete` | Delete all your stored info
+`bio show` | Display all your stored info and their privacy settings.
+`bio delete` | Delete all your stored info.
 
 #### Setting your info
 
@@ -224,7 +224,7 @@ You can run this command in a server or in Sandpiper DMs.
 
 Command | Description | Example
 ------- | ----------- | -------
-`whois <name>` | Search for a user by one of their names on Discord | `whois jason`
+`whois <name>` | Search for a user by one of their names on Discord. | `whois jason`
 
 ## Planned features
 
