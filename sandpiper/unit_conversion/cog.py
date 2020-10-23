@@ -33,12 +33,6 @@ class UnitConversion(commands.Cog):
         if not quantity_strs:
             return
 
-        perms = msg.channel.permissions_for(msg.guild.me)
-        if not perms.send_messages:
-            logger.info(f'Lacking send_messages permission '
-                         f'(guild: {msg.guild} channel: {msg.channel})')
-            return
-
         # Create output strings for all quantities encountered in the message
         quantities = [q for qstr in quantity_strs
                       if (q := imperial_metric(qstr)) is not None]
@@ -47,9 +41,4 @@ class UnitConversion(commands.Cog):
         conversion = '\n'.join([f'{q[0]:.2f~P} = {q[1]:.2f~P}'
                                 for q in quantities])
 
-        try:
-            await msg.channel.send(conversion)
-        except discord.HTTPException as e:
-            logger.warning('Failed to send unit conversion: ', exc_info=e)
-        except discord.InvalidArgument as e:
-            logger.error('Failed to send unit conversion: ', exc_info=e)
+        await msg.channel.send(conversion)
