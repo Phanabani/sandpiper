@@ -35,6 +35,10 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
+        pass
+
+    @abstractmethod
     def delete_user(self, user_id: int):
         pass
 

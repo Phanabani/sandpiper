@@ -84,6 +84,21 @@ class DatabaseSQLite(Database):
         except sqlite3.Error:
             logger.error('Failed to find users by name', exc_info=True)
 
+    def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
+        logger.info(f'Getting all user timezones')
+        stmt = '''
+            SELECT user_id, timezone FROM user_info
+            WHERE privacy_timezone = :privacy
+        '''
+        args = {'privacy': PrivacyType.PUBLIC}
+        try:
+            with self._con:
+                result = self._con.execute(stmt, args).fetchall()
+                return [(user_id, pytz.timezone(tz_name))
+                        for user_id, tz_name in result]
+        except sqlite3.Error:
+            logger.error('Failed to get all user timezones', exc_info=True)
+
     def delete_user(self, user_id: int):
         logger.info(f'Deleting user (user_id={user_id})')
         stmt = 'DELETE FROM user_info WHERE user_id = ?'
