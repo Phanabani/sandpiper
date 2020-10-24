@@ -63,7 +63,7 @@ class UnitConversion(commands.Cog):
         for qstr in quantity_strs:
             q = imperial_metric(qstr)
             if q is not None:
-                conversions.append(f'{q[0]:.2f~P} = {q[1]:.2f~P}')
+                conversions.append(f'`{q[0]:.2f~P}` = `{q[1]:.2f~P}`')
             else:
                 failed.append(qstr)
 
