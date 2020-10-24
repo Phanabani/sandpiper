@@ -49,7 +49,7 @@ class Sandpiper(commands.Bot):
                     f'Just type "{rest}".')
 
         self.load_extension('sandpiper.bios')
-        self.load_extension('sandpiper.unit_conversion')
+        self.load_extension('sandpiper.conversion')
         self.load_extension('sandpiper.user_info')
 
     async def on_connect(self):

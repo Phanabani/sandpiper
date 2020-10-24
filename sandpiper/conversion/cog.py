@@ -15,7 +15,7 @@ logger = logging.getLogger('sandpiper.unit_conversion')
 conversion_pattern = re.compile(r'{(.+?)}')
 
 
-class UnitConversion(commands.Cog):
+class Conversion(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot

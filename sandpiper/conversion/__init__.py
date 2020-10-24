@@ -1,7 +1,7 @@
 from discord.ext.commands import Bot
 
-from .cog import UnitConversion
+from .cog import Conversion
 
 
 def setup(bot: Bot):
-    bot.add_cog(UnitConversion(bot))
+    bot.add_cog(Conversion(bot))
