@@ -6,6 +6,7 @@ import discord
 import discord.ext.commands as commands
 
 from ..common.embeds import Embeds
+from ..common.time import time_format
 from .time_conversion import *
 from .unit_conversion import *
 
