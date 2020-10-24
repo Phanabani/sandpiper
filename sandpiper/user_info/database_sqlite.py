@@ -6,7 +6,7 @@ from typing import Any, List, NoReturn, Optional, Tuple, Union
 
 import pytz
 
-from .database import Database, DatabaseError
+from .database import *
 from .enums import PrivacyType
 
 __all__ = ['DatabaseSQLite']
@@ -189,14 +189,14 @@ class DatabaseSQLite(Database):
 
     # Timezone
 
-    def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
+    def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         timezone_name = self._do_execute_get('timezone', user_id)
         if timezone_name:
             return pytz.timezone(timezone_name)
         return None
 
     def set_timezone(self, user_id: int,
-                     new_timezone: Optional[pytz.tzinfo.BaseTzInfo]):
+                     new_timezone: Optional[TimezoneType]):
         if new_timezone:
             new_timezone = new_timezone.zone
         self._do_execute_set('timezone', user_id, new_timezone)
