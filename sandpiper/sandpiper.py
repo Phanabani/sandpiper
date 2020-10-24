@@ -48,9 +48,9 @@ class Sandpiper(commands.Bot):
                     f'You don\'t need to prefix commands here. '
                     f'Just type "{rest}".')
 
+        self.load_extension('sandpiper.user_info')
         self.load_extension('sandpiper.bios')
         self.load_extension('sandpiper.conversion')
-        self.load_extension('sandpiper.user_info')
 
     async def on_connect(self):
         logger.info('Client connected')
