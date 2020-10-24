@@ -31,25 +31,30 @@ class UnitConversion(commands.Cog):
         if not conversion_strs:
             return
 
-        if await self.imperial_metric_conversion(msg.channel, conversion_strs):
-            return
+        await self.convert_imperial_metric(msg.channel, conversion_strs)
 
-    async def imperial_metric_conversion(
+    async def convert_imperial_metric(
             self, channel: discord.TextChannel,
-            quantity_strs: List[str]) -> bool:
+            quantity_strs: List[str]) -> List[str]:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
         metric and reply with the conversions.
 
         :param channel: Discord channel to send conversions message to
         :param quantity_strs: a list of strings that may be valid quantities
+        :returns: a list of strings that could not be converted
         """
 
-        quantities = [q for qstr in quantity_strs
-                      if (q := imperial_metric(qstr)) is not None]
-        if not quantities:
-            return False
-        conversion = '\n'.join(f'{q[0]:.2f~P} = {q[1]:.2f~P}'
-                               for q in quantities)
-        await channel.send(conversion)
-        return True
+        conversions = []
+        failed = []
+        for qstr in quantity_strs:
+            q = imperial_metric(qstr)
+            if q is not None:
+                conversions.append(f'{q[0]:.2f~P} = {q[1]:.2f~P}')
+            else:
+                failed.append(qstr)
+
+        if conversions:
+            await channel.send('\n'.join(conversions))
+
+        return failed
