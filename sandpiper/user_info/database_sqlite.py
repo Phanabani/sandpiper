@@ -7,13 +7,10 @@ from typing import Any, List, NoReturn, Optional, Tuple, Union
 import pytz
 
 from .database import *
-from .enums import PrivacyType
 
 __all__ = ['DatabaseSQLite']
 
 logger = logging.getLogger('sandpiper.user_data.database_sqlite')
-
-DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
 
 class DatabaseSQLite(Database):
