@@ -5,6 +5,8 @@ from typing import List
 import discord
 import discord.ext.commands as commands
 
+from ..common.embeds import Embeds
+from .time_conversion import *
 from .unit_conversion import *
 
 logger = logging.getLogger('sandpiper.unit_conversion')
@@ -31,20 +33,48 @@ class UnitConversion(commands.Cog):
         if not conversion_strs:
             return
 
-        conversion_strs = await self.convert_time(msg.channel, conversion_strs)
+        conversion_strs = await self.convert_time(msg, conversion_strs)
         await self.convert_imperial_metric(msg.channel, conversion_strs)
 
-    async def convert_time(self, channel: discord.TextChannel,
+    async def convert_time(self, msg: discord.Message,
                            time_strs: List[str]) -> List[str]:
         """
         Convert a list of time strings (like "5:45 PM") to different users'
         timezones and reply with the conversions.
 
-        :param channel: Discord channel to send conversions message to
+        :param msg: Discord message that triggered the conversion
         :param time_strs: a list of strings that may be valid times
         :returns: a list of strings that could not be converted
         """
-        pass
+
+        user_data = self.bot.get_cog('UserData')
+        if user_data is None:
+            # User data cog couldn't be retrieved, so consider all conversions
+            # failed
+            return time_strs
+
+        try:
+            localized_times, failed = convert_time_to_user_timezones(
+                user_data, msg.author.id, msg.guild, time_strs
+            )
+        except UserTimezoneUnset:
+            cmd_prefix = self.bot.command_prefix(self.bot, msg)[-1]
+            await Embeds.error(
+                msg.channel,
+                f"You haven't set your timezone yet. Type "
+                f"`{cmd_prefix}help timezone set` for more info."
+            )
+            return time_strs
+
+        if localized_times:
+            output = []
+            for tz_name, times in localized_times:
+                times = ' | '.join(f'`{time.strftime(time_format)}`'
+                                   for time in times)
+                output.append(f'**{tz_name}**: {times}')
+            await msg.channel.send('\n'.join(output))
+
+        return failed
 
     async def convert_imperial_metric(
             self, channel: discord.TextChannel,
