@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import List
 
 import discord
 import discord.ext.commands as commands
@@ -8,7 +9,7 @@ from .unit_conversion import *
 
 logger = logging.getLogger('sandpiper.unit_conversion')
 
-quantity_pattern = re.compile(r'{(.+?)}')
+conversion_pattern = re.compile(r'{(.+?)}')
 
 
 class UnitConversion(commands.Cog):
@@ -17,28 +18,38 @@ class UnitConversion(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener(name='on_message')
-    async def unit_conversions(self, msg: discord.Message):
+    async def conversions(self, msg: discord.Message):
         """
-        Scan a message for quantities like {5 km}, and reply with their
-        conversions to either imperial or metric.
+        Scan a message for conversion strings.
 
-        :param msg: discord message to scan for quantities
-        :return: ``False`` if no quantities were found
+        :param msg: Discord message to scan for conversions
         """
-
         if msg.author == self.bot.user:
             return
 
-        quantity_strs = quantity_pattern.findall(msg.content)
-        if not quantity_strs:
+        conversion_strs = conversion_pattern.findall(msg.content)
+        if not conversion_strs:
             return
 
-        # Create output strings for all quantities encountered in the message
+        if await self.imperial_metric_conversion(msg.channel, conversion_strs):
+            return
+
+    async def imperial_metric_conversion(
+            self, channel: discord.TextChannel,
+            quantity_strs: List[str]) -> bool:
+        """
+        Convert a list of quantity strings (like "5 km") between imperial and
+        metric and reply with the conversions.
+
+        :param channel: Discord channel to send conversions message to
+        :param quantity_strs: a list of strings that may be valid quantities
+        """
+
         quantities = [q for qstr in quantity_strs
                       if (q := imperial_metric(qstr)) is not None]
         if not quantities:
-            return
-        conversion = '\n'.join([f'{q[0]:.2f~P} = {q[1]:.2f~P}'
-                                for q in quantities])
-
-        await msg.channel.send(conversion)
+            return False
+        conversion = '\n'.join(f'{q[0]:.2f~P} = {q[1]:.2f~P}'
+                               for q in quantities)
+        await channel.send(conversion)
+        return True
