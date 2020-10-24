@@ -31,7 +31,20 @@ class UnitConversion(commands.Cog):
         if not conversion_strs:
             return
 
+        conversion_strs = await self.convert_time(msg.channel, conversion_strs)
         await self.convert_imperial_metric(msg.channel, conversion_strs)
+
+    async def convert_time(self, channel: discord.TextChannel,
+                           time_strs: List[str]) -> List[str]:
+        """
+        Convert a list of time strings (like "5:45 PM") to different users'
+        timezones and reply with the conversions.
+
+        :param channel: Discord channel to send conversions message to
+        :param time_strs: a list of strings that may be valid times
+        :returns: a list of strings that could not be converted
+        """
+        pass
 
     async def convert_imperial_metric(
             self, channel: discord.TextChannel,
