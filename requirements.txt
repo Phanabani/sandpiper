@@ -4,3 +4,4 @@ discord.py>=1.5
 fuzzywuzzy[speedup]>=0.18
 pint>=0.16
 pytz>=2020.1
+tzlocal>=2.1
