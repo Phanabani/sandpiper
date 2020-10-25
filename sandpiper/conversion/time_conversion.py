@@ -1,6 +1,6 @@
 import datetime as dt
 import logging
-from typing import List, Tuple
+from typing import List, Set, Tuple
 
 import discord
 
@@ -39,9 +39,14 @@ def convert_time_to_user_timezones(
     basis_tz = db.get_timezone(user_id)
     if basis_tz is None:
         raise UserTimezoneUnset()
-    user_timezones = [tz for user_id, tz in db.get_all_timezones()
-                      if guild.get_member(user_id)]
+    # Filter out repeat timezones and timezones of users outside this guild
+    user_timezones: Set[TimezoneType] = {
+        tz for user_id, tz in db.get_all_timezones()
+        if guild.get_member(user_id)
+    }
 
+    # Attempt to parse the strings as times and populate success and failure
+    # lists accordingly
     parsed_times = []
     failed = []
     for tstr in time_strs:
@@ -58,6 +63,7 @@ def convert_time_to_user_timezones(
     if not parsed_times:
         return [], failed
 
+    # Iterate over each timezone and convert all times to that timezone
     conversions = []
     for tz in user_timezones:
         tz_name: str = tz.zone
