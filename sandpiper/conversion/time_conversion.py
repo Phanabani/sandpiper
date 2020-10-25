@@ -54,8 +54,8 @@ def convert_time_to_user_timezones(
         try:
             parsed_times.append(parse_time(tstr, basis_tz))
         except TimeParsingError as e:
-            logger.debug(f"Failed to parse time string (string={tstr}, "
-                         f"reason={e})")
+            logger.info(f"Failed to parse time string (string={tstr}, "
+                        f"reason={e})")
             failed.append(tstr)
         except:
             logger.warning(f"Unhandled exception while parsing time string "

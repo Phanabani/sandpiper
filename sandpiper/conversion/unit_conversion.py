@@ -61,12 +61,12 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
     """
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(f"Attempting unit conversion for {quantity_str!r}")
+        logger.info(f"Attempting unit conversion for {quantity_str!r}")
 
     if height := imperial_height_pattern.match(quantity_str):
         # Added support for imperial shorthand units for length
         # e.g. 5' 8" == 5 feet + 8 inches
-        logger.debug('Imperial length shorthand detected')
+        logger.info('Imperial length shorthand detected')
         foot = Q_(D(foot), 'foot') if (foot := height.group('foot')) else 0
         inch = Q_(D(inch), 'inch') if (inch := height.group('inch')) else 0
         quantity = foot + inch
@@ -75,18 +75,18 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
         try:
             quantity = ureg.parse_expression(quantity_str)
         except UndefinedUnitError:
-            logger.debug('Undefined unit')
+            logger.info('Undefined unit')
             return None
 
     if not isinstance(quantity, Quantity):
-        logger.debug('Not a quantity')
+        logger.info('Not a quantity')
         return None
     if quantity.units not in unit_map:
-        logger.debug(f"Unit not supported {quantity.units}")
+        logger.info(f"Unit not supported {quantity.units}")
         return None
     conversion_unit = unit_map[quantity.units]
 
     quantity_to = quantity.to(conversion_unit)
-    logger.debug(f"Conversion successful: "
-                 f"{quantity:.2f~P} -> {quantity_to:.2f~P}")
+    logger.info(f"Conversion successful: "
+                f"{quantity:.2f~P} -> {quantity_to:.2f~P}")
     return quantity, quantity_to
