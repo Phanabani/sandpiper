@@ -95,7 +95,8 @@ class DatabaseSQLite(Database):
             with self._con:
                 result = self._con.execute(stmt, args).fetchall()
                 return [(user_id, pytz.timezone(tz_name))
-                        for user_id, tz_name in result]
+                        for user_id, tz_name in result
+                        if tz_name is not None]
         except sqlite3.Error:
             logger.error('Failed to get all user timezones', exc_info=True)
 
