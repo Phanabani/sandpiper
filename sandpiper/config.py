@@ -15,7 +15,7 @@ DEFAULTS = {
   },
 
   "logging": {
-    "sandpiper_logging_level": "DEBUG",
+    "sandpiper_logging_level": "INFO",
     "discord_logging_level": "WARNING",
     "output_file": "./logs/sandpiper.log",
     "when": "midnight",
