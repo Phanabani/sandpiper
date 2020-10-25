@@ -1,19 +1,15 @@
-import datetime
 import logging
 from pathlib import Path
 import sqlite3
-from typing import Any, List, NoReturn, Optional, Tuple, Union
+from typing import Any, NoReturn, Union
 
 import pytz
 
-from .database import Database, DatabaseError
-from .enums import PrivacyType
+from .database import *
 
 __all__ = ['DatabaseSQLite']
 
 logger = logging.getLogger('sandpiper.user_data.database_sqlite')
-
-DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
 
 class DatabaseSQLite(Database):
@@ -87,6 +83,21 @@ class DatabaseSQLite(Database):
                 return self._con.execute(stmt, args).fetchall()
         except sqlite3.Error:
             logger.error('Failed to find users by name', exc_info=True)
+
+    def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
+        logger.info(f'Getting all user timezones')
+        stmt = '''
+            SELECT user_id, timezone FROM user_info
+            WHERE privacy_timezone = :privacy
+        '''
+        args = {'privacy': PrivacyType.PUBLIC}
+        try:
+            with self._con:
+                result = self._con.execute(stmt, args).fetchall()
+                return [(user_id, pytz.timezone(tz_name))
+                        for user_id, tz_name in result]
+        except sqlite3.Error:
+            logger.error('Failed to get all user timezones', exc_info=True)
 
     def delete_user(self, user_id: int):
         logger.info(f'Deleting user (user_id={user_id})')
@@ -189,14 +200,14 @@ class DatabaseSQLite(Database):
 
     # Timezone
 
-    def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
+    def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         timezone_name = self._do_execute_get('timezone', user_id)
         if timezone_name:
             return pytz.timezone(timezone_name)
         return None
 
     def set_timezone(self, user_id: int,
-                     new_timezone: Optional[pytz.tzinfo.BaseTzInfo]):
+                     new_timezone: Optional[TimezoneType]):
         if new_timezone:
             new_timezone = new_timezone.zone
         self._do_execute_set('timezone', user_id, new_timezone)

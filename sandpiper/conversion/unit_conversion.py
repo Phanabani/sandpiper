@@ -9,7 +9,7 @@ from pint.quantity import Quantity
 
 __all__ = ['imperial_metric']
 
-logger = logging.getLogger('sandpiper.unit_conversion')
+logger = logging.getLogger('sandpiper.conversion.unit_conversion')
 
 ureg = UnitRegistry(
     autoconvert_offset_to_baseunit=True,  # For temperatures

@@ -32,7 +32,7 @@ def fuzzy_match_timezone(tz_str: str, best_match_threshold=75,
     # partial_ratio finds substrings, which isn't really what users will be
     # searching by, and the _set_ratio methods are totally unusable.
     matches: List[Tuple[str, int]] = fuzzy_process.extractBests(
-        tz_str, pytz.all_timezones, scorer=fuzz.ratio,
+        tz_str, pytz.common_timezones, scorer=fuzz.ratio,
         score_cutoff=lower_score_cutoff, limit=limit)
     tz_matches = TimezoneMatches(matches)
 

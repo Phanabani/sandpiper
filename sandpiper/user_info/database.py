@@ -2,11 +2,10 @@ from abc import ABCMeta, abstractmethod
 import datetime
 from typing import List, Optional, Tuple
 
-import pytz
-
+from ..common.time import TimezoneType
 from .enums import PrivacyType
 
-__all__ = ['DatabaseError', 'Database']
+DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
 
 class DatabaseError(Exception):
@@ -33,6 +32,10 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
+        pass
+
+    @abstractmethod
+    def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
         pass
 
     @abstractmethod
@@ -88,12 +91,12 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_timezone(self, user_id: int) -> Optional[pytz.tzinfo.BaseTzInfo]:
+    def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         pass
 
     @abstractmethod
     def set_timezone(self, user_id: int,
-                     new_timezone: Optional[pytz.tzinfo.BaseTzInfo]):
+                     new_timezone: Optional[TimezoneType]):
         pass
 
     @abstractmethod

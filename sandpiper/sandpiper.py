@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import discord
 import discord.ext.commands as commands
@@ -47,9 +48,9 @@ class Sandpiper(commands.Bot):
                     f'You don\'t need to prefix commands here. '
                     f'Just type "{rest}".')
 
-        self.load_extension('sandpiper.bios')
-        self.load_extension('sandpiper.unit_conversion')
         self.load_extension('sandpiper.user_info')
+        self.load_extension('sandpiper.bios')
+        self.load_extension('sandpiper.conversion')
 
     async def on_connect(self):
         logger.info('Client connected')
@@ -64,7 +65,14 @@ class Sandpiper(commands.Bot):
         logger.info('Client started')
 
     async def on_error(self, event_method: str, *args, **kwargs):
-        if event_method == 'on_message':
+        exc_type, __, __ = sys.exc_info()
+
+        if exc_type is discord.HTTPException:
+            logger.warning('HTTP exception', exc_info=True)
+        elif exc_type is discord.Forbidden:
+            logger.warning('Forbidden request', exc_info=True)
+
+        elif event_method == 'on_message':
             msg: discord.Message = args[0]
             logger.error(
                 f'Unhandled in on_message (content: {msg.content!r} '
@@ -76,4 +84,3 @@ class Sandpiper(commands.Bot):
                 f"Unhandled in {event_method} (args: {args} kwargs: {kwargs})",
                 exc_info=True
             )
-        await super().on_error(event_method, *args, **kwargs)

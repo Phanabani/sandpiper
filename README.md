@@ -9,6 +9,7 @@ around the world.
 
 Her current features include:
 - Unit conversion between imperial and metric quantities
+- Time conversion between the timezones of users in your server
 - Miniature user bios
     - Set your preferred name, pronouns, birthday, and timezone
     - Manage the privacy of each of these fields (private by default, but they 
@@ -22,8 +23,10 @@ Her current features include:
 - [Config](#config)
 - [Commands and features](#commands-and-features)
     - [Unit conversion](#unit-conversion)
+    - [Time conversion](#time-conversion)
     - [Bios](#bios)
 - [Planned features](#planned-features)
+- [Inspiration](#inspiration)
 - [License](#license)
 
 ## Install
@@ -68,7 +71,7 @@ See [config](#config) for more configuration options.
 
 #### Basic
 
-In the top level directory, simply run sandpiper as a Python module.
+In the top level directory, simply run Sandpiper as a Python module.
 
 ```shell script
 python -m sandpiper
@@ -135,27 +138,26 @@ Key | Value
 ## Commands and features
 
 In servers, commands must be prefixed with the configured command prefix
-(default="!piper "). When DMing Sandpiper, you do not need to prefix commands.
+(default=`"!piper "`). When DMing Sandpiper, you do not need to prefix commands.
 
 ### Unit conversion
 
 Convert measurements written in regular messages! Just surround a measurement
 in {curly brackets} and Sandpiper will convert it for you. You can put
-multiple measurements in a message (just be sure that each is put in its own
-brackets).
+multiple measurements in a message as long as each is put in its own brackets.
 
-Here are some examples:
+#### Examples
 
 > guys it's **{30f}** outside today, I'm so cold...
 
 > I've been working out a lot lately and I've already lost **{2 kg}**!!
 
-> I think Jason is like **{6' 2"}**
+> I think Jason is like **{6' 2"}** tall
 
 > Lou lives about **{15km}** from me and TJ's staying at a hotel **{1.5km}**
 > away, so he and I are gonna meet up and drive over to Lou.
 
-Currently supported units:
+#### Supported units:
 
 Metric | Imperial
 ------ | --------
@@ -164,6 +166,31 @@ Meter `m` | Foot `ft or '`
 Centimeter `cm` | Inch `in or "`
 Kilogram `kg` | Pound `lbs`
 Celsius `C or degC or °C` | Fahrenheit `F or degF or °F`
+
+### Time conversion
+
+Just like [unit conversion](#unit-conversion), you can also convert times
+between timezones! Surround a time in {curly brackets} and Sandpiper will
+convert it to the different timezones of users in your server.
+
+Times can be formatted in 12- or 24-hour time and use colon separators (HH:MM).
+12-hour times can optionally include AM or PM to specify what half of the day
+you mean. If you don't specify, AM will be assumed.
+ 
+You can put multiple times in a message as long as each is put in its own brackets.
+
+To use this feature, you and your friends need to set your timezones with the
+`timezone set` command (see the [bio commands section](#setting-your-info)
+for more info).
+
+#### Examples
+
+> do you guys wanna play at {9pm}?
+
+> I wish I could, but I'm busy from {14} to {17:45}
+
+> yeah I've gotta wake up at {5} for work tomorrow, so it's an early bedtime
+> for me
 
 ### Bios
 
@@ -236,8 +263,15 @@ Command | Description | Example
   - [X] Pronouns
   - [X] Birthday
   - [X] Timezone
-- [ ] Time conversion
+- [X] Time conversion
 - [ ] Birthday notifications
+
+## Inspiration
+
+These Discord bots inspired the development of Sandpiper:
+
+- [Friend-Time by Kevin Novak](https://github.com/KevinNovak/Friend-Time) - inspiration for time and unit conversion features
+- [Birthday Bot by NoiTheCat](https://github.com/NoiTheCat/BirthdayBot) - inspiration for upcoming birthday feature
 
 ## License
 
