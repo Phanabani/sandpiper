@@ -40,10 +40,11 @@ def convert_time_to_user_timezones(
     if basis_tz is None:
         raise UserTimezoneUnset()
     # Filter out repeat timezones and timezones of users outside this guild
-    user_timezones: Set[TimezoneType] = {
-        tz for user_id, tz in db.get_all_timezones()
-        if guild.get_member(user_id)
-    }
+    all_timezones = db.get_all_timezones()
+    logger.debug(f"All timezones: {all_timezones}")
+    user_timezones: Set[TimezoneType] = {tz for user_id, tz in all_timezones
+                                         if guild.get_member(user_id)}
+    logger.debug(f"Filtered timezones: {user_timezones}")
 
     # Attempt to parse the strings as times and populate success and failure
     # lists accordingly
