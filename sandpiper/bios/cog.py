@@ -106,7 +106,7 @@ class Bios(commands.Cog):
                     f'message={ctx.message!r})',
                     exc_info=error.original
                 )
-                await Embeds.error(ctx, 'Unexpected error')
+                await Embeds.error(ctx, "Unexpected error.")
         else:
             await Embeds.error(ctx, str(error))
 
