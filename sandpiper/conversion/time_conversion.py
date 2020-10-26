@@ -16,7 +16,7 @@ class UserTimezoneUnset(Exception):
     pass
 
 
-def convert_time_to_user_timezones(
+async def convert_time_to_user_timezones(
         user_data: UserData, user_id: int, guild: discord.Guild,
         time_strs: List[str]
 ) -> Tuple[List[Tuple[str, List[dt.datetime]]], List[str]]:
@@ -35,12 +35,12 @@ def convert_time_to_user_timezones(
         occupied by users in the guild.
     """
 
-    db = user_data.get_database()
-    basis_tz = db.get_timezone(user_id)
+    db = await user_data.get_database()
+    basis_tz = await db.get_timezone(user_id)
     if basis_tz is None:
         raise UserTimezoneUnset()
     # Filter out repeat timezones and timezones of users outside this guild
-    all_timezones = db.get_all_timezones()
+    all_timezones = await db.get_all_timezones()
     logger.debug(f"All timezones: {all_timezones}")
     user_timezones: Set[TimezoneType] = {tz for user_id, tz in all_timezones
                                          if guild.get_member(user_id)}

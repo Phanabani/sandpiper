@@ -23,7 +23,7 @@ class UserData(commands.Cog):
     def set_database_adapter(self, database: Database):
         self._database = database
 
-    def get_database(self):
+    async def get_database(self):
         """
         Get the database adapter for manipulating user data.
 
@@ -33,6 +33,6 @@ class UserData(commands.Cog):
         """
         if self._database is None:
             raise DatabaseUnavailable('Database adapter is not set.')
-        if not self._database.connected():
+        if not await self._database.connected():
             raise DatabaseUnavailable('Database is not connected.')
         return self._database

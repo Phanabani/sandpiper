@@ -29,8 +29,8 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
 
 
-def user_names_str(ctx: commands.Context, db: Database, user_id: int,
-                   preferred_name: str = None, username: str = None):
+async def user_names_str(ctx: commands.Context, db: Database, user_id: int,
+                         preferred_name: str = None, username: str = None):
     """
     Create a string with a user's names (preferred name, Discord username,
     guild display names). You can supply ``preferred_name`` or ``username``
@@ -40,17 +40,17 @@ def user_names_str(ctx: commands.Context, db: Database, user_id: int,
     """
 
     # Get pronouns
-    privacy_pronouns = db.get_privacy_pronouns(user_id)
+    privacy_pronouns = await db.get_privacy_pronouns(user_id)
     if privacy_pronouns == PrivacyType.PUBLIC:
-        pronouns = db.get_pronouns(user_id)
+        pronouns = await db.get_pronouns(user_id)
     else:
         pronouns = None
 
     # Get preferred name
     if preferred_name is None:
-        privacy_preferred_name = db.get_privacy_preferred_name(user_id)
+        privacy_preferred_name = await db.get_privacy_preferred_name(user_id)
         if privacy_preferred_name == PrivacyType.PUBLIC:
-            preferred_name = db.get_preferred_name(user_id)
+            preferred_name = await db.get_preferred_name(user_id)
             if preferred_name is None:
                 preferred_name = '`No preferred name`'
         else:
@@ -85,11 +85,11 @@ class Bios(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    def _get_database(self) -> Database:
+    async def _get_database(self) -> Database:
         user_data: Optional[UserData] = self.bot.get_cog('UserData')
         if user_data is None:
             raise RuntimeError('UserData cog is not loaded.')
-        return user_data.get_database()
+        return await user_data.get_database()
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context,
@@ -127,8 +127,8 @@ class Bios(commands.Cog):
     async def bio_delete(self, ctx: commands.Context):
         """Delete all of your personal info."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.delete_user(user_id)
+        db = await self._get_database()
+        await db.delete_user(user_id)
         await Embeds.success(ctx, 'Deleted all of your personal info!')
 
     @bio.command(name='show', aliases=_show_aliases)
@@ -137,20 +137,20 @@ class Bios(commands.Cog):
         """Display your personal info."""
 
         user_id: int = ctx.author.id
-        db = self._get_database()
+        db = await self._get_database()
 
-        preferred_name = db.get_preferred_name(user_id)
-        pronouns = db.get_pronouns(user_id)
-        birthday = db.get_birthday(user_id)
-        age = db.get_age(user_id)
+        preferred_name = await db.get_preferred_name(user_id)
+        pronouns = await db.get_pronouns(user_id)
+        birthday = await db.get_birthday(user_id)
+        age = await db.get_age(user_id)
         age = age if age is not None else 'N/A'
-        timezone = db.get_timezone(user_id)
+        timezone = await db.get_timezone(user_id)
 
-        p_preferred_name = db.get_privacy_preferred_name(user_id)
-        p_pronouns = db.get_privacy_pronouns(user_id)
-        p_birthday = db.get_privacy_birthday(user_id)
-        p_age = db.get_privacy_age(user_id)
-        p_timezone = db.get_privacy_timezone(user_id)
+        p_preferred_name = await db.get_privacy_preferred_name(user_id)
+        p_pronouns = await db.get_privacy_pronouns(user_id)
+        p_birthday = await db.get_privacy_birthday(user_id)
+        p_age = await db.get_privacy_age(user_id)
+        p_timezone = await db.get_privacy_timezone(user_id)
 
         await Embeds.info(ctx, message=(
             user_info_str('Name', preferred_name, p_preferred_name),
@@ -172,12 +172,12 @@ class Bios(commands.Cog):
             self, ctx: commands.Context, new_privacy: privacy_handler):
         """Set the privacy of all of your personal info at once."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_privacy_preferred_name(user_id, new_privacy)
-        db.set_privacy_pronouns(user_id, new_privacy)
-        db.set_privacy_birthday(user_id, new_privacy)
-        db.set_privacy_age(user_id, new_privacy)
-        db.set_privacy_timezone(user_id, new_privacy)
+        db = await self._get_database()
+        await db.set_privacy_preferred_name(user_id, new_privacy)
+        await db.set_privacy_pronouns(user_id, new_privacy)
+        await db.set_privacy_birthday(user_id, new_privacy)
+        await db.set_privacy_age(user_id, new_privacy)
+        await db.set_privacy_timezone(user_id, new_privacy)
         await Embeds.success(ctx, 'All privacies set!')
 
     @privacy.command(name='name')
@@ -185,8 +185,8 @@ class Bios(commands.Cog):
             self, ctx: commands.Context, new_privacy: privacy_handler):
         """Set the privacy of your preferred name."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_privacy_preferred_name(user_id, new_privacy)
+        db = await self._get_database()
+        await db.set_privacy_preferred_name(user_id, new_privacy)
         await Embeds.success(ctx, 'Name privacy set!')
 
     @privacy.command(name='pronouns')
@@ -194,8 +194,8 @@ class Bios(commands.Cog):
             self, ctx: commands.Context, new_privacy: privacy_handler):
         """Set the privacy of your pronouns."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_privacy_pronouns(user_id, new_privacy)
+        db = await self._get_database()
+        await db.set_privacy_pronouns(user_id, new_privacy)
         await Embeds.success(ctx, 'Pronouns privacy set!')
 
     @privacy.command(name='birthday')
@@ -203,8 +203,8 @@ class Bios(commands.Cog):
             self, ctx: commands.Context, new_privacy: privacy_handler):
         """Set the privacy of your birthday."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_privacy_birthday(user_id, new_privacy)
+        db = await self._get_database()
+        await db.set_privacy_birthday(user_id, new_privacy)
         await Embeds.success(ctx, 'Birthday privacy set!')
 
     @privacy.command(name='age')
@@ -212,8 +212,8 @@ class Bios(commands.Cog):
             self, ctx: commands.Context, new_privacy: privacy_handler):
         """Set the privacy of your age."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_privacy_age(user_id, new_privacy)
+        db = await self._get_database()
+        await db.set_privacy_age(user_id, new_privacy)
         await Embeds.success(ctx, 'Age privacy set!')
 
     @privacy.command(name='timezone')
@@ -221,8 +221,8 @@ class Bios(commands.Cog):
             self, ctx: commands.Context, new_privacy: privacy_handler):
         """Set the privacy of your timezone."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_privacy_timezone(user_id, new_privacy)
+        db = await self._get_database()
+        await db.set_privacy_timezone(user_id, new_privacy)
         await Embeds.success(ctx, 'Timezone privacy set!')
 
     # Name
@@ -237,9 +237,9 @@ class Bios(commands.Cog):
     async def name_show(self, ctx: commands.Context):
         """Display your preferred name."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        preferred_name = db.get_preferred_name(user_id)
-        privacy = db.get_privacy_preferred_name(user_id)
+        db = await self._get_database()
+        preferred_name = await db.get_preferred_name(user_id)
+        privacy = await db.get_privacy_preferred_name(user_id)
         await Embeds.info(ctx, user_info_str('Name', preferred_name, privacy))
 
     @name.command(name='set', aliases=_set_aliases)
@@ -247,14 +247,14 @@ class Bios(commands.Cog):
     async def name_set(self, ctx: commands.Context, new_name: str):
         """Set your preferred name."""
         user_id: int = ctx.author.id
-        db = self._get_database()
+        db = await self._get_database()
         if len(new_name) > 64:
             raise BadArgument(f'Name must be 64 characters or less '
                               f'(yours: {len(new_name)}).')
-        db.set_preferred_name(user_id, new_name)
+        await db.set_preferred_name(user_id, new_name)
         await Embeds.success(ctx, 'Name set!')
 
-        if db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
+        if await db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
                 'Your preferred name is set to private. If you want others to '
@@ -266,8 +266,8 @@ class Bios(commands.Cog):
     async def name_delete(self, ctx: commands.Context):
         """Delete your stored preferred name."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_preferred_name(user_id, None)
+        db = await self._get_database()
+        await db.set_preferred_name(user_id, None)
         await Embeds.success(ctx, 'Preferred name deleted!')
 
     # Pronouns
@@ -282,9 +282,9 @@ class Bios(commands.Cog):
     async def pronouns_show(self, ctx: commands.Context):
         """Display your pronouns."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        pronouns = db.get_pronouns(user_id)
-        privacy = db.get_privacy_pronouns(user_id)
+        db = await self._get_database()
+        pronouns = await db.get_pronouns(user_id)
+        privacy = await db.get_privacy_pronouns(user_id)
         await Embeds.info(ctx, user_info_str('Pronouns', pronouns, privacy))
 
     @pronouns.command(name='set', aliases=_set_aliases)
@@ -292,14 +292,14 @@ class Bios(commands.Cog):
     async def pronouns_set(self, ctx: commands.Context, new_pronouns: str):
         """Set your pronouns."""
         user_id: int = ctx.author.id
-        db = self._get_database()
+        db = await self._get_database()
         if len(new_pronouns) > 64:
             raise BadArgument(f'Pronouns must be 64 characters or less '
                               f'(yours: {len(new_pronouns)}).')
-        db.set_pronouns(user_id, new_pronouns)
+        await db.set_pronouns(user_id, new_pronouns)
         await Embeds.success(ctx, 'Pronouns set!')
 
-        if db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
+        if await db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
                 'Your pronouns are set to private. If you want others to be '
@@ -311,8 +311,8 @@ class Bios(commands.Cog):
     async def pronouns_delete(self, ctx: commands.Context):
         """Delete your stored pronouns."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_pronouns(user_id, None)
+        db = await self._get_database()
+        await db.set_pronouns(user_id, None)
         await Embeds.success(ctx, 'Pronouns deleted!')
 
     # Birthday
@@ -327,9 +327,9 @@ class Bios(commands.Cog):
     async def birthday_show(self, ctx: commands.Context):
         """Display your birthday."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        birthday = db.get_birthday(user_id)
-        privacy = db.get_privacy_birthday(user_id)
+        db = await self._get_database()
+        birthday = await db.get_birthday(user_id)
+        privacy = await db.get_privacy_birthday(user_id)
         await Embeds.info(ctx, user_info_str('Birthday', birthday, privacy))
 
     @birthday.command(name='set', aliases=_set_aliases)
@@ -338,11 +338,11 @@ class Bios(commands.Cog):
                            new_birthday: date_handler):
         """Set your birthday."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_birthday(user_id, new_birthday)
+        db = await self._get_database()
+        await db.set_birthday(user_id, new_birthday)
         await Embeds.success(ctx, 'Birthday set!')
 
-        if db.get_privacy_birthday(user_id) == PrivacyType.PRIVATE:
+        if await db.get_privacy_birthday(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
                 'Your birthday is set to private. If you want others to be '
@@ -356,8 +356,8 @@ class Bios(commands.Cog):
     async def birthday_delete(self, ctx: commands.Context):
         """Delete your stored birthday."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_birthday(user_id, None)
+        db = await self._get_database()
+        await db.set_birthday(user_id, None)
         await Embeds.success(ctx, 'Birthday deleted!')
 
     # Age
@@ -372,9 +372,9 @@ class Bios(commands.Cog):
     async def age_show(self, ctx: commands.Context):
         """Display your age (calculated automatically using your birthday)."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        age = db.get_age(user_id)
-        privacy = db.get_privacy_age(user_id)
+        db = await self._get_database()
+        age = await db.get_age(user_id)
+        privacy = await db.get_privacy_age(user_id)
         await Embeds.info(ctx, user_info_str('Age', age, privacy))
 
     # noinspection PyUnusedLocal
@@ -415,9 +415,9 @@ class Bios(commands.Cog):
     async def timezone_show(self, ctx: commands.Context):
         """Display your timezone."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        timezone = db.get_timezone(user_id)
-        privacy = db.get_privacy_timezone(user_id)
+        db = await self._get_database()
+        timezone = await db.get_timezone(user_id)
+        privacy = await db.get_privacy_timezone(user_id)
         await Embeds.info(ctx, user_info_str('Timezone', timezone, privacy))
 
     @timezone.command(name='set', aliases=_set_aliases)
@@ -433,7 +433,7 @@ class Bios(commands.Cog):
         """
 
         user_id: int = ctx.author.id
-        db = self._get_database()
+        db = await self._get_database()
 
         tz_matches = fuzzy_match_timezone(
             new_timezone, best_match_threshold=50, lower_score_cutoff=50,
@@ -451,7 +451,7 @@ class Bios(commands.Cog):
 
         if tz_matches.best_match:
             # Display best match with other possible matches
-            db.set_timezone(user_id, tz_matches.best_match)
+            await db.set_timezone(user_id, tz_matches.best_match)
             await Embeds.success(ctx, message=(
                 f'Timezone set to **{tz_matches.best_match}**!',
                 tz_matches.matches[1:] and '\nOther possible matches:',
@@ -465,7 +465,7 @@ class Bios(commands.Cog):
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
             ))
 
-        if db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
+        if await db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
                 'Your timezone is set to private. If you want others to be '
@@ -477,8 +477,8 @@ class Bios(commands.Cog):
     async def timezone_delete(self, ctx: commands.Context):
         """Delete your stored timezone."""
         user_id: int = ctx.author.id
-        db = self._get_database()
-        db.set_timezone(user_id, None)
+        db = await self._get_database()
+        await db.set_timezone(user_id, None)
         await Embeds.success(ctx, 'Timezone deleted!')
 
     # Extra commands
@@ -493,17 +493,17 @@ class Bios(commands.Cog):
         if len(name) < 2:
             raise BadArgument('Name must be at least 2 characters.')
 
-        db = self._get_database()
+        db = await self._get_database()
 
         user_strs = []
         seen_users = set()
 
-        for user_id, preferred_name in db.find_users_by_preferred_name(name):
+        for user_id, preferred_name in await db.find_users_by_preferred_name(name):
             if user_id in seen_users:
                 continue
             seen_users.add(user_id)
-            names = user_names_str(ctx, db, user_id,
-                                   preferred_name=preferred_name)
+            names = await user_names_str(ctx, db, user_id,
+                                         preferred_name=preferred_name)
             user_strs.append(names)
 
         for user_id, __ in find_users_by_display_name(
@@ -511,14 +511,14 @@ class Bios(commands.Cog):
             if user_id in seen_users:
                 continue
             seen_users.add(user_id)
-            names = user_names_str(ctx, db, user_id)
+            names = await user_names_str(ctx, db, user_id)
             user_strs.append(names)
 
         for user_id, username in find_users_by_username(ctx.bot, name):
             if user_id in seen_users:
                 continue
             seen_users.add(user_id)
-            names = user_names_str(ctx, db, user_id, username=username)
+            names = await user_names_str(ctx, db, user_id, username=username)
             user_strs.append(names)
 
         if user_strs:

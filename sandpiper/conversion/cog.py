@@ -55,7 +55,7 @@ class Conversion(commands.Cog):
             return time_strs
 
         try:
-            localized_times, failed = convert_time_to_user_timezones(
+            localized_times, failed = await convert_time_to_user_timezones(
                 user_data, msg.author.id, msg.guild, time_strs
             )
         except UserTimezoneUnset:
