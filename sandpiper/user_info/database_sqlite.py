@@ -73,6 +73,10 @@ class DatabaseSQLite(Database):
 
     async def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
         logger.info(f'Finding users by preferred name (name={name!r})')
+        if name == '':
+            logger.info('Skipping empty string')
+            return []
+
         stmt = '''
             SELECT user_id, preferred_name FROM user_info
             WHERE preferred_name like :name
