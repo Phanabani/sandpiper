@@ -4,13 +4,15 @@ from typing import List, Optional, Tuple
 from fuzzywuzzy import fuzz, process as fuzzy_process
 import pytz
 
+from ..common.time import TimezoneType
+
 __all__ = ['TimezoneMatches', 'fuzzy_match_timezone']
 
 
 @dataclass
 class TimezoneMatches:
     matches: List[Tuple[str, int]] = None
-    best_match: Optional[pytz.BaseTzInfo] = False
+    best_match: Optional[TimezoneType] = False
     has_multiple_best_matches: bool = False
 
 
