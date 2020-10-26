@@ -98,7 +98,7 @@ class Bios(commands.Cog):
             if isinstance(error.original, DatabaseUnavailable):
                 await Embeds.error(ctx, str(DatabaseUnavailable))
             elif isinstance(error.original, DatabaseError):
-                await Embeds.error(ctx, 'Error during database operation.')
+                await Embeds.error(ctx, "Error during database operation.")
             else:
                 logger.error(
                     f'Unexpected error in "{ctx.command}" ('
@@ -129,7 +129,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.delete_user(user_id)
-        await Embeds.success(ctx, 'Deleted all of your personal info!')
+        await Embeds.success(ctx, "Deleted all of your personal info!")
 
     @bio.command(name='show', aliases=_show_aliases)
     @commands.dm_only()
@@ -178,7 +178,7 @@ class Bios(commands.Cog):
         await db.set_privacy_birthday(user_id, new_privacy)
         await db.set_privacy_age(user_id, new_privacy)
         await db.set_privacy_timezone(user_id, new_privacy)
-        await Embeds.success(ctx, 'All privacies set!')
+        await Embeds.success(ctx, "All privacies set!")
 
     @privacy.command(name='name')
     async def privacy_name(
@@ -187,7 +187,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
-        await Embeds.success(ctx, 'Name privacy set!')
+        await Embeds.success(ctx, "Name privacy set!")
 
     @privacy.command(name='pronouns')
     async def privacy_pronouns(
@@ -196,7 +196,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_pronouns(user_id, new_privacy)
-        await Embeds.success(ctx, 'Pronouns privacy set!')
+        await Embeds.success(ctx, "Pronouns privacy set!")
 
     @privacy.command(name='birthday')
     async def privacy_birthday(
@@ -205,7 +205,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_birthday(user_id, new_privacy)
-        await Embeds.success(ctx, 'Birthday privacy set!')
+        await Embeds.success(ctx, "Birthday privacy set!")
 
     @privacy.command(name='age')
     async def privacy_age(
@@ -214,7 +214,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_age(user_id, new_privacy)
-        await Embeds.success(ctx, 'Age privacy set!')
+        await Embeds.success(ctx, "Age privacy set!")
 
     @privacy.command(name='timezone')
     async def privacy_timezone(
@@ -223,7 +223,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_timezone(user_id, new_privacy)
-        await Embeds.success(ctx, 'Timezone privacy set!')
+        await Embeds.success(ctx, "Timezone privacy set!")
 
     # Name
 
@@ -249,17 +249,18 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_name) > 64:
-            raise BadArgument(f'Name must be 64 characters or less '
-                              f'(yours: {len(new_name)}).')
+            raise BadArgument(f"Name must be 64 characters or less "
+                              f"(yours: {len(new_name)}).")
         await db.set_preferred_name(user_id, new_name)
         await Embeds.success(ctx, 'Name set!')
 
         if await db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
-                'Your preferred name is set to private. If you want others to '
-                'be able to see it through Sandpiper, set it to public with '
-                'the command `privacy name public`.')
+                "Your preferred name is set to private. If you want others to "
+                "be able to see it through Sandpiper, set it to public with "
+                "the command `privacy name public`."
+            )
 
     @name.command(name='delete', aliases=_delete_aliases)
     @commands.dm_only()
@@ -268,7 +269,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_preferred_name(user_id, None)
-        await Embeds.success(ctx, 'Preferred name deleted!')
+        await Embeds.success(ctx, "Preferred name deleted!")
 
     # Pronouns
 
@@ -294,17 +295,18 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_pronouns) > 64:
-            raise BadArgument(f'Pronouns must be 64 characters or less '
-                              f'(yours: {len(new_pronouns)}).')
+            raise BadArgument(f"Pronouns must be 64 characters or less "
+                              f"(yours: {len(new_pronouns)}).")
         await db.set_pronouns(user_id, new_pronouns)
         await Embeds.success(ctx, 'Pronouns set!')
 
         if await db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
-                'Your pronouns are set to private. If you want others to be '
-                'able to see them through Sandpiper, set them to public with '
-                'the command `privacy pronouns public`.')
+                "Your pronouns are set to private. If you want others to be "
+                "able to see them through Sandpiper, set them to public with "
+                "the command `privacy pronouns public`."
+            )
 
     @pronouns.command(name='delete', aliases=_delete_aliases)
     @commands.dm_only()
@@ -313,7 +315,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_pronouns(user_id, None)
-        await Embeds.success(ctx, 'Pronouns deleted!')
+        await Embeds.success(ctx, "Pronouns deleted!")
 
     # Birthday
 
@@ -340,16 +342,17 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, new_birthday)
-        await Embeds.success(ctx, 'Birthday set!')
+        await Embeds.success(ctx, "Birthday set!")
 
         if await db.get_privacy_birthday(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
-                'Your birthday is set to private. If you want others to be '
-                'able to see it through Sandpiper, set it to public with '
-                'the command `privacy birthday public`. If you want others to '
-                'know your age but not your birthday, you may set that to '
-                'public with the command `privacy age public`.')
+                "Your birthday is set to private. If you want others to be "
+                "able to see it through Sandpiper, set it to public with "
+                "the command `privacy birthday public`. If you want others to "
+                "know your age but not your birthday, you may set that to "
+                "public with the command `privacy age public`."
+            )
 
     @birthday.command(name='delete', aliases=_delete_aliases)
     @commands.dm_only()
@@ -358,7 +361,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, None)
-        await Embeds.success(ctx, 'Birthday deleted!')
+        await Embeds.success(ctx, "Birthday deleted!")
 
     # Age
 
@@ -385,8 +388,11 @@ class Bios(commands.Cog):
         Age is automatically calculated using your birthday. This command
         exists only to let you know that you don't have to set it.
         """
-        await Embeds.error(ctx, 'Age is automatically calculated using your '
-                                'birthday. You don\'t need to set it!')
+        await Embeds.error(
+            ctx,
+            "Age is automatically calculated using your birthday. "
+            "You don't need to set it!"
+        )
 
     # noinspection PyUnusedLocal
     @age.command(name='delete', aliases=_delete_aliases)
@@ -398,10 +404,11 @@ class Bios(commands.Cog):
         """
         await Embeds.error(
             ctx,
-            'Age is automatically calculated using your birthday. You can '
-            'either delete your birthday with `birthday delete` or set your '
-            'age to private so others can\'t see it with '
-            '`privacy age private`.')
+            "Age is automatically calculated using your birthday. You can "
+            "either delete your birthday with `birthday delete` or set your "
+            "age to private so others can't see it with "
+            "`privacy age private`."
+        )
 
     # Timezone
 
@@ -442,35 +449,36 @@ class Bios(commands.Cog):
         if not tz_matches.matches:
             # No matches
             raise BadArgument(
-                'Timezone provided doesn\'t have any close matches. Try '
-                'typing the name of a major city near you or your '
-                'state/country name.\n\n'
-                'If you\'re stuck, try using this '
-                '[timezone picker](http://kevalbhatt.github.io/timezone-picker/).'
+                "Timezone provided doesn't have any close matches. Try "
+                "typing the name of a major city near you or your "
+                "state/country name.\n\n"
+                "If you're stuck, try using this "
+                "[timezone picker](http://kevalbhatt.github.io/timezone-picker/)."
             )
 
         if tz_matches.best_match:
             # Display best match with other possible matches
             await db.set_timezone(user_id, tz_matches.best_match)
             await Embeds.success(ctx, message=(
-                f'Timezone set to **{tz_matches.best_match}**!',
-                tz_matches.matches[1:] and '\nOther possible matches:',
+                f"Timezone set to **{tz_matches.best_match}**!",
+                tz_matches.matches[1:] and "\nOther possible matches:",
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches[1:]])
             ))
         else:
             # No best match; display other possible matches
             await Embeds.error(ctx, message=(
-                'Couldn\'t find a good match for the timezone you entered.',
-                '\nPossible matches:',
+                "Couldn't find a good match for the timezone you entered.",
+                "\nPossible matches:",
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
             ))
 
         if await db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
                 ctx,
-                'Your timezone is set to private. If you want others to be '
-                'able to see it through Sandpiper, set it to public with '
-                'the command `privacy timezone public`.')
+                "Your timezone is set to private. If you want others to be "
+                "able to see it through Sandpiper, set it to public with "
+                "the command `privacy timezone public`."
+            )
 
     @timezone.command(name='delete', aliases=_delete_aliases)
     @commands.dm_only()
@@ -479,7 +487,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_timezone(user_id, None)
-        await Embeds.success(ctx, 'Timezone deleted!')
+        await Embeds.success(ctx, "Timezone deleted!")
 
     # Extra commands
 
@@ -491,7 +499,7 @@ class Bios(commands.Cog):
         in servers you share with them.
         """
         if len(name) < 2:
-            raise BadArgument('Name must be at least 2 characters.')
+            raise BadArgument("Name must be at least 2 characters.")
 
         db = await self._get_database()
 
@@ -524,4 +532,4 @@ class Bios(commands.Cog):
         if user_strs:
             await Embeds.info(ctx, message=user_strs)
         else:
-            await Embeds.error(ctx, 'No users found with this name.')
+            await Embeds.error(ctx, "No users found with this name.")
