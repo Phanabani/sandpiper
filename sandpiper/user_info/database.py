@@ -15,96 +15,96 @@ class DatabaseError(Exception):
 class Database(metaclass=ABCMeta):
 
     @abstractmethod
-    def create_table(self):
+    async def create_table(self):
         pass
 
     @abstractmethod
-    def connect(self):
+    async def connect(self):
         pass
 
     @abstractmethod
-    def disconnect(self):
+    async def disconnect(self):
         pass
 
     @abstractmethod
-    def connected(self) -> bool:
+    async def connected(self) -> bool:
         pass
 
     @abstractmethod
-    def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
+    async def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
         pass
 
     @abstractmethod
-    def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
+    async def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
         pass
 
     @abstractmethod
-    def delete_user(self, user_id: int):
+    async def delete_user(self, user_id: int):
         pass
 
     @abstractmethod
-    def get_preferred_name(self, user_id: int) -> Optional[str]:
+    async def get_preferred_name(self, user_id: int) -> Optional[str]:
         pass
 
     @abstractmethod
-    def set_preferred_name(self, user_id: int, new_preferred_name: Optional[str]):
+    async def set_preferred_name(self, user_id: int, new_preferred_name: Optional[str]):
         pass
 
     @abstractmethod
-    def get_privacy_preferred_name(self, user_id: int) -> PrivacyType:
+    async def get_privacy_preferred_name(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
-    def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
-    def get_pronouns(self, user_id: int) -> Optional[str]:
+    async def get_pronouns(self, user_id: int) -> Optional[str]:
         pass
 
     @abstractmethod
-    def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
+    async def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
         pass
 
     @abstractmethod
-    def get_privacy_pronouns(self, user_id: int) -> PrivacyType:
+    async def get_privacy_pronouns(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
-    def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
-    def get_birthday(self, user_id: int) -> Optional[datetime.date]:
+    async def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         pass
 
     @abstractmethod
-    def set_birthday(self, user_id: int, new_birthday: Optional[datetime.date]):
+    async def set_birthday(self, user_id: int, new_birthday: Optional[datetime.date]):
         pass
 
     @abstractmethod
-    def get_privacy_birthday(self, user_id: int) -> PrivacyType:
+    async def get_privacy_birthday(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
-    def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
-    def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
+    async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         pass
 
     @abstractmethod
-    def set_timezone(self, user_id: int,
-                     new_timezone: Optional[TimezoneType]):
+    async def set_timezone(self, user_id: int,
+                           new_timezone: Optional[TimezoneType]):
         pass
 
     @abstractmethod
-    def get_privacy_timezone(self, user_id: int) -> PrivacyType:
+    async def get_privacy_timezone(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
-    def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @staticmethod
@@ -116,16 +116,16 @@ class Database(metaclass=ABCMeta):
             return age - 1
         return age
 
-    def get_age(self, user_id: int) -> Optional[int]:
-        birthday = self.get_birthday(user_id)
+    async def get_age(self, user_id: int) -> Optional[int]:
+        birthday = await self.get_birthday(user_id)
         if birthday is None:
             return None
         return self._calculate_age(birthday, datetime.date.today())
 
     @abstractmethod
-    def get_privacy_age(self, user_id: int) -> PrivacyType:
+    async def get_privacy_age(self, user_id: int) -> PrivacyType:
         pass
 
     @abstractmethod
-    def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
         pass
