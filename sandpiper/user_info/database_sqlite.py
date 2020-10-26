@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from sqlite3 import PARSE_DECLTYPES
-from typing import Any, NoReturn, Union
+from typing import Any, NoReturn, Union, cast
 
 import aiosqlite
 import pytz
@@ -85,7 +85,7 @@ class DatabaseSQLite(Database):
         args = {'name': f'%{name}%', 'privacy': PrivacyType.PUBLIC}
         try:
             cur = await self._con.execute(stmt, args)
-            return await cur.fetchall()
+            return cast(List[Tuple[int, str]], await cur.fetchall())
         except aiosqlite.Error:
             logger.error('Failed to find users by name', exc_info=True)
 
