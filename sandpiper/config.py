@@ -8,10 +8,10 @@ from typing import Any, Dict, Tuple, Union
 DEFAULTS = {
   "bot": {
     "command_prefix": "!piper ",
-    "description": "A bot that makes it easier to communicate with friends "
-                   "around the world.\nVisit my GitHub page for more info "
-                   "about commands and features: "
-                   "https://github.com/Hawkpath/sandpiper#commands-and-features"
+    "description":
+        "A bot that makes it easier to communicate with friends around the "
+        "world.\nVisit my GitHub page for more info about commands and "
+        "features: https://github.com/Hawkpath/sandpiper#commands-and-features"
   },
 
   "logging": {
