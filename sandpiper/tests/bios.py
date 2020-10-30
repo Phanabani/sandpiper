@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import List
 import unittest
 import unittest.mock as mock
 
@@ -8,6 +9,7 @@ import pytz
 
 from sandpiper.bios import Bios
 from sandpiper.user_info.database_sqlite import DatabaseSQLite
+from sandpiper.user_info.enums import PrivacyType
 
 __all__ = ['TestBios']
 
@@ -16,74 +18,130 @@ CONNECTION = ':memory:'
 
 class TestBios(unittest.IsolatedAsyncioTestCase):
 
-    async def asyncSetUp(self) -> None:
-        self._db = DatabaseSQLite(CONNECTION)
-        await self._db.connect()
+    async def asyncSetUp(self):
+        # Connect to a dummy database
+        self.db = DatabaseSQLite(CONNECTION)
+        await self.db.connect()
 
+        # Bypass UserData cog lookup by patching in the database
         patcher = mock.patch(
             'sandpiper.bios.Bios._get_database',
-            return_value=self._db
+            return_value=self.db
         )
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        Bot = mock.create_autospec(commands.Bot)
-        Context = mock.create_autospec(commands.Context)
-        bot = Bot(command_prefix='')
-        self._bios = Bios(bot)
-        self._ctx = Context()
+        # This is the meat of the operation; it allows for message properties
+        # to be set where normally it is prohibited
+        self.msg = mock.MagicMock(spec=discord.Message)
+        self.msg.author.bot = False  # Otherwise the invocation will be skipped
 
-    async def asyncTearDown(self) -> None:
-        await self._db.disconnect()
+        # Create a dummy bot that will never actually connect but will help
+        # with invocation
+        self.bot = commands.Bot(command_prefix='')
+        self.bios = Bios(self.bot)
+        self.bot.add_cog(self.bios)
 
+        # This function checks if message author is the self bot and skips
+        # context creation (meaning we won't get command invocation), so
+        # we will bypass it
+        patcher = mock.patch.object(self.bot, '_skip_check', return_value=False)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # This connection (discord.state.ConnectionState) object has a `user`
+        # field which is accessed by the client's `user` property. The
+        # _skip_check function is called with `client.user.id` which doesn't
+        # exist (since we aren't connecting) and raises an AttributeError, so
+        # we need to patch it in.
+        patcher = mock.patch.object(self.bot, '_connection')
+        connection_mock = patcher.start()
+        connection_mock.user.id = 0
+        self.addCleanup(patcher.stop)
+
+    async def asyncTearDown(self):
+        await self.db.disconnect()
+
+    async def do_invoke(self, message_content: str) -> mock.AsyncMock:
+        """
+        Use self._msg to invoke a command.
+
+        :returns: an AsyncMock representing the `ctx.send` method. You can use
+            the methods defined in Mock to check the calls to this method by
+            the command invocation.
+        """
+        self.msg.content = message_content
+        ctx = await self.bot.get_context(self.msg)
+        ctx.send = mock.AsyncMock()
+        await self.bot.invoke(ctx)
+        return ctx.send
+
+    async def do_invoke_get_embeds(
+            self, message_content: str) -> List[discord.Embed]:
+        send = await self.do_invoke(message_content)
+        return [
+            embed for call in send.call_args_list
+            if (embed := call.kwargs.get('embed'))
+        ]
+
+    # noinspection PyUnresolvedReferences
     async def test_show(self):
         uid = 123
-        self._ctx.author.id = uid
-        await self._db.set_preferred_name(uid, 'Greg')
-        await self._db.set_pronouns(uid, 'He/Him')
-        await self._db.set_birthday(uid, dt.date(2000, 2, 14))
-        await self._db.set_timezone(uid, pytz.timezone('America/New_York'))
+        await self.db.set_preferred_name(uid, 'Greg')
+        await self.db.set_pronouns(uid, 'He/Him')
+        await self.db.set_birthday(uid, dt.date(2000, 2, 14))
+        await self.db.set_timezone(uid, pytz.timezone('America/New_York'))
 
-        await self._bios.name_show.callback(self._bios, self._ctx)
-        embed: discord.Embed = self._ctx.send.call_args.kwargs['embed']
-        self.assertIn('Greg', embed.description)
+        self.msg.author.id = uid
+        self.msg.guild = None
 
-        await self._bios.pronouns_show.callback(self._bios, self._ctx)
-        embed: discord.Embed = self._ctx.send.call_args.kwargs['embed']
-        self.assertIn('He/Him', embed.description)
+        embeds = await self.do_invoke_get_embeds('name show')
+        self.assertIn('Greg', embeds[0].description)
 
-        await self._bios.birthday_show.callback(self._bios, self._ctx)
-        embed: discord.Embed = self._ctx.send.call_args.kwargs['embed']
-        self.assertIn('2000-02-14', embed.description)
+        embeds = await self.do_invoke_get_embeds('pronouns show')
+        self.assertIn('He/Him', embeds[0].description)
 
-        await self._bios.age_show.callback(self._bios, self._ctx)
-        embed: discord.Embed = self._ctx.send.call_args.kwargs['embed']
-        self.assertRegex(embed.description, r'\d+')
+        embeds = await self.do_invoke_get_embeds('birthday show')
+        self.assertIn('2000-02-14', embeds[0].description)
 
-        await self._bios.timezone_show.callback(self._bios, self._ctx)
-        embed: discord.Embed = self._ctx.send.call_args.kwargs['embed']
-        self.assertIn('America/New_York', embed.description)
+        embeds = await self.do_invoke_get_embeds('age show')
+        self.assertRegex(embeds[0].description, r'\d+')
+
+        embeds = await self.do_invoke_get_embeds('timezone show')
+        self.assertIn('America/New_York', embeds[0].description)
 
     async def test_set(self):
         uid = 123
-        self._ctx.author.id = uid
+        self.msg.author.id = uid
+        self.msg.guild = None
 
-        await self._bios.name_set.callback(self._bios, self._ctx, 'Greg')
-        value = await self._db.get_preferred_name(uid)
+        embeds = await self.do_invoke_get_embeds('name set Greg')
+        self.assertIn('Success', embeds[0].title)
+        self.assertIn('Warning', embeds[1].title)
+        self.assertIn('privacy name public', embeds[1].description)
+        value = await self.db.get_preferred_name(uid)
         self.assertEqual(value, 'Greg')
 
-        await self._bios.pronouns_set.callback(self._bios, self._ctx, 'He/Him')
-        value = await self._db.get_pronouns(uid)
+        embeds = await self.do_invoke_get_embeds('pronouns set He/Him')
+        self.assertIn('Success', embeds[0].title)
+        self.assertIn('Warning', embeds[1].title)
+        self.assertIn('privacy pronouns public', embeds[1].description)
+        value = await self.db.get_pronouns(uid)
         self.assertEqual(value, 'He/Him')
 
-        await self._bios.birthday_set.callback(self._bios, self._ctx, '2000-02-14')
-        value = await self._db.get_birthday(uid)
+        embeds = await self.do_invoke_get_embeds('birthday set 2000-02-14')
+        self.assertIn('Success', embeds[0].title)
+        self.assertIn('Warning', embeds[1].title)
+        self.assertIn('privacy birthday public', embeds[1].description)
+        value = await self.db.get_birthday(uid)
         self.assertEqual(value, dt.date(2000, 2, 14))
 
-        await self._bios.age_set.callback(self._bios, self._ctx)
-        embed: discord.Embed = self._ctx.send.call_args.kwargs['embed']
-        self.assertIn('Error', embed.title)
+        embeds = await self.do_invoke_get_embeds('age set 20')
+        self.assertIn('Error', embeds[0].title)
 
-        await self._bios.timezone_set.callback(self._bios, self._ctx, new_timezone='America/New_York')
-        value = await self._db.get_timezone(uid)
+        embeds = await self.do_invoke_get_embeds('timezone set new york')
+        self.assertIn('Success', embeds[0].title)
+        self.assertIn('Warning', embeds[1].title)
+        self.assertIn('privacy timezone public', embeds[1].description)
+        value = await self.db.get_timezone(uid)
         self.assertEqual(value, pytz.timezone('America/New_York'))
