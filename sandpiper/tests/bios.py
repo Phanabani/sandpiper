@@ -1,16 +1,38 @@
 import datetime as dt
+import unittest.mock as mock
 
 import discord.ext.commands as commands
 import pytz
 
 from ._test_helpers import DiscordMockingTestCase
 from sandpiper.bios import Bios
+from sandpiper.user_info.database_sqlite import DatabaseSQLite
 from sandpiper.user_info.enums import PrivacyType
 
 __all__ = ['TestBios']
 
+CONNECTION = ':memory:'
+
 
 class TestBios(DiscordMockingTestCase):
+
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+
+        # Connect to a dummy database
+        self.db = DatabaseSQLite(CONNECTION)
+        await self.db.connect()
+
+        # Bypass UserData cog lookup by patching in the database
+        patcher = mock.patch(
+            'sandpiper.bios.Bios._get_database',
+            return_value=self.db
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    async def asyncTearDown(self):
+        await self.db.disconnect()
 
     def setup_cogs(self, bot: commands.Bot):
         self.bios = Bios(bot)

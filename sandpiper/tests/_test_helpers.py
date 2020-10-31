@@ -5,28 +5,12 @@ import unittest.mock as mock
 import discord
 import discord.ext.commands as commands
 
-from sandpiper.user_info.database_sqlite import DatabaseSQLite
-
 __all__ = ['DiscordMockingTestCase']
-
-CONNECTION = ':memory:'
 
 
 class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
-        # Connect to a dummy database
-        self.db = DatabaseSQLite(CONNECTION)
-        await self.db.connect()
-
-        # Bypass UserData cog lookup by patching in the database
-        patcher = mock.patch(
-            'sandpiper.bios.Bios._get_database',
-            return_value=self.db
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         # This is the meat of the operation; it allows for message properties
         # to be set where normally it is prohibited
         self.msg = mock.MagicMock(spec=discord.Message)
@@ -53,9 +37,6 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         connection_mock = patcher.start()
         connection_mock.user.id = 0
         self.addCleanup(patcher.stop)
-
-    async def asyncTearDown(self):
-        await self.db.disconnect()
 
     def setup_cogs(self, bot: commands.Bot):
         pass
