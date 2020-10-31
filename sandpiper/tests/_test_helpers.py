@@ -41,7 +41,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
     def setup_cogs(self, bot: commands.Bot):
         pass
 
-    async def do_invoke(self, message_content: str) -> mock.AsyncMock:
+    async def invoke_cmd(self, message_content: str) -> mock.AsyncMock:
         """
         Use self._msg to invoke a command.
 
@@ -57,9 +57,9 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         await ctx.command.invoke(ctx)
         return ctx.send
 
-    async def do_invoke_get_embeds(
+    async def invoke_cmd_get_embeds(
             self, message_content: str) -> List[discord.Embed]:
-        send = await self.do_invoke(message_content)
+        send = await self.invoke_cmd(message_content)
         return [
             embed for call in send.call_args_list
             if (embed := call.kwargs.get('embed'))

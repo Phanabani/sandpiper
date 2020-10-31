@@ -62,37 +62,37 @@ class TestBios(DiscordMockingTestCase):
 
         # Individual
 
-        embeds = await self.do_invoke_get_embeds('privacy name public')
+        embeds = await self.invoke_cmd_get_embeds('privacy name public')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy pronouns public')
+        embeds = await self.invoke_cmd_get_embeds('privacy pronouns public')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy birthday public')
+        embeds = await self.invoke_cmd_get_embeds('privacy birthday public')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy age public')
+        embeds = await self.invoke_cmd_get_embeds('privacy age public')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy timezone public')
+        embeds = await self.invoke_cmd_get_embeds('privacy timezone public')
         self.assert_success(embeds[0])
         await assert_all_privacies(PrivacyType.PUBLIC)
 
-        embeds = await self.do_invoke_get_embeds('privacy name private')
+        embeds = await self.invoke_cmd_get_embeds('privacy name private')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy pronouns private')
+        embeds = await self.invoke_cmd_get_embeds('privacy pronouns private')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy birthday private')
+        embeds = await self.invoke_cmd_get_embeds('privacy birthday private')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy age private')
+        embeds = await self.invoke_cmd_get_embeds('privacy age private')
         self.assert_success(embeds[0])
-        embeds = await self.do_invoke_get_embeds('privacy timezone private')
+        embeds = await self.invoke_cmd_get_embeds('privacy timezone private')
         self.assert_success(embeds[0])
         await assert_all_privacies(PrivacyType.PRIVATE)
 
         # Batch set
 
-        embeds = await self.do_invoke_get_embeds('privacy all public')
+        embeds = await self.invoke_cmd_get_embeds('privacy all public')
         self.assert_success(embeds[0])
         await assert_all_privacies(PrivacyType.PUBLIC)
 
-        embeds = await self.do_invoke_get_embeds('privacy all private')
+        embeds = await self.invoke_cmd_get_embeds('privacy all private')
         self.assert_success(embeds[0])
         await assert_all_privacies(PrivacyType.PRIVATE)
 
@@ -105,25 +105,25 @@ class TestBios(DiscordMockingTestCase):
 
         # Individual
 
-        embeds = await self.do_invoke_get_embeds('name show')
+        embeds = await self.invoke_cmd_get_embeds('name show')
         self.assert_info(embeds[0], 'Greg')
 
-        embeds = await self.do_invoke_get_embeds('pronouns show')
+        embeds = await self.invoke_cmd_get_embeds('pronouns show')
         self.assert_info(embeds[0], 'He/Him')
 
-        embeds = await self.do_invoke_get_embeds('birthday show')
+        embeds = await self.invoke_cmd_get_embeds('birthday show')
         self.assert_info(embeds[0], '2000-02-14')
 
-        embeds = await self.do_invoke_get_embeds('age show')
+        embeds = await self.invoke_cmd_get_embeds('age show')
         self.assert_info(embeds[0])
         self.assertRegex(embeds[0].description, r'\d+')
 
-        embeds = await self.do_invoke_get_embeds('timezone show')
+        embeds = await self.invoke_cmd_get_embeds('timezone show')
         self.assert_info(embeds[0], 'America/New_York')
 
         # Batch show
 
-        embeds = await self.do_invoke_get_embeds('bio show')
+        embeds = await self.invoke_cmd_get_embeds('bio show')
         self.assert_info(embeds[0], 'Greg')
         self.assert_info(embeds[0], 'He/Him')
         self.assert_info(embeds[0], '2000-02-14')
@@ -134,28 +134,28 @@ class TestBios(DiscordMockingTestCase):
         self.msg.author.id = uid
         self.msg.guild = None
 
-        embeds = await self.do_invoke_get_embeds('name set Greg')
+        embeds = await self.invoke_cmd_get_embeds('name set Greg')
         self.assert_success(embeds[0])
         self.assert_warning(embeds[1], 'privacy name public')
         value = await self.db.get_preferred_name(uid)
         self.assertEqual(value, 'Greg')
 
-        embeds = await self.do_invoke_get_embeds('pronouns set He/Him')
+        embeds = await self.invoke_cmd_get_embeds('pronouns set He/Him')
         self.assert_success(embeds[0])
         self.assert_warning(embeds[1], 'privacy pronouns public')
         value = await self.db.get_pronouns(uid)
         self.assertEqual(value, 'He/Him')
 
-        embeds = await self.do_invoke_get_embeds('birthday set 2000-02-14')
+        embeds = await self.invoke_cmd_get_embeds('birthday set 2000-02-14')
         self.assert_success(embeds[0])
         self.assert_warning(embeds[1], 'privacy birthday public')
         value = await self.db.get_birthday(uid)
         self.assertEqual(value, dt.date(2000, 2, 14))
 
-        embeds = await self.do_invoke_get_embeds('age set 20')
+        embeds = await self.invoke_cmd_get_embeds('age set 20')
         self.assert_error(embeds[0])
 
-        embeds = await self.do_invoke_get_embeds('timezone set new york')
+        embeds = await self.invoke_cmd_get_embeds('timezone set new york')
         self.assert_success(embeds[0])
         self.assert_warning(embeds[1], 'privacy timezone public')
         value = await self.db.get_timezone(uid)
@@ -170,30 +170,30 @@ class TestBios(DiscordMockingTestCase):
 
         # Individual
 
-        embeds = await self.do_invoke_get_embeds('name delete')
+        embeds = await self.invoke_cmd_get_embeds('name delete')
         self.assert_success(embeds[0])
         self.assertIsNone(await self.db.get_preferred_name(uid))
 
-        embeds = await self.do_invoke_get_embeds('pronouns delete')
+        embeds = await self.invoke_cmd_get_embeds('pronouns delete')
         self.assert_success(embeds[0])
         self.assertIsNone(await self.db.get_pronouns(uid))
 
-        embeds = await self.do_invoke_get_embeds('age delete')
+        embeds = await self.invoke_cmd_get_embeds('age delete')
         self.assert_error(embeds[0], 'birthday delete')
 
-        embeds = await self.do_invoke_get_embeds('birthday delete')
+        embeds = await self.invoke_cmd_get_embeds('birthday delete')
         self.assert_success(embeds[0])
         self.assertIsNone(await self.db.get_birthday(uid))
         self.assertIsNone(await self.db.get_age(uid))
 
-        embeds = await self.do_invoke_get_embeds('timezone delete')
+        embeds = await self.invoke_cmd_get_embeds('timezone delete')
         self.assert_success(embeds[0])
         self.assertIsNone(await self.db.get_timezone(uid))
 
         # Batch delete
 
         await self.make_greg(uid)
-        embeds = await self.do_invoke_get_embeds('bio delete')
+        embeds = await self.invoke_cmd_get_embeds('bio delete')
         self.assert_success(embeds[0])
         self.assertIsNone(await self.db.get_preferred_name(uid))
         self.assertIsNone(await self.db.get_pronouns(uid))
