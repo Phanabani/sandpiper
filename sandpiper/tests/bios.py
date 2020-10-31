@@ -16,6 +16,54 @@ class TestBios(DiscordMockingTestCase):
         self.bios = Bios(bot)
         bot.add_cog(self.bios)
 
+    async def test_privacy(self):
+        uid = 123
+        self.msg.author.id = uid
+
+        async def assert_all_privacies(privacy: PrivacyType):
+            name = await self.db.get_privacy_preferred_name(uid)
+            pronouns = await self.db.get_privacy_pronouns(uid)
+            birthday = await self.db.get_privacy_birthday(uid)
+            age = await self.db.get_privacy_age(uid)
+            timezone = await self.db.get_privacy_timezone(uid)
+            self.assertEqual(name, privacy)
+            self.assertEqual(pronouns, privacy)
+            self.assertEqual(birthday, privacy)
+            self.assertEqual(age, privacy)
+            self.assertEqual(timezone, privacy)
+
+        embeds = await self.do_invoke_get_embeds('privacy name public')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy pronouns public')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy birthday public')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy age public')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy timezone public')
+        self.assert_success(embeds[0])
+        await assert_all_privacies(PrivacyType.PUBLIC)
+
+        embeds = await self.do_invoke_get_embeds('privacy name private')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy pronouns private')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy birthday private')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy age private')
+        self.assert_success(embeds[0])
+        embeds = await self.do_invoke_get_embeds('privacy timezone private')
+        self.assert_success(embeds[0])
+        await assert_all_privacies(PrivacyType.PRIVATE)
+
+        embeds = await self.do_invoke_get_embeds('privacy all public')
+        self.assert_success(embeds[0])
+        await assert_all_privacies(PrivacyType.PUBLIC)
+
+        embeds = await self.do_invoke_get_embeds('privacy all private')
+        self.assert_success(embeds[0])
+        await assert_all_privacies(PrivacyType.PRIVATE)
+
     async def test_show(self):
         uid = 123
         self.msg.author.id = uid
@@ -47,32 +95,28 @@ class TestBios(DiscordMockingTestCase):
         self.msg.guild = None
 
         embeds = await self.do_invoke_get_embeds('name set Greg')
-        self.assertIn('Success', embeds[0].title)
-        self.assertIn('Warning', embeds[1].title)
-        self.assertIn('privacy name public', embeds[1].description)
+        self.assert_success(embeds[0])
+        self.assert_warning(embeds[1], 'privacy name public')
         value = await self.db.get_preferred_name(uid)
         self.assertEqual(value, 'Greg')
 
         embeds = await self.do_invoke_get_embeds('pronouns set He/Him')
-        self.assertIn('Success', embeds[0].title)
-        self.assertIn('Warning', embeds[1].title)
-        self.assertIn('privacy pronouns public', embeds[1].description)
+        self.assert_success(embeds[0])
+        self.assert_warning(embeds[1], 'privacy pronouns public')
         value = await self.db.get_pronouns(uid)
         self.assertEqual(value, 'He/Him')
 
         embeds = await self.do_invoke_get_embeds('birthday set 2000-02-14')
-        self.assertIn('Success', embeds[0].title)
-        self.assertIn('Warning', embeds[1].title)
-        self.assertIn('privacy birthday public', embeds[1].description)
+        self.assert_success(embeds[0])
+        self.assert_warning(embeds[1], 'privacy birthday public')
         value = await self.db.get_birthday(uid)
         self.assertEqual(value, dt.date(2000, 2, 14))
 
         embeds = await self.do_invoke_get_embeds('age set 20')
-        self.assertIn('Error', embeds[0].title)
+        self.assert_error(embeds[0])
 
         embeds = await self.do_invoke_get_embeds('timezone set new york')
-        self.assertIn('Success', embeds[0].title)
-        self.assertIn('Warning', embeds[1].title)
-        self.assertIn('privacy timezone public', embeds[1].description)
+        self.assert_success(embeds[0])
+        self.assert_warning(embeds[1], 'privacy timezone public')
         value = await self.db.get_timezone(uid)
         self.assertEqual(value, pytz.timezone('America/New_York'))
