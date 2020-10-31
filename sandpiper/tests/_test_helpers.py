@@ -65,6 +65,21 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
             if (embed := call.kwargs.get('embed'))
         ]
 
+    async def dispatch_msg(self, message_content: str) -> mock.AsyncMock:
+        self.msg.content = message_content
+        self.msg.channel.send = mock.AsyncMock()
+
+        for listener in self.bot.extra_events.get('on_message', []):
+            await listener(self.msg)
+        return self.msg.channel.send
+
+    async def dispatch_msg_get_msgs(self, message_content: str) -> List[str]:
+        send = await self.dispatch_msg(message_content)
+        return [
+            content for call in send.call_args_list
+            if (content := call.args[0]) is not None
+        ]
+
     def assert_success(self, embed: discord.Embed, description: str = None):
         self.assertIn('Success', embed.title)
         if description is not None:
