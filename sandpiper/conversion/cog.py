@@ -9,7 +9,7 @@ from ..common.embeds import Embeds
 from ..common.time import time_format
 from .time_conversion import *
 from .unit_conversion import *
-from ..user_data import DatabaseUnavailable
+from ..user_data import DatabaseUnavailable, UserData
 
 logger = logging.getLogger('sandpiper.unit_conversion')
 
@@ -49,14 +49,14 @@ class Conversion(commands.Cog):
         :returns: a list of strings that could not be converted
         """
 
-        user_data = self.bot.get_cog('UserData')
+        user_data: UserData = self.bot.get_cog('UserData')
         if user_data is None:
             # User data cog couldn't be retrieved, so consider all conversions
             # failed
             return time_strs
 
         try:
-            db = user_data.get_database()
+            db = await user_data.get_database()
         except DatabaseUnavailable:
             return time_strs
 
