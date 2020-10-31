@@ -96,3 +96,8 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Error', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
+
+    def assert_info(self, embed: discord.Embed, description: str = None):
+        self.assertIn('Info', embed.title)
+        if description is not None:
+            self.assertIn(description, embed.description)
