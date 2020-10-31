@@ -60,8 +60,7 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
         otherwise a tuple of original quantity and converted quantity
     """
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.info(f"Attempting unit conversion for {quantity_str!r}")
+    logger.info(f"Attempting unit conversion for {quantity_str!r}")
 
     if height := imperial_height_pattern.match(quantity_str):
         # Added support for imperial shorthand units for length
