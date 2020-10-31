@@ -18,13 +18,13 @@ class TestBios(DiscordMockingTestCase):
 
     async def test_show(self):
         uid = 123
+        self.msg.author.id = uid
+        self.msg.guild = None
+
         await self.db.set_preferred_name(uid, 'Greg')
         await self.db.set_pronouns(uid, 'He/Him')
         await self.db.set_birthday(uid, dt.date(2000, 2, 14))
         await self.db.set_timezone(uid, pytz.timezone('America/New_York'))
-
-        self.msg.author.id = uid
-        self.msg.guild = None
 
         embeds = await self.do_invoke_get_embeds('name show')
         self.assertIn('Greg', embeds[0].description)
