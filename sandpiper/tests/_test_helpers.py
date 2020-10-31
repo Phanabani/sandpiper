@@ -81,3 +81,18 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
             embed for call in send.call_args_list
             if (embed := call.kwargs.get('embed'))
         ]
+
+    def assert_success(self, embed: discord.Embed, description: str = None):
+        self.assertIn('Success', embed.title)
+        if description is not None:
+            self.assertIn(description, embed.description)
+
+    def assert_warning(self, embed: discord.Embed, description: str = None):
+        self.assertIn('Warning', embed.title)
+        if description is not None:
+            self.assertIn(description, embed.description)
+
+    def assert_error(self, embed: discord.Embed, description: str = None):
+        self.assertIn('Error', embed.title)
+        if description is not None:
+            self.assertIn(description, embed.description)
