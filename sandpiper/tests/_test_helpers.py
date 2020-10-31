@@ -71,7 +71,9 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.msg.content = message_content
         ctx = await self.bot.get_context(self.msg)
         ctx.send = mock.AsyncMock()
-        await self.bot.invoke(ctx)
+        # This is normally done with bot.invoke, but that silently suppresses
+        # errors which is BAD!!! >:(
+        await ctx.command.invoke(ctx)
         return ctx.send
 
     async def do_invoke_get_embeds(
