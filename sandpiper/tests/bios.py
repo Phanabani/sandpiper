@@ -6,8 +6,8 @@ import pytz
 
 from ._test_helpers import DiscordMockingTestCase
 from sandpiper.bios import Bios
-from sandpiper.user_info.database_sqlite import DatabaseSQLite
-from sandpiper.user_info.enums import PrivacyType
+from sandpiper.user_data.database_sqlite import DatabaseSQLite
+from sandpiper.user_data.enums import PrivacyType
 
 __all__ = ['TestBios']
 

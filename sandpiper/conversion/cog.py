@@ -9,7 +9,7 @@ from ..common.embeds import Embeds
 from ..common.time import time_format
 from .time_conversion import *
 from .unit_conversion import *
-from ..user_info import DatabaseUnavailable
+from ..user_data import DatabaseUnavailable
 
 logger = logging.getLogger('sandpiper.unit_conversion')
 

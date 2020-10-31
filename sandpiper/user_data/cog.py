@@ -6,7 +6,7 @@ from .database import Database
 
 __all__ = ['UserData', 'DatabaseUnavailable']
 
-logger = logging.getLogger('sandpiper.user_info')
+logger = logging.getLogger('sandpiper.user_data')
 
 
 class DatabaseUnavailable(Exception):

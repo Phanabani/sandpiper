@@ -9,9 +9,9 @@ from .misc import fuzzy_match_timezone
 from ..common.discord import *
 from ..common.embeds import Embeds
 from ..common.misc import join
-from ..user_info.cog import UserData, DatabaseUnavailable
-from ..user_info.database import Database, DatabaseError
-from ..user_info.enums import PrivacyType
+from ..user_data.cog import UserData, DatabaseUnavailable
+from ..user_data.database import Database, DatabaseError
+from ..user_data.enums import PrivacyType
 
 __all__ = ['Bios']
 

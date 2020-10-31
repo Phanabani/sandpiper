@@ -5,7 +5,7 @@ from typing import List, Set, Tuple
 import discord
 
 from ..common.time import *
-from ..user_info.database import Database
+from ..user_data.database import Database
 
 __all__ = ['UserTimezoneUnset', 'convert_time_to_user_timezones']
 

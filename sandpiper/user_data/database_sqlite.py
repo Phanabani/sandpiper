@@ -37,9 +37,9 @@ class DatabaseSQLite(Database):
         return self._con is not None
 
     async def create_table(self):
-        logger.info('Creating user_info table if not exists')
+        logger.info('Creating user_data table if not exists')
         stmt = '''
-            CREATE TABLE IF NOT EXISTS user_info (
+            CREATE TABLE IF NOT EXISTS user_data (
                 user_id INTEGER PRIMARY KEY UNIQUE, 
                 preferred_name TEXT, 
                 pronouns TEXT, 
@@ -60,10 +60,10 @@ class DatabaseSQLite(Database):
         await self.create_indices()
 
     async def create_indices(self):
-        logger.info('Creating indices for user_info table if not exist')
+        logger.info('Creating indices for user_data table if not exist')
         stmt = '''
             CREATE INDEX IF NOT EXISTS index_users_preferred_name
-            ON user_info(preferred_name)
+            ON user_data(preferred_name)
         '''
         try:
             await self._con.execute(stmt)
@@ -78,7 +78,7 @@ class DatabaseSQLite(Database):
             return []
 
         stmt = '''
-            SELECT user_id, preferred_name FROM user_info
+            SELECT user_id, preferred_name FROM user_data
             WHERE preferred_name like :name
                 AND privacy_preferred_name = :privacy
         '''
@@ -92,7 +92,7 @@ class DatabaseSQLite(Database):
     async def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
         logger.info(f'Getting all user timezones')
         stmt = '''
-            SELECT user_id, timezone FROM user_info
+            SELECT user_id, timezone FROM user_data
             WHERE privacy_timezone = :privacy
         '''
         args = {'privacy': PrivacyType.PUBLIC}
@@ -107,7 +107,7 @@ class DatabaseSQLite(Database):
 
     async def delete_user(self, user_id: int):
         logger.info(f'Deleting user (user_id={user_id})')
-        stmt = 'DELETE FROM user_info WHERE user_id = ?'
+        stmt = 'DELETE FROM user_data WHERE user_id = ?'
         args = (user_id,)
         try:
             await self._con.execute(stmt, args)
@@ -122,7 +122,7 @@ class DatabaseSQLite(Database):
     async def _do_execute_get(self, col_name: str, user_id: int,
                               default: Any = None) -> Optional[Any]:
         logger.info(f'Getting data from column {col_name} (user_id={user_id})')
-        stmt = f'SELECT {col_name} FROM user_info WHERE user_id = ?'
+        stmt = f'SELECT {col_name} FROM user_data WHERE user_id = ?'
         try:
             cur = await self._con.execute(stmt, (user_id,))
             result = await cur.fetchone()
@@ -140,7 +140,7 @@ class DatabaseSQLite(Database):
         logger.info(f'Setting data in column {col_name} (user_id={user_id} '
                     f'new_value={new_value!r})')
         stmt = f'''
-            INSERT INTO user_info(user_id, {col_name})
+            INSERT INTO user_data(user_id, {col_name})
             VALUES (:user_id, :new_value)
             ON CONFLICT (user_id) DO
             UPDATE SET {col_name} = :new_value
