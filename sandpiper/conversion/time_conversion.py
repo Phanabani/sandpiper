@@ -5,7 +5,7 @@ from typing import List, Set, Tuple
 import discord
 
 from ..common.time import *
-from ..user_info import UserData
+from ..user_info.database import Database
 
 __all__ = ['UserTimezoneUnset', 'convert_time_to_user_timezones']
 
@@ -17,13 +17,12 @@ class UserTimezoneUnset(Exception):
 
 
 async def convert_time_to_user_timezones(
-        user_data: UserData, user_id: int, guild: discord.Guild,
-        time_strs: List[str]
+        db: Database, user_id: int, guild: discord.Guild, time_strs: List[str]
 ) -> Tuple[List[Tuple[str, List[dt.datetime]]], List[str]]:
     """
     Convert times.
 
-    :param user_data: the UserData cog for interacting with the database
+    :param db: the Database adapter for getting user timezones
     :param user_id: the id of the user asking for a time conversion
     :param guild: the guild the conversion is occurring in
     :param time_strs: a list of strings that may be time specifiers
@@ -35,7 +34,6 @@ async def convert_time_to_user_timezones(
         occupied by users in the guild.
     """
 
-    db = await user_data.get_database()
     basis_tz = await db.get_timezone(user_id)
     if basis_tz is None:
         raise UserTimezoneUnset()

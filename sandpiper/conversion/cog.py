@@ -9,6 +9,7 @@ from ..common.embeds import Embeds
 from ..common.time import time_format
 from .time_conversion import *
 from .unit_conversion import *
+from ..user_info import DatabaseUnavailable
 
 logger = logging.getLogger('sandpiper.unit_conversion')
 
@@ -55,8 +56,13 @@ class Conversion(commands.Cog):
             return time_strs
 
         try:
+            db = user_data.get_database()
+        except DatabaseUnavailable:
+            return time_strs
+
+        try:
             localized_times, failed = await convert_time_to_user_timezones(
-                user_data, msg.author.id, msg.guild, time_strs
+                db, msg.author.id, msg.guild, time_strs
             )
         except UserTimezoneUnset:
             cmd_prefix = self.bot.command_prefix(self.bot, msg)[-1]
