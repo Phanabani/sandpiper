@@ -34,9 +34,6 @@ async def convert_time_to_user_timezones(
         occupied by users in the guild.
     """
 
-    basis_tz = await db.get_timezone(user_id)
-    if basis_tz is None:
-        raise UserTimezoneUnset()
     # Filter out repeat timezones and timezones of users outside this guild
     all_timezones = await db.get_all_timezones()
     logger.debug(f"All timezones: {all_timezones}")
@@ -46,11 +43,11 @@ async def convert_time_to_user_timezones(
 
     # Attempt to parse the strings as times and populate success and failure
     # lists accordingly
-    parsed_times = []
-    failed = []
+    parsed_times: List[dt.datetime] = []
+    failed: List[str] = []
     for tstr in time_strs:
         try:
-            parsed_times.append(parse_time(tstr, basis_tz))
+            parsed_time = parse_time(tstr)
         except TimeParsingError as e:
             logger.info(f"Failed to parse time string (string={tstr}, "
                         f"reason={e})")
@@ -58,6 +55,12 @@ async def convert_time_to_user_timezones(
         except:
             logger.warning(f"Unhandled exception while parsing time string "
                            f"(string={tstr})", exc_info=True)
+        else:
+            basis_tz = await db.get_timezone(user_id)
+            if basis_tz is None:
+                raise UserTimezoneUnset()
+            local_dt = localize_time_to_datetime(parsed_time, basis_tz)
+            parsed_times.append(local_dt)
 
     if not parsed_times:
         return [], failed
