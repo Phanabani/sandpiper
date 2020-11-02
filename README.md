@@ -25,6 +25,7 @@ Her current features include:
     - [Unit conversion](#unit-conversion)
     - [Time conversion](#time-conversion)
     - [Bios](#bios)
+- [Developers](#developers)
 - [Planned features](#planned-features)
 - [Inspiration](#inspiration)
 - [License](#license)
@@ -38,7 +39,7 @@ git clone https://github.com/hawkpath/sandpiper.git
 cd sandpiper
 ```
 
-Create a virtual environment and install dependencies.
+With Python 3.8+, create a virtual environment and install dependencies.
 
 ```shell script
 python -m venv venv
@@ -254,6 +255,34 @@ You can run this command in a server or in Sandpiper DMs.
 Command | Description | Example
 ------- | ----------- | -------
 `whois <name>` | Search for a user by one of their names on Discord. | `whois jason`
+
+## Developers
+
+### Installation
+
+Follow the installation steps in [install](#install) and install the
+development dependencies:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+### Testing
+
+#### Run unit tests
+
+```bash
+python -m sandpiper.tests
+```
+
+#### Run tests with code coverage
+
+```bash
+coverage run -m sandpiper.tests
+coverage html
+```
+
+Open `htmlcov/index.html` to view the coverage report.
 
 ## Planned features
 

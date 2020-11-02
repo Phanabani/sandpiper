@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -11,15 +12,23 @@ DB_FILE = Path(__file__).parent.parent / 'sandpiper.db'
 
 def setup(bot: Bot):
     user_data = UserData(bot)
-    user_data.set_database_adapter(DatabaseSQLite(DB_FILE))
+    db = DatabaseSQLite(DB_FILE)
+    asyncio.run_coroutine_threadsafe(db.connect(), bot.loop)
+    user_data.set_database_adapter(db)
     bot.add_cog(user_data)
+
+
+async def do_disconnect(user_data: UserData):
+    try:
+        db = await user_data.get_database()
+    except DatabaseUnavailable:
+        pass
+    else:
+        await db.disconnect()
 
 
 def teardown(bot: Bot):
     """Disconnects from the database"""
     user_data: Optional[UserData] = bot.get_cog('UserData')
     if user_data is not None:
-        try:
-            user_data.get_database().disconnect()
-        except DatabaseUnavailable:
-            pass
+        asyncio.run_coroutine_threadsafe(do_disconnect(user_data), bot.loop)

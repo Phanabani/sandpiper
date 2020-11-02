@@ -6,7 +6,7 @@ import pytz
 import tzlocal
 
 __all__ = ['TimezoneType', 'TimeParsingError', 'time_format', 'parse_time',
-           'utc_now']
+           'utc_now', 'localize_time_to_datetime']
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 
@@ -42,15 +42,12 @@ def utc_now() -> dt.datetime:
     return local_tz.localize(dt.datetime.now())
 
 
-def parse_time(string: str, basis_tz: TimezoneType) -> dt.datetime:
+def parse_time(string: str) -> dt.time:
     """
     Parse a string as a time specifier of the general format "12:34 PM".
 
-    :raises: TimeParsingError if parsing failed in an expected way
+    :raises TimeParsingError: if parsing failed in an expected way
     """
-
-    # Convert UTC now to the basis timezone
-    now_basis = utc_now().astimezone(basis_tz)
 
     match = time_pattern.match(string)
     if not match:
@@ -81,9 +78,28 @@ def parse_time(string: str, basis_tz: TimezoneType) -> dt.datetime:
         else:
             raise TimeParsingError('24 hour times do not use AM or PM')
 
+    return dt.time(hour, minute)
+
+
+def localize_time_to_datetime(time: dt.time,
+                              basis_tz: TimezoneType) -> dt.datetime:
+    """
+    Turn a time into a datetime, localized in the given timezone based on the
+    current day in that timezone.
+
+    :param time: the time in `basis_tz`'s current day
+    :param basis_tz: the timezone for localizing the datetime. It is also used
+        to determine the datetime's date.
+    :returns: An aware timezone where the date is the current day in `basis_tz`
+        and the time is equal to `time`.
+    """
+
+    # Convert UTC now to the basis timezone
+    now_basis = utc_now().astimezone(basis_tz)
+
     # Create the datetime we think the user is trying to specify by using
     # their current local day and adding the hour and minute arguments.
     # Return the localized datetime
     basis_time = dt.datetime(now_basis.year, now_basis.month, now_basis.day,
-                             hour, minute)
+                             time.hour, time.minute)
     return basis_tz.localize(basis_time)
