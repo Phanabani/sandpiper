@@ -38,7 +38,7 @@ class Embeds:
         if isinstance(message, str):
             pass
         elif isinstance(message, Iterable):
-            message = join(message)
+            message = join(*message, sep='\n')
         elif message is None:
             message = discord.Embed.Empty
         else:
@@ -64,7 +64,7 @@ class Embeds:
             an iterable of strings to join with newlines.
         """
         if not isinstance(message, str) and isinstance(message, Iterable):
-            message = join(message)
+            message = join(*message, sep='\n')
         embed = discord.Embed(
             title='Success', description=message, color=cls.SUCCESS_COLOR)
         await messageable.send(embed=embed)
@@ -80,7 +80,7 @@ class Embeds:
             an iterable of strings to join with newlines.
         """
         if not isinstance(message, str) and isinstance(message, Iterable):
-            message = join(message)
+            message = join(*message, sep='\n')
         embed = discord.Embed(
             title='Warning', description=message, color=cls.WARNING_COLOR)
         await messageable.send(embed=embed)
@@ -96,7 +96,7 @@ class Embeds:
             iterable of strings to join with newlines.
         """
         if not isinstance(message, str) and isinstance(message, Iterable):
-            message = join(message)
+            message = join(*message, sep='\n')
         embed = discord.Embed(
             title='Error', description=message, color=cls.ERROR_COLOR)
         await messageable.send(embed=embed)
