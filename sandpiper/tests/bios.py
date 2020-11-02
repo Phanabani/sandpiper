@@ -134,6 +134,8 @@ class TestBios(DiscordMockingTestCase):
         self.msg.author.id = uid
         self.msg.guild = None
 
+        # Success
+
         embeds = await self.invoke_cmd_get_embeds('name set Greg')
         self.assert_success(embeds[0])
         self.assert_warning(embeds[1], 'privacy name public')
@@ -160,6 +162,14 @@ class TestBios(DiscordMockingTestCase):
         self.assert_warning(embeds[1], 'privacy timezone public')
         value = await self.db.get_timezone(uid)
         self.assertEqual(value, pytz.timezone('America/New_York'))
+
+        # Errors
+
+        with self.assertRaisesRegex(commands.BadArgument, r'64 characters'):
+            await self.invoke_cmd_get_embeds('name set ' + 'a'*65)
+
+        with self.assertRaisesRegex(commands.BadArgument, r'64 characters'):
+            await self.invoke_cmd_get_embeds('pronouns set ' + 'a'*65)
 
     async def test_delete(self):
         uid = 123
