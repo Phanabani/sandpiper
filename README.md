@@ -68,7 +68,7 @@ The only value you need to set is the `bot_token`.
 
 See [config](#config) for more configuration options.
 
-### Running the bot
+### Running Sandpiper
 
 #### Basic
 
@@ -82,13 +82,27 @@ python -m sandpiper
 
 [PM2](https://pm2.keymetrics.io/docs/usage/quick-start/) is a daemon process
 manager. Ensure you've followed the virtual environment setup described above,
-then simply run:
+then simply run the following command in Sandpiper's root directory:
 
 ```shell script
 pm2 start
 ```
 
 This starts the process as a daemon using info from [ecosystem.config.js](ecosystem.config.js).
+
+### Inviting Sandpiper to your Discord server
+
+Sandpiper requires the following permissions to run normally:
+
+- View Channels
+- Send Messages
+- Embed links
+
+These correspond to the permission integer `19456`.
+
+Sandpiper also requires the [server members privileged intent](https://discord.com/developers/docs/topics/gateway#privileged-intents)
+to allow for Discord username/server nickname lookup in the `whois` command.
+You can enable it on the bot page of your application (https:\//discord.com/developers/applications/<client_id>/bot).
 
 ## Config
 
