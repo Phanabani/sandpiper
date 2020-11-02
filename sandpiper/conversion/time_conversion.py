@@ -49,12 +49,12 @@ async def convert_time_to_user_timezones(
         try:
             parsed_time = parse_time(tstr)
         except TimeParsingError as e:
-            logger.info(f"Failed to parse time string (string={tstr}, "
+            logger.info(f"Failed to parse time string (string={tstr!r}, "
                         f"reason={e})")
             failed.append(tstr)
         except:
             logger.warning(f"Unhandled exception while parsing time string "
-                           f"(string={tstr})", exc_info=True)
+                           f"(string={tstr!r})", exc_info=True)
         else:
             basis_tz = await db.get_timezone(user_id)
             if basis_tz is None:
