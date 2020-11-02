@@ -148,7 +148,7 @@ Key | Value
 `when` *(string)* | Type of time interval for rotating log files. Must be one of ('S', 'M', 'H', 'D', 'midnight')
 `interval` *(integer)* | Number of specified time intervals that must elapse before rotating to a new log file
 `backup_count` *(integer)* | Number of backup log files to retain (deletes oldest after limit is reached)
-`format` *(string)* | Format string used when writing log messages ([format string reference](https://discordpy.readthedocs.io/en/latest/ext/commands/api.html#bot))
+`format` *(string)* | Format string used when writing log messages ([format string reference](https://docs.python.org/3/library/logging.html#logrecord-attributes))
 
 ## Commands and features
 
