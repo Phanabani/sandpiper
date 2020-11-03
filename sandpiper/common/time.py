@@ -5,7 +5,7 @@ from typing import Union, cast
 import pytz
 import tzlocal
 
-__all__ = ['TimezoneType', 'TimeParsingError', 'time_format', 'parse_time', 'parse_date',
+__all__ = ['TimezoneType', 'time_format', 'parse_time', 'parse_date',
            'utc_now', 'localize_time_to_datetime']
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
@@ -64,32 +64,26 @@ except ValueError:
         time_format = '%I:%M %p (%H:%M)'
 
 
-class TimeParsingError(Exception):
-    pass
-
-
 def utc_now() -> dt.datetime:
     # Get the system-local timezone and use it to localize dt.datetime.now()
     local_tz = cast(TimezoneType, tzlocal.get_localzone())
     return local_tz.localize(dt.datetime.now())
 
 
-def parse_time(string: str) -> dt.time:
+def parse_time(time_str: str) -> dt.time:
     """
     Parse a string as a time specifier of the general format "12:34 PM".
-
-    :raises TimeParsingError: if parsing failed in an expected way
     """
 
-    match = time_pattern.match(string)
+    match = time_pattern.match(time_str)
     if not match:
-        raise TimeParsingError('No match')
+        raise ValueError('No match')
 
     hour = int(match.group('hour'))
     minute = int(match.group('minute') or 0)
 
     if (0 > hour > 23) or (0 > minute > 59):
-        raise TimeParsingError('Hour or minute is out of range')
+        raise ValueError('Hour or minute is out of range')
 
     if match.group('period_pm'):
         if hour < 12:
@@ -99,7 +93,7 @@ def parse_time(string: str) -> dt.time:
             # 12 PM is 12:00
             pass
         else:
-            raise TimeParsingError('24 hour times do not use AM or PM')
+            raise ValueError('24 hour times do not use AM or PM')
     elif match.group('period_am'):
         if hour < 12:
             # AM, so no change
@@ -108,7 +102,7 @@ def parse_time(string: str) -> dt.time:
             # 12 AM is 00:00
             hour = 0
         else:
-            raise TimeParsingError('24 hour times do not use AM or PM')
+            raise ValueError('24 hour times do not use AM or PM')
 
     return dt.time(hour, minute)
 

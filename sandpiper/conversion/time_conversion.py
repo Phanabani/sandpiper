@@ -48,7 +48,7 @@ async def convert_time_to_user_timezones(
     for tstr in time_strs:
         try:
             parsed_time = parse_time(tstr)
-        except TimeParsingError as e:
+        except ValueError as e:
             logger.info(f"Failed to parse time string (string={tstr!r}, "
                         f"reason={e})")
             failed.append(tstr)
