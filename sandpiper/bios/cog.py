@@ -117,25 +117,32 @@ class Bios(commands.Cog):
             f'content={ctx.message.content!r})'
         )
 
-    @commands.group()
+    @commands.group(
+        brief="Personal info commands.",
+        help="Commands for managing all of your personal info at once."
+    )
     async def bio(self, ctx: commands.Context):
-        """Commands for managing all of your personal info."""
         pass
 
-    @bio.command(name='delete', aliases=_delete_aliases)
+    @bio.command(
+        name='delete', aliases=_delete_aliases,
+        brief="Delete all stored info.",
+        help="Delete all of your personal info stored in Sandpiper."
+    )
     @commands.dm_only()
     async def bio_delete(self, ctx: commands.Context):
-        """Delete all of your personal info."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.delete_user(user_id)
         await Embeds.success(ctx, "Deleted all of your personal info!")
 
-    @bio.command(name='show', aliases=_show_aliases)
+    @bio.command(
+        name='show', aliases=_show_aliases,
+        brief="Show all stored info.",
+        help="Display all of your personal info stored in Sandpiper."
+    )
     @commands.dm_only()
     async def bio_show(self, ctx: commands.Context):
-        """Display your personal info."""
-
         user_id: int = ctx.author.id
         db = await self._get_database()
 
@@ -162,15 +169,21 @@ class Bios(commands.Cog):
 
     # Privacy setters
 
-    @commands.group(name='privacy', invoke_without_command=False)
+    @commands.group(
+        name='privacy', invoke_without_command=False,
+        brief="Personal info privacy commands.",
+        help="Commands for setting the privacy of your personal info."
+    )
     async def privacy(self, ctx: commands.Context):
-        """Commands for setting the privacy of your personal info."""
         pass
 
-    @privacy.command(name='all')
+    @privacy.command(
+        name='all',
+        brief="Set all privacies at once.",
+        help="Set the privacy of all of your personal info at once."
+    )
     async def privacy_all(
             self, ctx: commands.Context, new_privacy: privacy_handler):
-        """Set the privacy of all of your personal info at once."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
@@ -180,46 +193,61 @@ class Bios(commands.Cog):
         await db.set_privacy_timezone(user_id, new_privacy)
         await Embeds.success(ctx, "All privacies set!")
 
-    @privacy.command(name='name')
+    @privacy.command(
+        name='name',
+        brief="Set preferred name privacy.",
+        help="Set the privacy of your preferred name."
+    )
     async def privacy_name(
             self, ctx: commands.Context, new_privacy: privacy_handler):
-        """Set the privacy of your preferred name."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
         await Embeds.success(ctx, "Name privacy set!")
 
-    @privacy.command(name='pronouns')
+    @privacy.command(
+        name='pronouns',
+        brief="Set pronouns privacy.",
+        help="Set the privacy of your pronouns."
+    )
     async def privacy_pronouns(
             self, ctx: commands.Context, new_privacy: privacy_handler):
-        """Set the privacy of your pronouns."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_pronouns(user_id, new_privacy)
         await Embeds.success(ctx, "Pronouns privacy set!")
 
-    @privacy.command(name='birthday')
+    @privacy.command(
+        name='birthday',
+        brief="Set birthday privacy.",
+        help="Set the privacy of your birthday."
+    )
     async def privacy_birthday(
             self, ctx: commands.Context, new_privacy: privacy_handler):
-        """Set the privacy of your birthday."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_birthday(user_id, new_privacy)
         await Embeds.success(ctx, "Birthday privacy set!")
 
-    @privacy.command(name='age')
+    @privacy.command(
+        name='age',
+        brief="Set age privacy.",
+        help="Set the privacy of your age."
+    )
     async def privacy_age(
             self, ctx: commands.Context, new_privacy: privacy_handler):
-        """Set the privacy of your age."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_age(user_id, new_privacy)
         await Embeds.success(ctx, "Age privacy set!")
 
-    @privacy.command(name='timezone')
+    @privacy.command(
+        name='timezone',
+        brief="Set timezone privacy.",
+        help="Set the privacy of your timezone."
+    )
     async def privacy_timezone(
             self, ctx: commands.Context, new_privacy: privacy_handler):
-        """Set the privacy of your timezone."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_timezone(user_id, new_privacy)
@@ -227,25 +255,33 @@ class Bios(commands.Cog):
 
     # Name
 
-    @commands.group(name='name', invoke_without_command=False)
+    @commands.group(
+        name='name', invoke_without_command=False,
+        brief="Preferred name commands.",
+        help="Commands for managing your preferred name."
+    )
     async def name(self, ctx: commands.Context):
-        """Commands for managing your preferred name."""
         pass
 
-    @name.command(name='show', aliases=_show_aliases)
+    @name.command(
+        name='show', aliases=_show_aliases,
+        help="Display your preferred name."
+    )
     @commands.dm_only()
     async def name_show(self, ctx: commands.Context):
-        """Display your preferred name."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         preferred_name = await db.get_preferred_name(user_id)
         privacy = await db.get_privacy_preferred_name(user_id)
         await Embeds.info(ctx, user_info_str('Name', preferred_name, privacy))
 
-    @name.command(name='set', aliases=_set_aliases)
+    @name.command(
+        name='set', aliases=_set_aliases,
+        brief="Set your preferred name.",
+        help="Set your preferred name. Must be 64 characters or less."
+    )
     @commands.dm_only()
     async def name_set(self, ctx: commands.Context, new_name: str):
-        """Set your preferred name."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_name) > 64:
@@ -262,10 +298,12 @@ class Bios(commands.Cog):
                 "the command `privacy name public`."
             )
 
-    @name.command(name='delete', aliases=_delete_aliases)
+    @name.command(
+        name='delete', aliases=_delete_aliases,
+        help="Delete your preferred name."
+    )
     @commands.dm_only()
     async def name_delete(self, ctx: commands.Context):
-        """Delete your stored preferred name."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_preferred_name(user_id, None)
@@ -273,25 +311,33 @@ class Bios(commands.Cog):
 
     # Pronouns
 
-    @commands.group(name='pronouns', invoke_without_command=False)
+    @commands.group(
+        name='pronouns', invoke_without_command=False,
+        brief="Pronouns commands.",
+        help="Commands for managing your pronouns."
+    )
     async def pronouns(self, ctx: commands.Context):
-        """Commands for managing your pronouns."""
         pass
 
-    @pronouns.command(name='show', aliases=_show_aliases)
+    @pronouns.command(
+        name='show', aliases=_show_aliases,
+        help="Display your pronouns."
+    )
     @commands.dm_only()
     async def pronouns_show(self, ctx: commands.Context):
-        """Display your pronouns."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         pronouns = await db.get_pronouns(user_id)
         privacy = await db.get_privacy_pronouns(user_id)
         await Embeds.info(ctx, user_info_str('Pronouns', pronouns, privacy))
 
-    @pronouns.command(name='set', aliases=_set_aliases)
+    @pronouns.command(
+        name='set', aliases=_set_aliases,
+        brief="Set your pronouns.",
+        help="Set your pronouns. Must be 64 characters or less."
+    )
     @commands.dm_only()
     async def pronouns_set(self, ctx: commands.Context, new_pronouns: str):
-        """Set your pronouns."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_pronouns) > 64:
@@ -308,10 +354,12 @@ class Bios(commands.Cog):
                 "the command `privacy pronouns public`."
             )
 
-    @pronouns.command(name='delete', aliases=_delete_aliases)
+    @pronouns.command(
+        name='delete', aliases=_delete_aliases,
+        help="Delete your pronouns."
+    )
     @commands.dm_only()
     async def pronouns_delete(self, ctx: commands.Context):
-        """Delete your stored pronouns."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_pronouns(user_id, None)
@@ -319,26 +367,34 @@ class Bios(commands.Cog):
 
     # Birthday
 
-    @commands.group(name='birthday', invoke_without_command=False)
+    @commands.group(
+        name='birthday', invoke_without_command=False,
+        brief="Birthday commands.",
+        help="Commands for managing your birthday."
+    )
     async def birthday(self, ctx: commands.Context):
-        """Commands for managing your birthday."""
         pass
 
-    @birthday.command(name='show', aliases=_show_aliases)
+    @birthday.command(
+        name='show', aliases=_show_aliases,
+        help="Display your birthday."
+    )
     @commands.dm_only()
     async def birthday_show(self, ctx: commands.Context):
-        """Display your birthday."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         birthday = await db.get_birthday(user_id)
         privacy = await db.get_privacy_birthday(user_id)
         await Embeds.info(ctx, user_info_str('Birthday', birthday, privacy))
 
-    @birthday.command(name='set', aliases=_set_aliases)
+    @birthday.command(
+        name='set', aliases=_set_aliases,
+        brief="Set your birthday.",
+        help="Set your birthday in the format YYYY-MM-DD."
+    )
     @commands.dm_only()
     async def birthday_set(self, ctx: commands.Context,
                            new_birthday: date_handler):
-        """Set your birthday."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, new_birthday)
@@ -354,10 +410,12 @@ class Bios(commands.Cog):
                 "public with the command `privacy age public`."
             )
 
-    @birthday.command(name='delete', aliases=_delete_aliases)
+    @birthday.command(
+        name='delete', aliases=_delete_aliases,
+        help="Delete your birthday."
+    )
     @commands.dm_only()
     async def birthday_delete(self, ctx: commands.Context):
-        """Delete your stored birthday."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, None)
@@ -365,15 +423,21 @@ class Bios(commands.Cog):
 
     # Age
 
-    @commands.group(name='age', invoke_without_command=False)
+    @commands.group(
+        name='age', invoke_without_command=False,
+        brief="Age commands.",
+        help="Commands for managing your age."
+    )
     async def age(self, ctx: commands.Context):
-        """Commands for managing your age."""
         pass
 
-    @age.command(name='show', aliases=_show_aliases)
+    @age.command(
+        name='show', aliases=_show_aliases,
+        brief="Display your age.",
+        help="Display your age (calculated automatically using your birthday)."
+    )
     @commands.dm_only()
     async def age_show(self, ctx: commands.Context):
-        """Display your age (calculated automatically using your birthday)."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         age = await db.get_age(user_id)
@@ -381,13 +445,16 @@ class Bios(commands.Cog):
         await Embeds.info(ctx, user_info_str('Age', age, privacy))
 
     # noinspection PyUnusedLocal
-    @age.command(name='set', aliases=_set_aliases)
+    @age.command(
+        name='set', aliases=_set_aliases,
+        brief="This command does nothing.",
+        help=(
+            "Age is automatically calculated using your birthday. This "
+            "command exists only to let you know that you don't have to set it."
+        )
+    )
     @commands.dm_only()
     async def age_set(self, ctx: commands.Context):
-        """
-        Age is automatically calculated using your birthday. This command
-        exists only to let you know that you don't have to set it.
-        """
         await Embeds.error(
             ctx,
             "Age is automatically calculated using your birthday. "
@@ -395,13 +462,16 @@ class Bios(commands.Cog):
         )
 
     # noinspection PyUnusedLocal
-    @age.command(name='delete', aliases=_delete_aliases)
+    @age.command(
+        name='delete', aliases=_delete_aliases,
+        brief="This command does nothing.",
+        help=(
+            "Age is automatically calculated using your birthday. This command "
+            "exists only to let you know that you can only delete your birthday."
+        )
+    )
     @commands.dm_only()
     async def age_delete(self, ctx: commands.Context):
-        """
-        Age is automatically calculated using your birthday. This command
-        exists only to let you know that you can only delete your birthday.
-        """
         await Embeds.error(
             ctx,
             "Age is automatically calculated using your birthday. You can "
@@ -412,33 +482,40 @@ class Bios(commands.Cog):
 
     # Timezone
 
-    @commands.group(name='timezone', invoke_without_command=False)
+    @commands.group(
+        name='timezone', invoke_without_command=False,
+        brief="Timezone commands.",
+        help="Commands for managing your timezone."
+    )
     async def timezone(self, ctx: commands.Context):
-        """Commands for managing your timezone."""
         pass
 
-    @timezone.command(name='show', aliases=_show_aliases)
+    @timezone.command(
+        name='show', aliases=_show_aliases,
+        help="Display your timezone."
+    )
     @commands.dm_only()
     async def timezone_show(self, ctx: commands.Context):
-        """Display your timezone."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         timezone = await db.get_timezone(user_id)
         privacy = await db.get_privacy_timezone(user_id)
         await Embeds.info(ctx, user_info_str('Timezone', timezone, privacy))
 
-    @timezone.command(name='set', aliases=_set_aliases)
+    @timezone.command(
+        name='set', aliases=_set_aliases,
+        brief="Set your timezone.",
+        help=(
+            "Set your timezone. Don't worry about formatting. Typing the "
+            "name of the nearest major city should be good enough, but you can "
+            "also try your state/country if that doesn't work."
+            "\n\n"
+            "If you're confused, use this website to find your full timezone "
+            "name: http://kevalbhatt.github.io/timezone-picker"
+        )
+    )
     @commands.dm_only()
     async def timezone_set(self, ctx: commands.Context, *, new_timezone: str):
-        """
-        Set your timezone. Typing the name of the nearest major city should be
-        good enough, but you can also try your state/country if that doesn't
-        work.
-
-        As a last resort, use this website to find your full timezone name:
-        http://kevalbhatt.github.io/timezone-picker/
-        """
-
         user_id: int = ctx.author.id
         db = await self._get_database()
 
@@ -480,10 +557,12 @@ class Bios(commands.Cog):
                 "the command `privacy timezone public`."
             )
 
-    @timezone.command(name='delete', aliases=_delete_aliases)
+    @timezone.command(
+        name='delete', aliases=_delete_aliases,
+        help="Delete your timezone."
+    )
     @commands.dm_only()
     async def timezone_delete(self, ctx: commands.Context):
-        """Delete your stored timezone."""
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_timezone(user_id, None)
@@ -491,13 +570,16 @@ class Bios(commands.Cog):
 
     # Extra commands
 
-    @commands.command(name='whois')
+    @commands.command(
+        name='whois',
+        brief="Search for a user.",
+        help=(
+            "Search for a user by one of their names. Outputs a list of "
+            "matching users, showing their preferred name, Discord username, "
+            "and nicknames in servers you share with them."
+        )
+    )
     async def whois(self, ctx: commands.Context, name: str):
-        """
-        Search for a user by one of their names. Outputs a list of matching
-        users, showing their preferred name, Discord username, and nicknames
-        in servers you share with them.
-        """
         if len(name) < 2:
             raise BadArgument("Name must be at least 2 characters.")
 
