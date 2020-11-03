@@ -288,7 +288,7 @@ class Bios(commands.Cog):
             raise BadArgument(f"Name must be 64 characters or less "
                               f"(yours: {len(new_name)}).")
         await db.set_preferred_name(user_id, new_name)
-        await Embeds.success(ctx, 'Name set!')
+        await Embeds.success(ctx, "Preferred name set!")
 
         if await db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
             await Embeds.warning(
