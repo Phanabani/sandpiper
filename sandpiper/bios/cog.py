@@ -281,7 +281,7 @@ class Bios(commands.Cog):
         help="Set your preferred name. Must be 64 characters or less."
     )
     @commands.dm_only()
-    async def name_set(self, ctx: commands.Context, new_name: str):
+    async def name_set(self, ctx: commands.Context, *, new_name: str):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_name) > 64:
@@ -337,7 +337,7 @@ class Bios(commands.Cog):
         help="Set your pronouns. Must be 64 characters or less."
     )
     @commands.dm_only()
-    async def pronouns_set(self, ctx: commands.Context, new_pronouns: str):
+    async def pronouns_set(self, ctx: commands.Context, *, new_pronouns: str):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_pronouns) > 64:
