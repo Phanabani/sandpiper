@@ -5,7 +5,7 @@ from typing import Union, cast
 import pytz
 import tzlocal
 
-__all__ = ['TimezoneType', 'TimeParsingError', 'time_format', 'parse_time',
+__all__ = ['TimezoneType', 'TimeParsingError', 'time_format', 'parse_time', 'parse_date',
            'utc_now', 'localize_time_to_datetime']
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
@@ -17,6 +17,38 @@ time_pattern = re.compile(
     r'(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?$',
     re.I
 )
+
+date_pattern_simple = re.compile(
+    r'^(?P<year>\d{4})'
+    r'[/-](?P<month>\d\d)'
+    r'[/-](?P<day>\d\d)$'
+)
+
+date_pattern_words = re.compile(
+    r'^(?:(?P<day1>\d{1,2}) )?'
+    r'(?P<month>'
+        r'(?:jan(?:uary)?)'
+        r'|(?:feb(?:ruary)?)'
+        r'|(?:mar(?:ch)?)'
+        r'|(?:apr(?:il)?)'
+        r'|(?:may)'
+        r'|(?:june?)'
+        r'|(?:july?)'
+        r'|(?:aug(?:ust)?)'
+        r'|(?:sep(?:t(?:ember)?)?)'
+        r'|(?:oct(?:ober)?)'
+        r'|(?:nov(?:ember)?)'
+        r'|(?:dec(?:ember)?)'
+    r')'
+    r'(?: (?P<day2>\d{1,2}))?'
+    r'(?: (?P<year>\d{4}))?$',
+    re.I
+)
+
+months = {
+    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+}
 
 try:
     # Unix strip zero-padding
@@ -79,6 +111,27 @@ def parse_time(string: str) -> dt.time:
             raise TimeParsingError('24 hour times do not use AM or PM')
 
     return dt.time(hour, minute)
+
+
+def parse_date(date_str: str) -> dt.date:
+    if match := date_pattern_simple.match(date_str):
+        year = int(match.group('year'))
+        month = int(match.group('month'))
+        day = int(match.group('day'))
+
+    elif match := date_pattern_words.match(date_str):
+        year = int(match.group('year') or 1)
+        month = months[match.group('month')[:3].lower()]
+        day1 = match.group('day1')
+        day2 = match.group('day2')
+        if (day1 is None) == (day2 is None):
+            raise ValueError("You must specify the day")
+        day = int(day1 if day1 is not None else day2)
+
+    else:
+        raise ValueError('No match')
+
+    return dt.date(year, month, day)
 
 
 def localize_time_to_datetime(time: dt.time,

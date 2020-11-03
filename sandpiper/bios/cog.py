@@ -430,7 +430,7 @@ class Bios(commands.Cog):
         )
     )
     @commands.dm_only()
-    async def birthday_set(self, ctx: commands.Context,
+    async def birthday_set(self, ctx: commands.Context, *,
                            new_birthday: date_handler):
         user_id: int = ctx.author.id
         db = await self._get_database()

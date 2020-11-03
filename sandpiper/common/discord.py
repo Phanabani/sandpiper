@@ -1,21 +1,28 @@
 from datetime import date
+import logging
 from typing import List, Tuple
 
 import discord
 from discord.ext.commands import BadArgument
 
+from .time import parse_date
 from sandpiper.user_data.enums import PrivacyType
 
 __all__ = ['date_handler', 'privacy_handler', 'find_user_in_mutual_guilds',
            'find_users_by_display_name', 'find_users_by_username']
 
+logger = logging.getLogger('sandpiper.common.discord')
+
 
 def date_handler(date_str: str) -> date:
     try:
-        return date.fromisoformat(date_str)
-    except ValueError:
+        return parse_date(date_str)
+    except ValueError as e:
+        logger.info(f"Failed to parse date (str={date_str!r} reason={e})")
         raise BadArgument(
-            'Use date format YYYY-MM-DD (example: 1997-08-27)')
+            "Bad date format. Try something like this: `1997-08-27`, "
+            "`31 Oct`, `June 15 2001`"
+        )
 
 
 def privacy_handler(privacy_str: str) -> PrivacyType:
