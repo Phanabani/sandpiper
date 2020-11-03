@@ -41,7 +41,7 @@ class Sandpiper(commands.Bot):
             description=config.description,
         )
 
-        @self.command(name=config.command_prefix.strip())
+        @self.command(name=config.command_prefix.strip(), hidden=True)
         async def noprefix_notify(ctx: commands.Context, *, rest: str):
             if ctx.prefix == '':
                 raise commands.BadArgument(
