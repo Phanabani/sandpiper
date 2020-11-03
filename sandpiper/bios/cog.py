@@ -180,7 +180,12 @@ class Bios(commands.Cog):
     @privacy.command(
         name='all',
         brief="Set all privacies at once.",
-        help="Set the privacy of all of your personal info at once."
+        help=(
+            "Set the privacy of all of your personal info at once to either "
+            "'private' or 'public'."
+            "\n\n"
+            "Example: privacy all public"
+        )
     )
     async def privacy_all(
             self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -196,7 +201,11 @@ class Bios(commands.Cog):
     @privacy.command(
         name='name',
         brief="Set preferred name privacy.",
-        help="Set the privacy of your preferred name."
+        help=(
+            "Set the privacy of your preferred name 'private' or 'public'."
+            "\n\n"
+            "Example: privacy name public"
+        )
     )
     async def privacy_name(
             self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -208,7 +217,11 @@ class Bios(commands.Cog):
     @privacy.command(
         name='pronouns',
         brief="Set pronouns privacy.",
-        help="Set the privacy of your pronouns."
+        help=(
+            "Set the privacy of your pronouns to either 'private' or 'public'."
+            "\n\n"
+            "Example: privacy pronouns public"
+        )
     )
     async def privacy_pronouns(
             self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -220,7 +233,11 @@ class Bios(commands.Cog):
     @privacy.command(
         name='birthday',
         brief="Set birthday privacy.",
-        help="Set the privacy of your birthday."
+        help=(
+            "Set the privacy of your birthday to either 'private' or 'public'."
+            "\n\n"
+            "Example: privacy birthday public"
+        )
     )
     async def privacy_birthday(
             self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -232,7 +249,11 @@ class Bios(commands.Cog):
     @privacy.command(
         name='age',
         brief="Set age privacy.",
-        help="Set the privacy of your age."
+        help=(
+            "Set the privacy of your age to either 'private' or 'public'."
+            "\n\n"
+            "Example: privacy age public"
+        )
     )
     async def privacy_age(
             self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -244,7 +265,11 @@ class Bios(commands.Cog):
     @privacy.command(
         name='timezone',
         brief="Set timezone privacy.",
-        help="Set the privacy of your timezone."
+        help=(
+            "Set the privacy of your timezone to either 'private' or 'public'."
+            "\n\n"
+            "Example: privacy timezone public"
+        )
     )
     async def privacy_timezone(
             self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -278,7 +303,11 @@ class Bios(commands.Cog):
     @name.command(
         name='set', aliases=_set_aliases,
         brief="Set your preferred name.",
-        help="Set your preferred name. Must be 64 characters or less."
+        help=(
+             "Set your preferred name. Must be 64 characters or less."
+             "\n\n"
+             "Example: name set Hawk"
+        )
     )
     @commands.dm_only()
     async def name_set(self, ctx: commands.Context, *, new_name: str):
@@ -334,7 +363,11 @@ class Bios(commands.Cog):
     @pronouns.command(
         name='set', aliases=_set_aliases,
         brief="Set your pronouns.",
-        help="Set your pronouns. Must be 64 characters or less."
+        help=(
+            "Set your pronouns. Must be 64 characters or less."
+            "\n\n"
+            "Example: pronouns set She/Her"
+        )
     )
     @commands.dm_only()
     async def pronouns_set(self, ctx: commands.Context, *, new_pronouns: str):
@@ -390,7 +423,11 @@ class Bios(commands.Cog):
     @birthday.command(
         name='set', aliases=_set_aliases,
         brief="Set your birthday.",
-        help="Set your birthday in the format YYYY-MM-DD."
+        help=(
+            "Set your birthday in the format YYYY-MM-DD."
+            "\n\n"
+            "Example: birthday set 1997-08-27"
+        )
     )
     @commands.dm_only()
     async def birthday_set(self, ctx: commands.Context,
@@ -512,6 +549,8 @@ class Bios(commands.Cog):
             "\n\n"
             "If you're confused, use this website to find your full timezone "
             "name: http://kevalbhatt.github.io/timezone-picker"
+            "\n\n"
+            "Example: timezone set new york"
         )
     )
     @commands.dm_only()
@@ -577,6 +616,8 @@ class Bios(commands.Cog):
             "Search for a user by one of their names. Outputs a list of "
             "matching users, showing their preferred name, Discord username, "
             "and nicknames in servers you share with them."
+            "\n\n"
+            "Example: whois hawk"
         )
     )
     async def whois(self, ctx: commands.Context, name: str):
