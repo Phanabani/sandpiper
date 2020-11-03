@@ -80,7 +80,7 @@ class Bios(commands.Cog):
 
     _show_aliases = ('get',)
     _set_aliases = ()
-    _delete_aliases = ('clear',)
+    _delete_aliases = ('clear', 'remove')
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
