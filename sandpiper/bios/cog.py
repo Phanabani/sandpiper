@@ -9,6 +9,7 @@ from .misc import fuzzy_match_timezone
 from ..common.discord import *
 from ..common.embeds import Embeds
 from ..common.misc import join
+from ..common.time import format_date
 from ..user_data.cog import UserData, DatabaseUnavailable
 from ..user_data.database import Database, DatabaseError
 from ..user_data.enums import PrivacyType
@@ -149,6 +150,7 @@ class Bios(commands.Cog):
         preferred_name = await db.get_preferred_name(user_id)
         pronouns = await db.get_pronouns(user_id)
         birthday = await db.get_birthday(user_id)
+        birthday = format_date(birthday)
         age = await db.get_age(user_id)
         age = age if age is not None else 'N/A'
         timezone = await db.get_timezone(user_id)
@@ -417,6 +419,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         birthday = await db.get_birthday(user_id)
+        birthday = format_date(birthday)
         privacy = await db.get_privacy_birthday(user_id)
         await Embeds.info(ctx, user_info_str('Birthday', birthday, privacy))
 
@@ -478,6 +481,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         age = await db.get_age(user_id)
+        age = age if age is not None else 'N/A'
         privacy = await db.get_privacy_age(user_id)
         await Embeds.info(ctx, user_info_str('Age', age, privacy))
 

@@ -120,6 +120,10 @@ class Database(metaclass=ABCMeta):
         birthday = await self.get_birthday(user_id)
         if birthday is None:
             return None
+        if birthday.year == 1:
+            # Birthdays with year == 1 are considered yearless since year can't
+            # be None
+            return None
         return self._calculate_age(birthday, datetime.date.today())
 
     @abstractmethod

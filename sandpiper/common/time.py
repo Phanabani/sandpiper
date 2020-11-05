@@ -1,12 +1,14 @@
 import datetime as dt
 import re
-from typing import Union, cast
+from typing import Optional, Union, cast
 
 import pytz
 import tzlocal
 
-__all__ = ['TimezoneType', 'time_format', 'parse_time', 'parse_date',
-           'utc_now', 'localize_time_to_datetime']
+__all__ = [
+    'TimezoneType', 'time_format', 'parse_time', 'parse_date', 'format_date',
+    'utc_now', 'localize_time_to_datetime'
+]
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 
@@ -52,16 +54,18 @@ months = {
 
 try:
     # Unix strip zero-padding
-    time_format = '%-I:%M %p (%H:%M)'
-    dt.datetime.now().strftime(time_format)
+    no_zeropad = '-'
+    dt.datetime.now().strftime(f'%{no_zeropad}d')
 except ValueError:
     try:
         # Windows strip zero-padding
-        time_format = '%#I:%M %p (%H:%M)'
-        dt.datetime.now().strftime(time_format)
+        no_zeropad = '#'
+        dt.datetime.now().strftime(f'%{no_zeropad}d')
     except ValueError:
         # Fallback without stripping zero-padding
-        time_format = '%I:%M %p (%H:%M)'
+        no_zeropad = ''
+
+time_format = f'%{no_zeropad}I:%M %p (%H:%M)'
 
 
 def utc_now() -> dt.datetime:
@@ -126,6 +130,14 @@ def parse_date(date_str: str) -> dt.date:
         raise ValueError('No match')
 
     return dt.date(year, month, day)
+
+
+def format_date(date: Optional[dt.date]):
+    if date is None:
+        return None
+    if date.year == 1:
+        return date.strftime(f'%B %{no_zeropad}d')
+    return date.strftime('%Y-%m-%d')
 
 
 def localize_time_to_datetime(time: dt.time,
