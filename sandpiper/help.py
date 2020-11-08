@@ -26,10 +26,6 @@ def boxify(inside: str):
 
 class HelpCommand(DefaultHelpCommand):
 
-    def __init__(self, **kwargs):
-        kwargs.pop('indent', None)
-        super().__init__(indent=3, **kwargs)
-
     def get_ending_note(self):
         command_name = self.invoked_with
         return (
@@ -37,23 +33,29 @@ class HelpCommand(DefaultHelpCommand):
             f"on a command."
         )
 
-    def add_commands_recursive(self, commands: Iterable[Command], depth=0):
-        indent = ' ' * max(0, self.indent * (depth - 1))
-
+    def add_commands_recursive(self, commands: Iterable[Command],
+                               depth=0, vertical_connectors=''):
         commands = list(commands)
         for i, c in enumerate(sort_commands(commands)):
             if depth != 0:
                 if i == len(commands) - 1:
-                    connector = '└─ '
+                    horizontal_connector = '└─ '
+                    next_vertical = vertical_connectors + '   '
                 else:
-                    connector = '├─ '
+                    horizontal_connector = '├─ '
+                    next_vertical = vertical_connectors + '│  '
             else:
-                connector = ''
+                horizontal_connector = next_vertical = ''
+
             self.paginator.add_line(
-                f"{indent}{connector}{c.name} \N{EN DASH} {c.short_doc}")
+                f"{vertical_connectors}{horizontal_connector}"
+                f"{c.name} \N{EN DASH} {c.short_doc}")
+
             if isinstance(c, Group):
-                self.add_commands_recursive(c.commands, depth+1)
-                self.paginator.add_line()
+                self.add_commands_recursive(c.commands, depth+1, next_vertical)
+                if depth == 0:
+                    # Add line breaks after first-level groups
+                    self.paginator.add_line()
 
     async def send_bot_help(self, mapping):
         ctx = self.context
