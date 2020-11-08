@@ -34,17 +34,33 @@ class HelpCommand(DefaultHelpCommand):
         )
 
     def add_commands_recursive(self, commands: Iterable[Command],
-                               depth=0, vertical_connectors=''):
+                               depth=0, vertical_connectors='',
+                               *, parent_path: str = None):
+        if parent_path:
+            # Print the nodes of this branch leading from the root to the
+            # current command
+            parent_path = parent_path.split(' ')
+            depth = len(parent_path)
+            for i, parent in enumerate(parent_path):
+                if i == 0:
+                    self.paginator.add_line(parent)
+                else:
+                    self.paginator.add_line(f"{vertical_connectors}└─ {parent}")
+                    vertical_connectors += '   '
+
         commands = list(commands)
         for i, c in enumerate(sort_commands(commands)):
             if depth != 0:
                 if i == len(commands) - 1:
+                    # Last item; terminate this level of the tree
                     horizontal_connector = '└─ '
                     next_vertical = vertical_connectors + '   '
                 else:
+                    # Continue this level of the tree
                     horizontal_connector = '├─ '
                     next_vertical = vertical_connectors + '│  '
             else:
+                # Don't print connectors for the top level of the tree
                 horizontal_connector = next_vertical = ''
 
             self.paginator.add_line(
@@ -83,5 +99,19 @@ class HelpCommand(DefaultHelpCommand):
         if note:
             self.paginator.add_line()
             self.paginator.add_line(note)
+
+        await self.send_pages()
+
+    async def send_group_help(self, group):
+        self.add_command_formatting(group)
+
+        filtered = await self.filter_commands(group.commands)
+        self.add_commands_recursive(filtered, parent_path=group.qualified_name)
+
+        if filtered:
+            note = self.get_ending_note()
+            if note:
+                self.paginator.add_line()
+                self.paginator.add_line(note)
 
         await self.send_pages()
