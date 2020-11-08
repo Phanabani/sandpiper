@@ -5,6 +5,7 @@ import discord
 import discord.ext.commands as commands
 
 from . import Config
+from .help import HelpCommand
 
 __all__ = ['Sandpiper']
 
@@ -39,6 +40,7 @@ class Sandpiper(commands.Bot):
             # Bot params
             command_prefix=get_prefix,
             description=config.description,
+            help_command=HelpCommand()
         )
 
         @self.command(name=config.command_prefix.strip(), hidden=True)
