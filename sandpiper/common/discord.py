@@ -3,18 +3,51 @@ import logging
 from typing import List, Tuple
 
 import discord
-from discord.ext.commands import BadArgument
+from discord.ext.commands import BadArgument, Command
 
 from .time import parse_date
 from sandpiper.user_data.enums import PrivacyType
 
 __all__ = [
-    'date_handler', 'privacy_handler',
+    'AutoOrder', 'date_handler', 'privacy_handler',
     'find_user_in_mutual_guilds', 'find_users_by_display_name',
     'find_users_by_username'
 ]
 
 logger = logging.getLogger('sandpiper.common.discord')
+
+
+class AutoOrder:
+    """
+    Decorate commands/groups with an instance of this class to magically
+    order them in definition-order in Sandpiper's help command! You should use
+    a new instance of this class for each cog to ensure top-level
+    commands/groups get ordered correctly.
+
+    This can also be done manually by adding an ``order`` kwarg in the
+    command/group decorator call.
+
+    Technically, it adds an 'order' key to the command's __original_kwargs__
+    dict, as this is perhaps the only attribute that persists across command
+    copies (commands are apparently copied for each help command invocation,
+    therefore we lose any other attributes we may set, like a command.order).
+    """
+
+    def __init__(self):
+        self.top_level_order = 0
+
+    def __call__(self, command: Command):
+        if command.parent is None:
+            # Use state to order these top-level commands since the cog isn't
+            # bound yet and therefore we can't query the command count
+            order = self.top_level_order
+            self.top_level_order += 1
+        else:
+            # Order by parent's commands count
+            order = len(command.parent.commands) - 1
+
+        command.__original_kwargs__['order'] = order
+        return command
 
 
 def date_handler(date_str: str) -> date:

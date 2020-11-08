@@ -83,6 +83,8 @@ class Bios(commands.Cog):
     _set_aliases = ()
     _delete_aliases = ('clear', 'remove')
 
+    auto_order = AutoOrder()
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -118,6 +120,7 @@ class Bios(commands.Cog):
             f'content={ctx.message.content!r})'
         )
 
+    @auto_order
     @commands.group(
         brief="Personal info commands.",
         help="Commands for managing all of your personal info at once."
@@ -125,18 +128,7 @@ class Bios(commands.Cog):
     async def bio(self, ctx: commands.Context):
         pass
 
-    @bio.command(
-        name='delete', aliases=_delete_aliases,
-        brief="Delete all stored info.",
-        help="Delete all of your personal info stored in Sandpiper."
-    )
-    @commands.dm_only()
-    async def bio_delete(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.delete_user(user_id)
-        await Embeds.success(ctx, "Deleted all of your personal info!")
-
+    @auto_order
     @bio.command(
         name='show', aliases=_show_aliases,
         brief="Show all stored info.",
@@ -169,8 +161,22 @@ class Bios(commands.Cog):
             user_info_str('Timezone', timezone, p_timezone)
         ))
 
+    @auto_order
+    @bio.command(
+        name='delete', aliases=_delete_aliases,
+        brief="Delete all stored info.",
+        help="Delete all of your personal info stored in Sandpiper."
+    )
+    @commands.dm_only()
+    async def bio_delete(self, ctx: commands.Context):
+        user_id: int = ctx.author.id
+        db = await self._get_database()
+        await db.delete_user(user_id)
+        await Embeds.success(ctx, "Deleted all of your personal info!")
+
     # Privacy setters
 
+    @auto_order
     @commands.group(
         name='privacy', invoke_without_command=False,
         brief="Personal info privacy commands.",
@@ -179,6 +185,7 @@ class Bios(commands.Cog):
     async def privacy(self, ctx: commands.Context):
         pass
 
+    @auto_order
     @privacy.command(
         name='all',
         brief="Set all privacies at once.",
@@ -200,6 +207,7 @@ class Bios(commands.Cog):
         await db.set_privacy_timezone(user_id, new_privacy)
         await Embeds.success(ctx, "All privacies set!")
 
+    @auto_order
     @privacy.command(
         name='name',
         brief="Set preferred name privacy.",
@@ -216,6 +224,7 @@ class Bios(commands.Cog):
         await db.set_privacy_preferred_name(user_id, new_privacy)
         await Embeds.success(ctx, "Name privacy set!")
 
+    @auto_order
     @privacy.command(
         name='pronouns',
         brief="Set pronouns privacy.",
@@ -232,6 +241,7 @@ class Bios(commands.Cog):
         await db.set_privacy_pronouns(user_id, new_privacy)
         await Embeds.success(ctx, "Pronouns privacy set!")
 
+    @auto_order
     @privacy.command(
         name='birthday',
         brief="Set birthday privacy.",
@@ -248,6 +258,7 @@ class Bios(commands.Cog):
         await db.set_privacy_birthday(user_id, new_privacy)
         await Embeds.success(ctx, "Birthday privacy set!")
 
+    @auto_order
     @privacy.command(
         name='age',
         brief="Set age privacy.",
@@ -264,6 +275,7 @@ class Bios(commands.Cog):
         await db.set_privacy_age(user_id, new_privacy)
         await Embeds.success(ctx, "Age privacy set!")
 
+    @auto_order
     @privacy.command(
         name='timezone',
         brief="Set timezone privacy.",
@@ -282,6 +294,7 @@ class Bios(commands.Cog):
 
     # Name
 
+    @auto_order
     @commands.group(
         name='name', invoke_without_command=False,
         brief="Preferred name commands.",
@@ -290,6 +303,7 @@ class Bios(commands.Cog):
     async def name(self, ctx: commands.Context):
         pass
 
+    @auto_order
     @name.command(
         name='show', aliases=_show_aliases,
         help="Display your preferred name."
@@ -302,6 +316,7 @@ class Bios(commands.Cog):
         privacy = await db.get_privacy_preferred_name(user_id)
         await Embeds.info(ctx, user_info_str('Name', preferred_name, privacy))
 
+    @auto_order
     @name.command(
         name='set', aliases=_set_aliases,
         brief="Set your preferred name.",
@@ -329,6 +344,7 @@ class Bios(commands.Cog):
                 "the command `privacy name public`."
             )
 
+    @auto_order
     @name.command(
         name='delete', aliases=_delete_aliases,
         help="Delete your preferred name."
@@ -342,6 +358,7 @@ class Bios(commands.Cog):
 
     # Pronouns
 
+    @auto_order
     @commands.group(
         name='pronouns', invoke_without_command=False,
         brief="Pronouns commands.",
@@ -350,6 +367,7 @@ class Bios(commands.Cog):
     async def pronouns(self, ctx: commands.Context):
         pass
 
+    @auto_order
     @pronouns.command(
         name='show', aliases=_show_aliases,
         help="Display your pronouns."
@@ -362,6 +380,7 @@ class Bios(commands.Cog):
         privacy = await db.get_privacy_pronouns(user_id)
         await Embeds.info(ctx, user_info_str('Pronouns', pronouns, privacy))
 
+    @auto_order
     @pronouns.command(
         name='set', aliases=_set_aliases,
         brief="Set your pronouns.",
@@ -389,6 +408,7 @@ class Bios(commands.Cog):
                 "the command `privacy pronouns public`."
             )
 
+    @auto_order
     @pronouns.command(
         name='delete', aliases=_delete_aliases,
         help="Delete your pronouns."
@@ -402,6 +422,7 @@ class Bios(commands.Cog):
 
     # Birthday
 
+    @auto_order
     @commands.group(
         name='birthday', invoke_without_command=False,
         brief="Birthday commands.",
@@ -410,6 +431,7 @@ class Bios(commands.Cog):
     async def birthday(self, ctx: commands.Context):
         pass
 
+    @auto_order
     @birthday.command(
         name='show', aliases=_show_aliases,
         help="Display your birthday."
@@ -423,6 +445,7 @@ class Bios(commands.Cog):
         privacy = await db.get_privacy_birthday(user_id)
         await Embeds.info(ctx, user_info_str('Birthday', birthday, privacy))
 
+    @auto_order
     @birthday.command(
         name='set', aliases=_set_aliases,
         brief="Set your birthday.",
@@ -450,6 +473,7 @@ class Bios(commands.Cog):
                 "public with the command `privacy age public`."
             )
 
+    @auto_order
     @birthday.command(
         name='delete', aliases=_delete_aliases,
         help="Delete your birthday."
@@ -463,6 +487,7 @@ class Bios(commands.Cog):
 
     # Age
 
+    @auto_order
     @commands.group(
         name='age', invoke_without_command=False,
         brief="Age commands.",
@@ -471,6 +496,7 @@ class Bios(commands.Cog):
     async def age(self, ctx: commands.Context):
         pass
 
+    @auto_order
     @age.command(
         name='show', aliases=_show_aliases,
         brief="Display your age.",
@@ -486,6 +512,7 @@ class Bios(commands.Cog):
         await Embeds.info(ctx, user_info_str('Age', age, privacy))
 
     # noinspection PyUnusedLocal
+    @auto_order
     @age.command(
         name='set', aliases=_set_aliases, hidden=True,
         brief="This command does nothing.",
@@ -503,6 +530,7 @@ class Bios(commands.Cog):
         )
 
     # noinspection PyUnusedLocal
+    @auto_order
     @age.command(
         name='delete', aliases=_delete_aliases, hidden=True,
         brief="This command does nothing.",
@@ -523,6 +551,7 @@ class Bios(commands.Cog):
 
     # Timezone
 
+    @auto_order
     @commands.group(
         name='timezone', invoke_without_command=False,
         brief="Timezone commands.",
@@ -531,6 +560,7 @@ class Bios(commands.Cog):
     async def timezone(self, ctx: commands.Context):
         pass
 
+    @auto_order
     @timezone.command(
         name='show', aliases=_show_aliases,
         help="Display your timezone."
@@ -543,6 +573,7 @@ class Bios(commands.Cog):
         privacy = await db.get_privacy_timezone(user_id)
         await Embeds.info(ctx, user_info_str('Timezone', timezone, privacy))
 
+    @auto_order
     @timezone.command(
         name='set', aliases=_set_aliases,
         brief="Set your timezone.",
@@ -600,6 +631,7 @@ class Bios(commands.Cog):
                 "the command `privacy timezone public`."
             )
 
+    @auto_order
     @timezone.command(
         name='delete', aliases=_delete_aliases,
         help="Delete your timezone."
@@ -613,6 +645,7 @@ class Bios(commands.Cog):
 
     # Extra commands
 
+    @auto_order
     @commands.command(
         name='whois',
         brief="Search for a user.",
