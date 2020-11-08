@@ -8,8 +8,11 @@ from discord.ext.commands import BadArgument
 from .time import parse_date
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = ['date_handler', 'privacy_handler', 'find_user_in_mutual_guilds',
-           'find_users_by_display_name', 'find_users_by_username']
+__all__ = [
+    'date_handler', 'privacy_handler',
+    'find_user_in_mutual_guilds', 'find_users_by_display_name',
+    'find_users_by_username'
+]
 
 logger = logging.getLogger('sandpiper.common.discord')
 
