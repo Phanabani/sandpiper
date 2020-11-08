@@ -487,7 +487,7 @@ class Bios(commands.Cog):
 
     # noinspection PyUnusedLocal
     @age.command(
-        name='set', aliases=_set_aliases,
+        name='set', aliases=_set_aliases, hidden=True,
         brief="This command does nothing.",
         help=(
             "Age is automatically calculated using your birthday. This "
@@ -504,7 +504,7 @@ class Bios(commands.Cog):
 
     # noinspection PyUnusedLocal
     @age.command(
-        name='delete', aliases=_delete_aliases,
+        name='delete', aliases=_delete_aliases, hidden=True,
         brief="This command does nothing.",
         help=(
             "Age is automatically calculated using your birthday. This command "
