@@ -24,6 +24,13 @@ def boxify(inside: str):
     return f"{top}\n│ {inside} │\n{bot}"
 
 
+def is_dm_only(command: Command):
+    for check in command.checks:
+        if check.__qualname__.startswith('dm_only'):
+            return True
+    return False
+
+
 class HelpCommand(DefaultHelpCommand):
 
     def shorten_text(self, text: str, suffix: str = ''):
@@ -72,12 +79,8 @@ class HelpCommand(DefaultHelpCommand):
 
             line = (f"{vertical_connectors}{horizontal_connector}"
                     f"{c.name} \N{EN DASH} {c.short_doc}")
-            for check in c.checks:
-                # If the command has a dm_only check, display that the command
-                # may only be run in DMs
-                if check.__qualname__.startswith('dm_only'):
-                    line = self.shorten_text(line, ' (DM only)')
-                    break
+            if is_dm_only(c):
+                line = self.shorten_text(line, ' (DM only)')
             else:
                 line = self.shorten_text(line)
             self.paginator.add_line(line)
@@ -150,6 +153,10 @@ class HelpCommand(DefaultHelpCommand):
         await self.send_pages()
 
     def add_command_formatting(self, command: Command):
+        if is_dm_only(command):
+            self.paginator.add_line(
+                '** You must DM Sandpiper to use this command **', empty=True)
+
         super().add_command_formatting(command)
 
         try:
