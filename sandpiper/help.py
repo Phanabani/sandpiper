@@ -63,9 +63,9 @@ class HelpCommand(DefaultHelpCommand):
                 # Don't print connectors for the top level of the tree
                 horizontal_connector = next_vertical = ''
 
-            self.paginator.add_line(
-                f"{vertical_connectors}{horizontal_connector}"
-                f"{c.name} \N{EN DASH} {c.short_doc}")
+            line = (f"{vertical_connectors}{horizontal_connector}"
+                    f"{c.name} \N{EN DASH} {c.short_doc}")
+            self.paginator.add_line(self.shorten_text(line))
 
             if isinstance(c, Group):
                 self.add_commands_recursive(c.commands, depth+1, next_vertical)
