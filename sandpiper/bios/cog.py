@@ -450,7 +450,8 @@ class Bios(commands.Cog):
         help=(
             "Set your birthday. There are several allowed formats, and some "
             "allow you to omit your birth year if you are not comfortable with "
-            "adding it (your age will not be calculated).\n"
+            "adding it (your age will not be calculated)."
+            "\n\n"
             "See the examples below for valid formats."
         ),
         example=(
