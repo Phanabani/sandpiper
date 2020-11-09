@@ -438,8 +438,19 @@ class Bios(commands.Cog):
     @birthday.command(
         name='set', aliases=_set_aliases,
         brief="Set your birthday.",
-        help="Set your birthday in the format YYYY-MM-DD.",
-        example="birthday set 1997-08-27"
+        help=(
+            "Set your birthday. There are several allowed formats, and some "
+            "allow you to omit your birth year if you are not comfortable with "
+            "adding it (your age will not be calculated).\n"
+            "See the examples below for valid formats."
+        ),
+        example=(
+            "birthday set 1997-08-27",
+            "birthday set 08 August 1997",
+            "birthday set Aug 8 1997",
+            "birthday set August 8",
+            "birthday set 8 Aug",
+        )
     )
     @commands.dm_only()
     async def birthday_set(self, ctx: commands.Context, *,
@@ -571,7 +582,12 @@ class Bios(commands.Cog):
             "If you're confused, use this website to find your full timezone "
             "name: http://kevalbhatt.github.io/timezone-picker"
         ),
-        example="timezone set new york"
+        example=(
+            "timezone set America/New_York",
+            "timezone set new york",
+            "timezone set amsterdam",
+            "timezone set london",
+        )
     )
     @commands.dm_only()
     async def timezone_set(self, ctx: commands.Context, *, new_timezone: str):
