@@ -1,7 +1,7 @@
 import itertools
 from typing import *
 
-from discord.ext.commands import DefaultHelpCommand, Group, Command
+from discord.ext.commands import DefaultHelpCommand, Group, Command, Cog
 
 __all__ = ['HelpCommand']
 
@@ -102,7 +102,21 @@ class HelpCommand(DefaultHelpCommand):
 
         await self.send_pages()
 
-    async def send_group_help(self, group):
+    async def send_cog_help(self, cog: Cog):
+        if cog.description:
+            self.paginator.add_line(cog.description, empty=True)
+
+        filtered = await self.filter_commands(cog.get_commands())
+        self.add_commands_recursive(filtered)
+
+        note = self.get_ending_note()
+        if note:
+            self.paginator.add_line()
+            self.paginator.add_line(note)
+
+        await self.send_pages()
+
+    async def send_group_help(self, group: Group):
         self.add_command_formatting(group)
 
         filtered = await self.filter_commands(group.commands)
@@ -116,7 +130,7 @@ class HelpCommand(DefaultHelpCommand):
 
         await self.send_pages()
 
-    def add_command_formatting(self, command):
+    def add_command_formatting(self, command: Command):
         super().add_command_formatting(command)
 
         try:
