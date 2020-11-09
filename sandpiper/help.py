@@ -33,9 +33,10 @@ class HelpCommand(DefaultHelpCommand):
             f"on a command."
         )
 
-    def add_commands_recursive(self, commands: Iterable[Command],
-                               depth=0, vertical_connectors='',
-                               *, parent_path: str = None):
+    async def add_commands_recursive(
+        self, commands: Iterable[Command], depth=0, vertical_connectors='',
+        *, parent_path: str = None
+    ):
         if parent_path:
             # Print the nodes of this branch leading from the root to the
             # current command
@@ -68,7 +69,10 @@ class HelpCommand(DefaultHelpCommand):
             self.paginator.add_line(self.shorten_text(line))
 
             if isinstance(c, Group):
-                self.add_commands_recursive(c.commands, depth+1, next_vertical)
+                await self.add_commands_recursive(
+                    await self.filter_commands(c.commands),
+                    depth+1, next_vertical
+                )
                 if depth == 0:
                     # Add line breaks after first-level groups
                     self.paginator.add_line()
@@ -85,15 +89,15 @@ class HelpCommand(DefaultHelpCommand):
             cog = command.cog
             return cog.qualified_name if cog is not None else self.no_category
 
-        filtered = await self.filter_commands(bot.commands, sort=True,
-                                              key=get_category)
+        filtered = await self.filter_commands(
+            bot.commands, sort=True, key=get_category)
         to_iterate = itertools.groupby(filtered, key=get_category)
 
         # Now we can add the commands to the page.
         for category, commands in to_iterate:
             self.paginator.add_line()
             self.paginator.add_line(boxify(category))
-            self.add_commands_recursive(commands)
+            await self.add_commands_recursive(commands)
 
         note = self.get_ending_note()
         if note:
@@ -107,7 +111,7 @@ class HelpCommand(DefaultHelpCommand):
             self.paginator.add_line(cog.description, empty=True)
 
         filtered = await self.filter_commands(cog.get_commands())
-        self.add_commands_recursive(filtered)
+        await self.add_commands_recursive(filtered)
 
         note = self.get_ending_note()
         if note:
@@ -120,7 +124,8 @@ class HelpCommand(DefaultHelpCommand):
         self.add_command_formatting(group)
 
         filtered = await self.filter_commands(group.commands)
-        self.add_commands_recursive(filtered, parent_path=group.qualified_name)
+        await self.add_commands_recursive(
+            filtered, parent_path=group.qualified_name)
 
         if filtered:
             note = self.get_ending_note()
