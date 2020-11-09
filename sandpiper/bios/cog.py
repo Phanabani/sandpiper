@@ -79,6 +79,15 @@ async def user_names_str(ctx: commands.Context, db: Database, user_id: int,
 
 class Bios(commands.Cog):
 
+    __cog_cleaned_doc__ = (
+        "Store some info about yourself to help your friends get to know you "
+        "more easily! Most of these commands can only be used in DMs with "
+        "Sandpiper for your privacy."
+        "\n\n"
+        "Some of this info is used by other Sandpiper features, such as "
+        "time conversion and birthday notifications."
+    )
+
     _show_aliases = ('get',)
     _set_aliases = ()
     _delete_aliases = ('clear', 'remove')
@@ -693,3 +702,5 @@ class Bios(commands.Cog):
             await Embeds.info(ctx, message=user_strs)
         else:
             await Embeds.error(ctx, "No users found with this name.")
+
+    del auto_order
