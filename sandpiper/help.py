@@ -115,3 +115,18 @@ class HelpCommand(DefaultHelpCommand):
                 self.paginator.add_line(note)
 
         await self.send_pages()
+
+    def add_command_formatting(self, command):
+        super().add_command_formatting(command)
+
+        try:
+            example = command.__original_kwargs__['example']
+        except KeyError:
+            pass
+        else:
+            if isinstance(example, str):
+                self.paginator.add_line(f"Example: {example}")
+            elif isinstance(example, (list, tuple)):
+                self.paginator.add_line('Examples:')
+                for ex in example:
+                    self.paginator.add_line(f"  {ex}")
