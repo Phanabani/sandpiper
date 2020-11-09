@@ -1,6 +1,6 @@
 from datetime import date
 import logging
-from typing import List, Tuple
+from typing import *
 
 import discord
 from discord.ext.commands import BadArgument, Command
@@ -72,6 +72,14 @@ def privacy_handler(privacy_str: str) -> PrivacyType:
 
 def find_user_in_mutual_guilds(client: discord.Client, whos_looking: int,
                                for_whom: int) -> List[discord.Member]:
+    """
+    Find a user who shares mutual guild's with someone else.
+
+    :param client: the client with access to guild members
+    :param whos_looking: the source user who is looking for the target
+    :param for_whom: the target user being searched for
+    :return: a list of guild members representing the target user
+    """
     found_members = []
     for g in client.guilds:
         g: discord.Guild
@@ -84,24 +92,52 @@ def find_user_in_mutual_guilds(client: discord.Client, whos_looking: int,
 
 def find_users_by_username(client: discord.Client,
                            name: str) -> [List[Tuple[int, str]]]:
+    """
+    Search for users by their Discord username.
+
+    :param client: the client with access to users
+    :param name: the substring to search for
+    :return: a list of users whose names match
+    """
     users = []
     name = name.casefold()
     for user in client.users:
         user: discord.User
-        if name in user.name.casefold():
+        if name in f'{user.name.casefold()}#{user.discriminator}':
             users.append((user.id, f'{user.name}#{user.discriminator}'))
     return users
 
 
-def find_users_by_display_name(client: discord.Client, whos_looking: int,
-                               name: str) -> [List[Tuple[int, str]]]:
+def find_users_by_display_name(
+    client: discord.Client, whos_looking: int, name: str,
+    *, guild: Optional[discord.Guild] = None,
+) -> [List[Tuple[int, str]]]:
+    """
+    Search for users by their display name (nickname in a guild). You may pass
+    in a guild to optimize the search by limiting to only that guild.
+
+    :param client: the client with access to guild members
+    :param whos_looking: the user who is searching
+    :param name: a substring to search for in user display names
+    :param guild: an optional guild to limit the search to
+    :return: a list of tuples of (user_id, display_name) with matching users
+    """
+
     users = []
     name = name.casefold()
-    for g in client.guilds:
-        g: discord.Guild
-        if g.get_member(whos_looking):
-            for member in g.members:
-                member: discord.Member
-                if name in member.display_name.casefold():
-                    users.append((member.id, member.display_name))
+
+    def search_guild(guild: discord.Guild):
+        if not guild.get_member(whos_looking):
+            return
+        for member in guild.members:
+            member: discord.Member
+            if name in member.display_name.casefold():
+                users.append((member.id, member.display_name))
+
+    if guild:
+        search_guild(guild)
+    else:
+        for guild in client.guilds:
+            search_guild(guild)
+
     return users

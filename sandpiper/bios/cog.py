@@ -30,14 +30,16 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
 
 
-async def user_names_str(ctx: commands.Context, db: Database, user_id: int,
-                         preferred_name: str = None, username: str = None):
+async def user_names_str(
+        ctx: commands.Context, db: Database, user_id: int,
+        *, preferred_name: str = None, username: str = None,
+        display_name: str = None
+):
     """
     Create a string with a user's names (preferred name, Discord username,
-    guild display names). You can supply ``preferred_name`` or ``username``
-    to optimize the number of operations this function has to perform. There
-    is no display_name parameter because this function still needs to find
-    the user's display name in ALL guilds, so supplying just the one is useless.
+    guild display names). You can supply ``preferred_name``, ``username``,
+    or ``display_name`` to optimize the number of operations this function
+    has to perform.
     """
 
     # Get pronouns
@@ -65,10 +67,18 @@ async def user_names_str(ctx: commands.Context, db: Database, user_id: int,
         else:
             username = '`User not found`'
 
-    # Find the user's nicknames on servers they share with the executor
-    # of the who is command
-    members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
-    display_names = ', '.join(m.display_name for m in members)
+    if ctx.guild is None:
+        # Find the user's nicknames on servers they share with the executor
+        # of the whois command
+        members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
+        display_names = ', '.join(m.display_name for m in members)
+    else:
+        if display_name is None:
+            # Find the user's nickname in the current guild ONLY
+            display_names = ctx.guild.get_member(user_id).display_name
+        else:
+            # Use the passed-in display name
+            display_names = display_name
 
     return join(
         join(preferred_name, pronouns and f'({pronouns})', sep=' '),
@@ -676,27 +686,46 @@ class Bios(commands.Cog):
         user_strs = []
         seen_users = set()
 
-        for user_id, preferred_name in await db.find_users_by_preferred_name(name):
+        def should_skip_user(user_id):
+            """
+            Filter out users that have already been seen or who aren't in the
+            guild.
+            """
             if user_id in seen_users:
-                continue
+                return True
             seen_users.add(user_id)
-            names = await user_names_str(ctx, db, user_id,
-                                         preferred_name=preferred_name)
+            if ctx.guild and not ctx.guild.get_member(user_id):
+                # Command was executed in a guild, so don't allow users from
+                # other guilds to be found
+                return True
+            return False
+
+        for user_id, preferred_name in await db.find_users_by_preferred_name(name):
+            # Get preferred names from database
+            if should_skip_user(user_id):
+                continue
+            names = await user_names_str(
+                ctx, db, user_id, preferred_name=preferred_name
+            )
             user_strs.append(names)
 
-        for user_id, __ in find_users_by_display_name(
-                ctx.bot, ctx.author.id, name):
-            if user_id in seen_users:
+        for user_id, display_name in find_users_by_display_name(
+                ctx.bot, ctx.author.id, name, guild=ctx.guild):
+            # Get display names from guilds
+            if should_skip_user(user_id):
                 continue
-            seen_users.add(user_id)
-            names = await user_names_str(ctx, db, user_id)
+            names = await user_names_str(
+                ctx, db, user_id, display_name=display_name
+            )
             user_strs.append(names)
 
         for user_id, username in find_users_by_username(ctx.bot, name):
-            if user_id in seen_users:
+            # Get usernames from client
+            if should_skip_user(user_id):
                 continue
-            seen_users.add(user_id)
-            names = await user_names_str(ctx, db, user_id, username=username)
+            names = await user_names_str(
+                ctx, db, user_id, username=username
+            )
             user_strs.append(names)
 
         if user_strs:
