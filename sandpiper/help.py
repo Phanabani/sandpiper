@@ -26,6 +26,12 @@ def boxify(inside: str):
 
 class HelpCommand(DefaultHelpCommand):
 
+    def shorten_text(self, text: str, suffix: str = ''):
+        if len(text) + len(suffix) > self.width:
+            return (text[:self.width - len(suffix) - 3]
+                    + '...' + suffix)
+        return text + suffix
+
     def get_ending_note(self):
         command_name = self.invoked_with
         return (
@@ -66,7 +72,15 @@ class HelpCommand(DefaultHelpCommand):
 
             line = (f"{vertical_connectors}{horizontal_connector}"
                     f"{c.name} \N{EN DASH} {c.short_doc}")
-            self.paginator.add_line(self.shorten_text(line))
+            for check in c.checks:
+                # If the command has a dm_only check, display that the command
+                # may only be run in DMs
+                if check.__qualname__.startswith('dm_only'):
+                    line = self.shorten_text(line, ' (DM only)')
+                    break
+            else:
+                line = self.shorten_text(line)
+            self.paginator.add_line(line)
 
             if isinstance(c, Group):
                 await self.add_commands_recursive(
