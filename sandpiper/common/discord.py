@@ -70,14 +70,17 @@ def privacy_handler(privacy_str: str) -> PrivacyType:
         raise BadArgument(f'Privacy must be one of {privacy_names}')
 
 
-def find_user_in_mutual_guilds(client: discord.Client, whos_looking: int,
-                               for_whom: int) -> List[discord.Member]:
+def find_user_in_mutual_guilds(
+    client: discord.Client, whos_looking: int, for_whom: int,
+    *, short_circuit: bool = False
+) -> List[discord.Member]:
     """
     Find a user who shares mutual guild's with someone else.
 
     :param client: the client with access to guild members
     :param whos_looking: the source user who is looking for the target
     :param for_whom: the target user being searched for
+    :param short_circuit: whether to return on the first found member
     :return: a list of guild members representing the target user
     """
     found_members = []
@@ -86,6 +89,8 @@ def find_user_in_mutual_guilds(client: discord.Client, whos_looking: int,
         if g.get_member(whos_looking):
             member = g.get_member(for_whom)
             if member:
+                if short_circuit:
+                    return member
                 found_members.append(member)
     return found_members
 

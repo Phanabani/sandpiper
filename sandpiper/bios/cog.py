@@ -686,18 +686,34 @@ class Bios(commands.Cog):
         user_strs = []
         seen_users = set()
 
-        def should_skip_user(user_id):
+        def should_skip_user(user_id: int, *, skip_guild_check=False):
             """
             Filter out users that have already been seen or who aren't in the
             guild.
+
+            :param user_id: the target user that's been found by the search
+                functions
+            :param skip_guild_check: whether to skip the process of ensuring
+                the target and executor exist in mutual guilds (for
+                optimization)
             """
             if user_id in seen_users:
                 return True
             seen_users.add(user_id)
-            if ctx.guild and not ctx.guild.get_member(user_id):
-                # Command was executed in a guild, so don't allow users from
-                # other guilds to be found
-                return True
+            if not skip_guild_check:
+                if ctx.guild:
+                    # We're in a guild, so don't allow users from other guilds
+                    # to be found
+                    if not ctx.guild.get_member(user_id):
+                        return True
+                else:
+                    # We're in DMs, so check if the executor shares a guild
+                    # with the target
+                    if not find_user_in_mutual_guilds(
+                            ctx.bot, ctx.author.id, user_id,
+                            short_circuit=True):
+                        # Executor doesn't share a guild with target
+                        return True
             return False
 
         for user_id, preferred_name in await db.find_users_by_preferred_name(name):
@@ -712,7 +728,9 @@ class Bios(commands.Cog):
         for user_id, display_name in find_users_by_display_name(
                 ctx.bot, ctx.author.id, name, guild=ctx.guild):
             # Get display names from guilds
-            if should_skip_user(user_id):
+            # This search function filters out non-mutual-guild users as part
+            # of its optimization, so we don't need to do that again
+            if should_skip_user(user_id, skip_guild_check=True):
                 continue
             names = await user_names_str(
                 ctx, db, user_id, display_name=display_name
