@@ -1,10 +1,11 @@
 import datetime as dt
 import unittest.mock as mock
+from typing import *
 
 import discord.ext.commands as commands
 import pytz
 
-from ._test_helpers import DiscordMockingTestCase
+from ._test_helpers import *
 from sandpiper.bios import Bios
 from sandpiper.user_data.database_sqlite import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
@@ -210,3 +211,122 @@ class TestBios(DiscordMockingTestCase):
         self.assertIsNone(await self.db.get_birthday(uid))
         self.assertIsNone(await self.db.get_age(uid))
         self.assertIsNone(await self.db.get_timezone(uid))
+
+    # noinspection DuplicatedCode
+    async def test_whois(self):
+
+        def id_getter(container: Iterable):
+            def get(id: int):
+                for i in container:
+                    if i.id == id:
+                        return i
+                return None
+            return get
+
+        users = [
+            MagicMock_(id=0, name='Executor', discriminator=0),
+            MagicMock_(id=1111, name='Blank', discriminator=1111),
+            MagicMock_(id=2222, name='Blank', discriminator=2222),
+            MagicMock_(id=3333, name='Greg', discriminator=3333),
+            MagicMock_(id=4444, name='Blank', discriminator=4444),
+            MagicMock_(id=5555, name='Blank', discriminator=5555),
+            MagicMock_(id=6666, name='Greg', discriminator=6666),
+            MagicMock_(id=7777, name='GuildHiddenGreg', discriminator=7777),
+            MagicMock_(id=8888, name='TotallyHiddenGreg', discriminator=8888),
+            MagicMock_(id=9999, name='Blank', discriminator=9999),
+        ]
+
+        patcher = mock.patch.object(self.bot, 'get_user')
+        get_user = patcher.start()
+        get_user.side_effect = id_getter(users)
+        self.addCleanup(patcher.stop)
+
+        member_groups = [
+            [
+                MagicMock_(id=0, name='Executor', discriminator=0, display_name='_executor_'),
+                MagicMock_(id=1111, name='Blank', discriminator=1111, display_name='_blank_'),
+                MagicMock_(id=2222, name='Blank', discriminator=2222, display_name='_blank_'),
+                MagicMock_(id=3333, name='Greg', discriminator=3333, display_name='_blank_'),
+                MagicMock_(id=4444, name='Blank', discriminator=4444, display_name='_greg_'),
+                MagicMock_(id=5555, name='Blank', discriminator=5555, display_name='_greg_'),
+                MagicMock_(id=6666, name='Greg', discriminator=6666, display_name='_blank_'),
+            ],
+            [
+                MagicMock_(id=0, name='Executor', discriminator=0, display_name='_executor_'),
+                MagicMock_(id=5555, name='Blank', discriminator=5555, display_name='another nickname'),
+                MagicMock_(id=7777, name='GuildHiddenGreg', discriminator=7777, display_name='_guildhiddengreg_'),
+            ],
+            [
+                MagicMock_(id=8888, name='TotallyHiddenGreg', discriminator=8888, display_name='_blank_'),
+                MagicMock_(id=9999, name='Blank', discriminator=9999, display_name='_totallyhiddengreg_'),
+            ]
+        ]
+
+        guilds = []
+        for members in member_groups:
+            guild = mock.MagicMock()
+            guild.members = members
+            guild.get_member.side_effect = id_getter(members)
+            guilds.append(guild)
+
+        db = self.db
+        await db.set_preferred_name(1111, '*Greg*')
+        await db.set_preferred_name(2222, '*Greg*')
+        await db.set_preferred_name(3333, '*Blank*')
+        await db.set_preferred_name(4444, '*Blank*')
+        await db.set_preferred_name(5555, '*Blank*')
+        await db.set_preferred_name(6666, None)
+        await db.set_preferred_name(7777, '*GuildHiddenGreg*')
+        await db.set_privacy_preferred_name(1111, PrivacyType.PUBLIC)
+        await db.set_privacy_preferred_name(2222, PrivacyType.PUBLIC)
+        await db.set_privacy_preferred_name(3333, PrivacyType.PUBLIC)
+        await db.set_privacy_preferred_name(4444, PrivacyType.PUBLIC)
+        await db.set_privacy_preferred_name(5555, PrivacyType.PUBLIC)
+        await db.set_privacy_preferred_name(6666, PrivacyType.PRIVATE)
+        await db.set_privacy_preferred_name(7777, PrivacyType.PUBLIC)
+        await db.set_pronouns(2222, 'He/Him')
+        await db.set_privacy_pronouns(2222, PrivacyType.PUBLIC)
+
+        self.bot.guilds = guilds
+        self.bot.users = users
+        self.msg.author = users[0]
+
+        # Invoke in a guild
+        self.msg.guild = guilds[0]
+
+        embeds = await self.invoke_cmd_get_embeds('whois greg')
+        self.assert_info(embeds[0])
+        desc = embeds[0].description
+        self.assertIn("*Greg* • Blank#1111 • _blank_", desc)
+        self.assertIn("*Greg* (He/Him) • Blank#2222 • _blank_", desc)
+        self.assertIn("*Blank* • Greg#3333 • _blank_", desc)
+        self.assertIn("*Blank* • Blank#4444 • _greg_", desc)
+        self.assertIn("*Blank* • Blank#5555 • _greg_", desc)
+        self.assertIn("`No preferred name` • Greg#6666 • _blank_", desc)
+        self.assertNotIn('GuildHiddenGreg#7777', desc)
+        self.assertNotIn('TotallyHiddenGreg#8888', desc)
+        self.assertNotIn('_totallyhiddengreg_', desc)
+
+        # Invoke in DMs
+        self.msg.guild = None
+
+        embeds = await self.invoke_cmd_get_embeds('whois greg')
+        self.assert_info(embeds[0])
+        desc = embeds[0].description
+        self.assertIn("*Greg* • Blank#1111 • _blank_", desc)
+        self.assertIn("*Greg* (He/Him) • Blank#2222 • _blank_", desc)
+        self.assertIn("*Blank* • Greg#3333 • _blank_", desc)
+        self.assertIn("*Blank* • Blank#4444 • _greg_", desc)
+        self.assertIn("*Blank* • Blank#5555 • _greg_, another nickname", desc)
+        self.assertIn("`No preferred name` • Greg#6666 • _blank_", desc)
+        self.assertIn('*GuildHiddenGreg* • GuildHiddenGreg#7777 • _guildhiddengreg_', desc)
+        self.assertNotIn('TotallyHiddenGreg#8888', desc)
+        self.assertNotIn('_totallyhiddengreg_', desc)
+
+        # Erroring commands
+
+        embeds = await self.invoke_cmd_get_embeds('whois gregothy')
+        self.assert_error(embeds[0], "No users")
+
+        with self.assertRaises(commands.BadArgument):
+            await self.invoke_cmd_get_embeds('whois e')

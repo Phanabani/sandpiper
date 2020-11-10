@@ -5,7 +5,7 @@ import unittest.mock as mock
 import discord
 import discord.ext.commands as commands
 
-__all__ = ['DiscordMockingTestCase']
+__all__ = ['DiscordMockingTestCase', 'MagicMock_']
 
 
 class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
@@ -15,6 +15,13 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         # to be set where normally it is prohibited
         self.msg = mock.MagicMock(spec=discord.Message)
         self.msg.author.bot = False  # Otherwise the invocation will be skipped
+
+        # Patch in some mocks for bot attributes that tests may need to work
+        # with (otherwise they're unsettable)
+        for attr in ('users', 'guilds'):
+            patcher = mock.patch(f"discord.ext.commands.Bot.{attr}")
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
         # Create a dummy bot that will never actually connect but will help
         # with invocation
@@ -99,3 +106,15 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Info', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
+
+
+class MagicMock_(mock.MagicMock):
+    """
+    Identical to MagicMock, but the ``name`` kwarg will be parsed as a regular
+    kwarg (assigned to the mock as an attribute).
+    """
+
+    def __init__(self, *args, **kwargs):
+        name = kwargs.pop('name', None)
+        super().__init__(*args, **kwargs)
+        self.name = name
