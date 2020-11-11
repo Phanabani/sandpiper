@@ -268,7 +268,9 @@ class TestBios(DiscordMockingTestCase):
         self.add_guild(1)
 
         self.add_user_to_guild(1, 0, '_executor_'),
-        self.add_user_to_guild(1, 1001, '_duplicate_'),
+        # Test duplicate removal
+        self.add_user_to_guild(1, 1001, '_GregDuplicate_'),
+        # Test display names from multiple guilds
         self.add_user_to_guild(1, 1004, '_extra_nickname_'),
 
         # Test username
