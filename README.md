@@ -102,7 +102,7 @@ These correspond to the permission integer `19456`.
 
 Sandpiper also requires the [server members privileged intent](https://discord.com/developers/docs/topics/gateway#privileged-intents)
 to allow for Discord username/server nickname lookup in the `whois` command.
-You can enable it on the bot page of your application (https:\//discord.com/developers/applications/<client_id>/bot).
+You can enable it on the bot page of your application (https:\/\/discord.com/developers/applications/<client_id>/bot).
 
 ## Config
 
@@ -226,10 +226,10 @@ for more info about managing your privacy.
 
 Command | Description | Example
 ------- | ----------- | -------
-`name set <new_name>` | Set your preferred name. | `name set Hawk`
-`pronouns set <new_pronouns>` | Set your pronouns. | `pronouns set She/Her`
-`birthday set <new_birthday>` | Set your birthday in format YYYY-MM-DD. | `birthday set 1997-08-27`
-`timezone set <new_timezone>` | Set your timezone. The command is pretty lenient, so you can try typing your timezone in any format. | `timezone set new york`
+`name set <new_name>` | Set your preferred name (max 64 characters). | `name set Hawk`
+`pronouns set <new_pronouns>` | Set your pronouns (max 64 characters). | `pronouns set She/Her`
+`birthday set <new_birthday>` | Set your birthday in one of the following formats: `1997-08-27`, `8 August 1997`, `Aug 8 1997`, `August 8`, `8 Aug`. You may omit your birth year with the month-name format. | `birthday set 1997-08-27`
+`timezone set <new_timezone>` | Set your timezone. Don't worry about formatting. Typing the name of the nearest major city should be good enough, but you can also try your state/country if that doesn't work. If you're confused, use this website to find your full timezone name: http://kevalbhatt.github.io/timezone-picker | `timezone set new york`
 
 #### Displaying your info
 
@@ -240,6 +240,15 @@ Command | Description | Example
 `birthday show` | Display your birthday. | `birthday show`
 `age show` | Display your age (calculated automatically from your birthday). | `age show`
 `timezone show` | Display your timezone. | `timezone show`
+
+#### Deleting your info
+
+Command | Description | Example
+------- | ----------- | -------
+`name delete` | Delete your preferred name. | `name delete`
+`pronouns delete` | Delete your pronouns. | `pronouns delete`
+`birthday delete` | Delete your birthday. | `birthday delete`
+`timezone delete` | Delete your timezone. | `timezone delete`
 
 #### Manage the privacy of your info
 
