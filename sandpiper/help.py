@@ -33,6 +33,10 @@ def is_dm_only(command: Command):
 
 class HelpCommand(DefaultHelpCommand):
 
+    def __init__(self, **options):
+        options.pop('verify_checks', None)
+        super().__init__(verify_checks=False, **options)
+
     def shorten_text(self, text: str, suffix: str = ''):
         if len(text) + len(suffix) > self.width:
             return (text[:self.width - len(suffix) - 3]
