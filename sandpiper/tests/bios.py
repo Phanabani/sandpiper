@@ -214,77 +214,105 @@ class TestBios(DiscordMockingTestCase):
     # noinspection DuplicatedCode
     async def test_whois(self):
 
+        db = self.db
+
+        # Guild 0
+        # Should be visible in guild and DMs
+
         self.add_guild(0)
-        self.add_guild(1)
-        self.add_guild(2)
 
         executor = self.add_user(0, 'Executor')
-        self.add_user(1001, 'Blank')
-        self.add_user(1002, 'Blank')
-        self.add_user(1003, 'Greg')
-        self.add_user(1004, 'Blank')
-        self.add_user(1005, 'Blank')
-        self.add_user(1006, 'Greg')
-
-        self.add_user(2001, 'GuildHiddenGreg')
-        self.add_user(2002, 'Blank')
-        self.add_user(2003, 'Blank')
-
-        self.add_user(3001, 'TotallyHiddenGreg')
-        self.add_user(3002, 'Blank')
-        self.add_user(3003, 'Blank')
-
         self.add_user_to_guild(0, 0, '_executor_'),
+
+        # Test username
+        self.add_user(1001, 'Greg')
         self.add_user_to_guild(0, 1001, '_blank_'),
-        self.add_user_to_guild(0, 1002, '_blank_'),
-        self.add_user_to_guild(0, 1003, '_blank_'),
-        self.add_user_to_guild(0, 1004, '_greg_'),
-        self.add_user_to_guild(0, 1005, '_greg_'),
-        self.add_user_to_guild(0, 1006, '_blank_'),
-
-        self.add_user_to_guild(1, 0, '_executor_'),
-        self.add_user_to_guild(1, 1005, '_extra_nickname_'),
-        self.add_user_to_guild(1, 2001, '_blank_'),
-        self.add_user_to_guild(1, 2002, '_guildhiddengreg_'),
-        self.add_user_to_guild(1, 2003, '_blank_'),
-
-        self.add_user_to_guild(2, 3001, '_blank_'),
-        self.add_user_to_guild(2, 3002, '_totallyhiddengreg_'),
-        self.add_user_to_guild(2, 3003, '_blank_'),
-
-        db = self.db
-        await db.set_preferred_name(1001, '*Greg*')
-        await db.set_preferred_name(1002, '*Greg*')
-        await db.set_preferred_name(1003, '*Blank*')
-        await db.set_preferred_name(1004, '*Blank*')
-        await db.set_preferred_name(1005, '*Blank*')
-        await db.set_preferred_name(1006, None)
-
-        await db.set_preferred_name(2001, '*Blank*')
-        await db.set_preferred_name(2002, '*Blank*')
-        await db.set_preferred_name(2003, '*GuildHiddenGreg*')
-
-        await db.set_preferred_name(3001, '*Blank*')
-        await db.set_preferred_name(3002, '*Blank*')
-        await db.set_preferred_name(3003, '*TotallyHiddenGreg*')
-
+        await db.set_preferred_name(1001, '*Blank*')
         await db.set_privacy_preferred_name(1001, PrivacyType.PUBLIC)
+
+        # Test display name
+        self.add_user(1002, 'Blank')
+        self.add_user_to_guild(0, 1002, '_greg_'),
+        await db.set_preferred_name(1002, '*Blank*')
         await db.set_privacy_preferred_name(1002, PrivacyType.PUBLIC)
+
+        # Test preferred name
+        self.add_user(1003, 'Blank')
+        self.add_user_to_guild(0, 1003, '_blank_'),
+        await db.set_preferred_name(1003, '*Greg*')
         await db.set_privacy_preferred_name(1003, PrivacyType.PUBLIC)
+
+        # Test display name constriction to guild
+        self.add_user(1004, 'Blank')
+        self.add_user_to_guild(0, 1004, '_greg_'),
+        await db.set_preferred_name(1004, '*Blank*')
         await db.set_privacy_preferred_name(1004, PrivacyType.PUBLIC)
+
+        # Test pronouns
+        self.add_user(1005, 'Blank')
+        self.add_user_to_guild(0, 1005, '_blank_'),
+        await db.set_preferred_name(1005, '*Greg*')
         await db.set_privacy_preferred_name(1005, PrivacyType.PUBLIC)
+        await db.set_pronouns(1005, 'He/Him')
+        await db.set_privacy_pronouns(1005, PrivacyType.PUBLIC)
+
+        # Test lack of preferred name
+        self.add_user(1006, 'Greg')
+        self.add_user_to_guild(0, 1006, '_blank_'),
+        await db.set_preferred_name(1006, None)
         await db.set_privacy_preferred_name(1006, PrivacyType.PRIVATE)
 
+        # Guild 1
+        # Should only be visible in DMs
+
+        self.add_guild(1)
+
+        self.add_user_to_guild(1, 0, '_executor_'),
+        self.add_user_to_guild(1, 1001, '_duplicate_'),
+        self.add_user_to_guild(1, 1004, '_extra_nickname_'),
+
+        # Test username
+        self.add_user(2001, 'GuildHiddenGreg')
+        self.add_user_to_guild(1, 2001, '_blank_'),
+        await db.set_preferred_name(2001, '*Blank*')
         await db.set_privacy_preferred_name(2001, PrivacyType.PUBLIC)
+
+        # Test display name
+        self.add_user(2002, 'Blank')
+        self.add_user_to_guild(1, 2002, '_guildhiddengreg_'),
+        await db.set_preferred_name(2002, '*Blank*')
         await db.set_privacy_preferred_name(2002, PrivacyType.PUBLIC)
+
+        # Test preferred name
+        self.add_user(2003, 'Blank')
+        self.add_user_to_guild(1, 2003, '_blank_'),
+        await db.set_preferred_name(2003, '*GuildHiddenGreg*')
         await db.set_privacy_preferred_name(2003, PrivacyType.PUBLIC)
 
+        # Guild 2
+        # Should be totally hidden
+
+        self.add_guild(2)
+
+        # Test username
+        self.add_user(3001, 'TotallyHiddenGreg')
+        self.add_user_to_guild(2, 3001, '_blank_'),
+        await db.set_preferred_name(3001, '*Blank*')
         await db.set_privacy_preferred_name(3001, PrivacyType.PUBLIC)
+
+        # Test display name
+        self.add_user(3002, 'Blank')
+        self.add_user_to_guild(2, 3002, '_totallyhiddengreg_'),
+        await db.set_preferred_name(3002, '*Blank*')
         await db.set_privacy_preferred_name(3002, PrivacyType.PUBLIC)
+
+        # Test preferred name
+        self.add_user(3003, 'Blank')
+        self.add_user_to_guild(2, 3003, '_blank_'),
+        await db.set_preferred_name(3003, '*TotallyHiddenGreg*')
         await db.set_privacy_preferred_name(3003, PrivacyType.PUBLIC)
 
-        await db.set_pronouns(1002, 'He/Him')
-        await db.set_privacy_pronouns(1002, PrivacyType.PUBLIC)
+        # Finish setup
 
         self.msg.author = executor
 
@@ -294,12 +322,12 @@ class TestBios(DiscordMockingTestCase):
 
         embeds = await self.invoke_cmd_get_embeds("whois greg")
         self.assert_info(embeds[0])
-        desc = embeds[0].description
-        self.assertIn("*Greg* • Blank#1001 • _blank_", desc)
-        self.assertIn("*Greg* (He/Him) • Blank#1002 • _blank_", desc)
-        self.assertIn("*Blank* • Greg#1003 • _blank_", desc)
+        desc: str = embeds[0].description
+        self.assertIn("*Blank* • Greg#1001 • _blank_", desc)
+        self.assertIn("*Blank* • Blank#1002 • _greg_", desc)
+        self.assertIn("*Greg* • Blank#1003 • _blank_", desc)
         self.assertIn("*Blank* • Blank#1004 • _greg_", desc)
-        self.assertIn("*Blank* • Blank#1005 • _greg_", desc)
+        self.assertIn("*Greg* (He/Him) • Blank#1005 • _blank_", desc)
         self.assertIn("`No preferred name` • Greg#1006 • _blank_", desc)
 
         self.assertNotIn("_extra_nickname_", desc)
@@ -317,12 +345,13 @@ class TestBios(DiscordMockingTestCase):
 
         embeds = await self.invoke_cmd_get_embeds('whois greg')
         self.assert_info(embeds[0])
-        desc = embeds[0].description
-        self.assertIn("*Greg* • Blank#1001 • _blank_", desc)
-        self.assertIn("*Greg* (He/Him) • Blank#1002 • _blank_", desc)
-        self.assertIn("*Blank* • Greg#1003 • _blank_", desc)
-        self.assertIn("*Blank* • Blank#1004 • _greg_", desc)
-        self.assertIn("*Blank* • Blank#1005 • _greg_, _extra_nickname_", desc)
+        desc: str = embeds[0].description
+        self.assertIn("*Greg* • Blank#1003 • _blank_", desc)
+        self.assertIn("*Greg* (He/Him) • Blank#1005 • _blank_", desc)
+        self.assertIn("*Blank* • Greg#1001 • _blank_", desc)
+        self.assertEqual(desc.count('Greg#1001'), 1)
+        self.assertIn("*Blank* • Blank#1002 • _greg_", desc)
+        self.assertIn("*Blank* • Blank#1004 • _greg_, _extra_nickname_", desc)
         self.assertIn("`No preferred name` • Greg#1006 • _blank_", desc)
 
         self.assertIn("*Blank* • GuildHiddenGreg#2001 • _blank_", desc)
