@@ -466,7 +466,7 @@ class Bios(commands.Cog):
         ),
         example=(
             "birthday set 1997-08-27",
-            "birthday set 08 August 1997",
+            "birthday set 8 August 1997",
             "birthday set Aug 8 1997",
             "birthday set August 8",
             "birthday set 8 Aug",
