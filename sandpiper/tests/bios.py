@@ -1,6 +1,5 @@
 import datetime as dt
 import unittest.mock as mock
-from typing import *
 
 import discord.ext.commands as commands
 import pytz
@@ -215,67 +214,43 @@ class TestBios(DiscordMockingTestCase):
     # noinspection DuplicatedCode
     async def test_whois(self):
 
-        def id_getter(container: Iterable):
-            def get(id: int):
-                for i in container:
-                    if i.id == id:
-                        return i
-                return None
-            return get
+        self.add_guild(0)
+        self.add_guild(1)
+        self.add_guild(2)
 
-        users = [
-            MagicMock_(id=0, name='Executor', discriminator=0),
-            MagicMock_(id=1001, name='Blank', discriminator=1001),
-            MagicMock_(id=1002, name='Blank', discriminator=1002),
-            MagicMock_(id=1003, name='Greg', discriminator=1003),
-            MagicMock_(id=1004, name='Blank', discriminator=1004),
-            MagicMock_(id=1005, name='Blank', discriminator=1005),
-            MagicMock_(id=1006, name='Greg', discriminator=1006),
+        executor = self.add_user(0, 'Executor')
+        self.add_user(1001, 'Blank')
+        self.add_user(1002, 'Blank')
+        self.add_user(1003, 'Greg')
+        self.add_user(1004, 'Blank')
+        self.add_user(1005, 'Blank')
+        self.add_user(1006, 'Greg')
 
-            MagicMock_(id=2001, name='GuildHiddenGreg', discriminator=2001),
-            MagicMock_(id=2002, name='Blank', discriminator=2002),
-            MagicMock_(id=2003, name='Blank', discriminator=2003),
+        self.add_user(2001, 'GuildHiddenGreg')
+        self.add_user(2002, 'Blank')
+        self.add_user(2003, 'Blank')
 
-            MagicMock_(id=3001, name='TotallyHiddenGreg', discriminator=3001),
-            MagicMock_(id=3002, name='Blank', discriminator=3002),
-            MagicMock_(id=3003, name='Blank', discriminator=3003),
-        ]
+        self.add_user(3001, 'TotallyHiddenGreg')
+        self.add_user(3002, 'Blank')
+        self.add_user(3003, 'Blank')
 
-        patcher = mock.patch.object(self.bot, 'get_user')
-        get_user = patcher.start()
-        get_user.side_effect = id_getter(users)
-        self.addCleanup(patcher.stop)
+        self.add_user_to_guild(0, 0, '_executor_'),
+        self.add_user_to_guild(0, 1001, '_blank_'),
+        self.add_user_to_guild(0, 1002, '_blank_'),
+        self.add_user_to_guild(0, 1003, '_blank_'),
+        self.add_user_to_guild(0, 1004, '_greg_'),
+        self.add_user_to_guild(0, 1005, '_greg_'),
+        self.add_user_to_guild(0, 1006, '_blank_'),
 
-        member_groups = [
-            [
-                MagicMock_(id=0, name='Executor', discriminator=0, display_name='_executor_'),
-                MagicMock_(id=1001, name='Blank', discriminator=1001, display_name='_blank_'),
-                MagicMock_(id=1002, name='Blank', discriminator=1002, display_name='_blank_'),
-                MagicMock_(id=1003, name='Greg', discriminator=1003, display_name='_blank_'),
-                MagicMock_(id=1004, name='Blank', discriminator=1004, display_name='_greg_'),
-                MagicMock_(id=1005, name='Blank', discriminator=1005, display_name='_greg_'),
-                MagicMock_(id=1006, name='Greg', discriminator=1006, display_name='_blank_'),
-            ],
-            [
-                MagicMock_(id=0, name='Executor', discriminator=0, display_name='_executor_'),
-                MagicMock_(id=1005, name='Blank', discriminator=1005, display_name='_extra_nickname_'),
-                MagicMock_(id=2001, name='GuildHiddenGreg', discriminator=2001, display_name='_blank_'),
-                MagicMock_(id=2002, name='Blank', discriminator=2002, display_name='_guildhiddengreg_'),
-                MagicMock_(id=2003, name='Blank', discriminator=2003, display_name='_blank_'),
-            ],
-            [
-                MagicMock_(id=3001, name='TotallyHiddenGreg', discriminator=3001, display_name='_blank_'),
-                MagicMock_(id=3002, name='Blank', discriminator=3002, display_name='_totallyhiddengreg_'),
-                MagicMock_(id=3003, name='Blank', discriminator=3003, display_name='_blank_'),
-            ]
-        ]
+        self.add_user_to_guild(1, 0, '_executor_'),
+        self.add_user_to_guild(1, 1005, '_extra_nickname_'),
+        self.add_user_to_guild(1, 2001, '_blank_'),
+        self.add_user_to_guild(1, 2002, '_guildhiddengreg_'),
+        self.add_user_to_guild(1, 2003, '_blank_'),
 
-        guilds = []
-        for members in member_groups:
-            guild = mock.MagicMock()
-            guild.members = members
-            guild.get_member.side_effect = id_getter(members)
-            guilds.append(guild)
+        self.add_user_to_guild(2, 3001, '_blank_'),
+        self.add_user_to_guild(2, 3002, '_totallyhiddengreg_'),
+        self.add_user_to_guild(2, 3003, '_blank_'),
 
         db = self.db
         await db.set_preferred_name(1001, '*Greg*')
@@ -311,13 +286,11 @@ class TestBios(DiscordMockingTestCase):
         await db.set_pronouns(1002, 'He/Him')
         await db.set_privacy_pronouns(1002, PrivacyType.PUBLIC)
 
-        self.bot.guilds = guilds
-        self.bot.users = users
-        self.msg.author = users[0]
+        self.msg.author = executor
 
         # Invoke in a guild
 
-        self.msg.guild = guilds[0]
+        self.msg.guild = self.guilds_map[0]
 
         embeds = await self.invoke_cmd_get_embeds("whois greg")
         self.assert_info(embeds[0])

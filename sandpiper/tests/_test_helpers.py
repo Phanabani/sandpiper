@@ -1,4 +1,4 @@
-from typing import List
+from typing import *
 import unittest
 import unittest.mock as mock
 
@@ -6,6 +6,20 @@ import discord
 import discord.ext.commands as commands
 
 __all__ = ['DiscordMockingTestCase', 'MagicMock_']
+
+
+class MagicMock_(mock.MagicMock):
+    """
+    Identical to MagicMock, but the ``name`` kwarg will be parsed as a regular
+    kwarg (assigned to the mock as an attribute).
+    """
+
+    def __init__(self, *args, _name_: Optional[str] = None, **kwargs):
+        if _name_ is None:
+            _name_ = ''
+        name_attr = kwargs.pop('name', None)
+        super().__init__(*args, name=_name_, **kwargs)
+        self.name = name_attr
 
 
 class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
@@ -45,8 +59,113 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         connection_mock.user.id = 0
         self.addCleanup(patcher.stop)
 
+        self.init_mock_userdata()
+
     def setup_cogs(self, bot: commands.Bot):
+        """Override to add cogs to the bot!"""
         pass
+
+    # noinspection PyPropertyAccess
+    def init_mock_userdata(self):
+        self.guilds: List[mock.Mock] = []
+        self.users: List[mock.Mock] = []
+        self.guilds_map: Dict[int, mock.Mock] = {}
+        self.users_map: Dict[int, mock.Mock] = {}
+
+        patcher = mock.patch.object(self.bot, 'get_user')
+        get_user = patcher.start()
+        get_user.side_effect = lambda id: self.users_map.get(id, None)
+        self.addCleanup(patcher.stop)
+
+        # These are patched in in asyncSetUp
+        self.bot.guilds = self.guilds
+        self.bot.users = self.users
+
+    def add_user(self, id: int, name: Optional[str] = None,
+                 discriminator: Optional[int] = None, **kwargs) -> discord.User:
+        """
+        Add a mock user to the client. You can access users through the list
+        `self.bot.users` or the id->user dict `self.bot.users_map`.
+
+        :param id: the ID for this user. Must be unique for each test.
+        :param name: an optional username for this user
+        :param discriminator: an optional discriminator for this user. Defaults
+            to the last 4 digits of the ID.
+        :param kwargs: extra kwargs to add to the user
+        :return: the new User mock
+        """
+
+        if id in self.users_map:
+            raise ValueError(f"User with id={id} already exists")
+        if name is None:
+            name = 'A_User'
+        if discriminator is None:
+            discriminator = id % 10000
+        user = MagicMock_(spec=discord.User, id=id, name=name,
+                          discriminator=discriminator, **kwargs)
+        self.users.append(user)
+        self.users_map[id] = user
+        return user
+
+    def add_guild(self, id: int, name: Optional[str] = None,
+                  **kwargs) -> discord.Guild:
+        """
+        Add a mock guild to the client. You can access guilds through the list
+        `self.bot.guilds` or the id->guild dict `self.bot.guilds_map`.
+
+        :param id: the ID for this guild. Must be unique for each test.
+        :param name: an optional username for this guild
+        :param kwargs: extra kwargs to add to the guild
+        :return: the new Guild mock
+        """
+
+        if id in self.guilds_map:
+            raise ValueError(f"Guild with id={id} already exists")
+        if name is None:
+            name = 'A_Guild'
+
+        guild = MagicMock_(spec=discord.Guild, id=id, name=name, **kwargs)
+        members = []
+        members_map = {}
+        guild.members = members
+        guild._members_map = members_map
+        guild.get_member.side_effect = lambda id: members_map.get(id, None)
+        self.guilds.append(guild)
+        self.guilds_map[id] = guild
+        return guild
+
+    def add_user_to_guild(self, guild_id: int, user_id: int,
+                          display_name: Optional[str],
+                          **kwargs) -> discord.Member:
+        """
+        Create a mock member by adding a user to a guild. The user and guild
+        must already exist (created with ``add_user`` or ``add_guild``).
+
+        :param guild_id: the ID of an existing guild to add the user to
+        :param user_id: the ID of an existing user to add to the guild
+        :param display_name: an optional display name for this member
+        :param kwargs: extra kwargs to add to the member
+        :return: the new Member mock
+        """
+
+        if user_id not in self.users_map:
+            raise ValueError(f"User with id={user_id} does not exist")
+        if guild_id not in self.guilds_map:
+            raise ValueError(f"Guild with id={guild_id} does not exist")
+
+        guild = self.guilds_map[guild_id]
+        if user_id in guild._members_map:
+            raise ValueError(f"Member with id={user_id} already exists in "
+                             f"this guild")
+        user = self.users_map[user_id]
+        member = MagicMock_(
+            spec=discord.Member,
+            id=user_id, name=user.name, discriminator=user.discriminator,
+            guild=guild, display_name=display_name, **kwargs
+        )
+        guild.members.append(member)
+        guild._members_map[user_id] = member
+        return member
 
     async def invoke_cmd(self, message_content: str) -> mock.AsyncMock:
         """
@@ -106,15 +225,3 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Info', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
-
-
-class MagicMock_(mock.MagicMock):
-    """
-    Identical to MagicMock, but the ``name`` kwarg will be parsed as a regular
-    kwarg (assigned to the mock as an attribute).
-    """
-
-    def __init__(self, *args, **kwargs):
-        name = kwargs.pop('name', None)
-        super().__init__(*args, **kwargs)
-        self.name = name
