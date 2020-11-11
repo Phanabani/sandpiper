@@ -8,6 +8,7 @@ import discord.ext.commands as commands
 __all__ = ['DiscordMockingTestCase', 'MagicMock_']
 
 
+# noinspection PyPep8Naming
 class MagicMock_(mock.MagicMock):
     """
     Identical to MagicMock, but the ``name`` kwarg will be parsed as a regular
@@ -169,12 +170,14 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def invoke_cmd(self, message_content: str) -> mock.AsyncMock:
         """
-        Use self._msg to invoke a command.
+        Invoke a command with ``self.msg``.
 
-        :returns: an AsyncMock representing the `ctx.send` method. You can use
+        :param message_content: the message content used to invoke the command
+        :return: an AsyncMock representing the `ctx.send` method. You can use
             the methods defined in Mock to check the calls to this method by
             the command invocation.
         """
+
         self.msg.content = message_content
         ctx = await self.bot.get_context(self.msg)
         ctx.send = mock.AsyncMock()
@@ -185,6 +188,13 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def invoke_cmd_get_embeds(
             self, message_content: str) -> List[discord.Embed]:
+        """
+        Invoke a command with ``invoke_cmd`` and return the embeds sent back.
+
+        :param message_content: the message content used to invoke the command
+        :return: a list of Embeds sent back after invocation
+        """
+
         send = await self.invoke_cmd(message_content)
         return [
             embed for call in send.call_args_list
@@ -192,6 +202,15 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         ]
 
     async def dispatch_msg(self, message_content: str) -> mock.AsyncMock:
+        """
+        Dispatch ``self.msg`` to the client.
+
+        :param message_content: the message content to be dispatched
+        :return: an AsyncMock representing the `msg.channel.send` method. You
+            can use the methods defined in Mock to check the calls to this
+            method by the command invocation.
+        """
+
         self.msg.content = message_content
         self.msg.channel.send = mock.AsyncMock()
 
@@ -200,6 +219,14 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         return self.msg.channel.send
 
     async def dispatch_msg_get_msgs(self, message_content: str) -> List[str]:
+        """
+        Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
+        return a list of message contents that were sent back.
+
+        :param message_content: the message content to be dispatched
+        :return: a list of the contents of each message sent back
+        """
+
         send = await self.dispatch_msg(message_content)
         return [
             content for call in send.call_args_list
