@@ -40,7 +40,11 @@ class TestConversion(DiscordMockingTestCase):
         bot.add_cog(UserData(bot))
 
     async def test_unit_conversion(self):
-        self.msg.author.id = 0
+        dutch_user = 123
+        await self.db.set_timezone(dutch_user, pytz.timezone('Europe/Amsterdam'))
+        await self.db.set_privacy_timezone(dutch_user, PrivacyType.PUBLIC)
+
+        self.msg.author.id = dutch_user
         msgs = await self.dispatch_msg_get_msgs(
             "guys it's {30f} outside today, I'm so cold...")
         self.assertIn('30.00 °F', msgs[0])
@@ -82,11 +86,17 @@ class TestConversion(DiscordMockingTestCase):
         self.msg.guild.get_member.return_value = True
 
         dutch_user = 123
+        dutch_tz = pytz.timezone('Europe/Amsterdam')
+        dutch_now = dt.datetime.now().astimezone(dutch_tz)
         british_user = 456
+        british_tz = pytz.timezone('Europe/London')
+        british_now = dt.datetime.now().astimezone(british_tz)
         american_user = 789
-        await self.db.set_timezone(dutch_user, pytz.timezone('Europe/Amsterdam'))
-        await self.db.set_timezone(british_user, pytz.timezone('Europe/London'))
-        await self.db.set_timezone(american_user, pytz.timezone('America/New_York'))
+        american_tz = pytz.timezone('America/New_York')
+        american_now = dt.datetime.now().astimezone(american_tz)
+        await self.db.set_timezone(dutch_user, dutch_tz)
+        await self.db.set_timezone(british_user, british_tz)
+        await self.db.set_timezone(american_user, american_tz)
         await self.db.set_privacy_timezone(dutch_user, PrivacyType.PUBLIC)
         await self.db.set_privacy_timezone(british_user, PrivacyType.PUBLIC)
         await self.db.set_privacy_timezone(american_user, PrivacyType.PUBLIC)
@@ -113,3 +123,11 @@ class TestConversion(DiscordMockingTestCase):
         self.assertRegex(msgs[0], r'Europe/Amsterdam.+6:00 AM')
         self.assertRegex(msgs[0], r'Europe/London.+5:00 AM')
         self.assertRegex(msgs[0], r'America/New_York.+12:00 AM')
+
+        self.msg.author.id = british_user
+        msgs = await self.dispatch_msg_get_msgs(
+            "I'm free {now}, anyone want to do something?"
+        )
+        self.assertRegex(msgs[0], r'Europe/Amsterdam.+' + dutch_now.strftime("%I:%M %p").lstrip("0"))
+        self.assertRegex(msgs[0], r'Europe/London.+' + british_now.strftime("%I:%M %p").lstrip("0"))
+        self.assertRegex(msgs[0], r'America/New_York.+' + american_now.strftime("%I:%M %p").lstrip("0"))
