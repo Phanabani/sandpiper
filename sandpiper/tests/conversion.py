@@ -115,6 +115,13 @@ class TestConversion(DiscordMockingTestCase):
         self.assertRegex(msgs[0], r'Europe/London.+7:00 PM.+10:45 PM')
         self.assertRegex(msgs[0], r'America/New_York.+2:00 PM.+5:45 PM')
 
+        self.msg.author.id = american_user
+        msgs = await self.dispatch_msg_get_msgs(
+            "Dude, it's {midnight} :gobed:!")
+        self.assertRegex(msgs[0], r'Europe/Amsterdam.+6:00 AM')
+        self.assertRegex(msgs[0], r'Europe/London.+5:00 AM')
+        self.assertRegex(msgs[0], r'America/New_York.+12:00 AM')
+
         self.msg.author.id = british_user
         msgs = await self.dispatch_msg_get_msgs(
             "yeah I've gotta wake up at {5} for work tomorrow, so it's an "
@@ -123,6 +130,13 @@ class TestConversion(DiscordMockingTestCase):
         self.assertRegex(msgs[0], r'Europe/Amsterdam.+6:00 AM')
         self.assertRegex(msgs[0], r'Europe/London.+5:00 AM')
         self.assertRegex(msgs[0], r'America/New_York.+12:00 AM')
+
+        self.msg.author.id = dutch_user
+        msgs = await self.dispatch_msg_get_msgs(
+            "It's nearly {noon}. Time for lunch!")
+        self.assertRegex(msgs[0], r'Europe/Amsterdam.+12:00 PM')
+        self.assertRegex(msgs[0], r'Europe/London.+11:00 AM')
+        self.assertRegex(msgs[0], r'America/New_York.+6:00 AM')
 
         self.msg.author.id = british_user
         msgs = await self.dispatch_msg_get_msgs(

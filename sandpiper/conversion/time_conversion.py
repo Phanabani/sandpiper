@@ -50,6 +50,11 @@ async def convert_time_to_user_timezones(
     parsed_times: List[dt.datetime] = []
     failed: List[str] = []
     for tstr in time_strs:
+        if tstr.lower() == 'noon':
+            tstr = "12:00"
+        elif tstr.lower() == 'midnight':
+            tstr = "00:00"
+
         if tstr.lower() == 'now':
             local_dt = dt.datetime.now()
             parsed_times.append(local_dt)
