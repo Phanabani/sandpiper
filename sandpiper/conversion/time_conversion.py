@@ -47,33 +47,36 @@ async def convert_time_to_user_timezones(
     failed: List[str] = []
     basis_tz = None
     for tstr in time_strs:
+        if tstr.lower() == 'now':
+            local_dt = dt.datetime.now()
+            parsed_times.append(local_dt)
+            continue
+
         if tstr.lower() == 'noon':
             tstr = "12:00"
         elif tstr.lower() == 'midnight':
             tstr = "00:00"
 
-        if tstr.lower() == 'now':
-            local_dt = dt.datetime.now()
-            parsed_times.append(local_dt)
+        try:
+            parsed_time = parse_time(tstr)
+        except ValueError as e:
+            logger.info(
+                f"Failed to parse time string (string={tstr!r}, reason={e})")
+            failed.append(tstr)
+        except:
+            logger.warning(
+                f"Unhandled exception while parsing time string "
+                f"(string={tstr!r})", exc_info=True
+            )
         else:
-            try:
-                parsed_time = parse_time(tstr)
-            except ValueError as e:
-                logger.info(f"Failed to parse time string (string={tstr!r}, "
-                            f"reason={e})")
-                failed.append(tstr)
-            except:
-                logger.warning(f"Unhandled exception while parsing time string "
-                            f"(string={tstr!r})", exc_info=True)
-            else:
-                # Only get this once
+            # Only get this once
+            if basis_tz is None:
+                basis_tz = await db.get_timezone(user_id)
                 if basis_tz is None:
-                    basis_tz = await db.get_timezone(user_id)
-                    if basis_tz is None:
-                        raise UserTimezoneUnset()
+                    raise UserTimezoneUnset()
 
-                local_dt = localize_time_to_datetime(parsed_time, basis_tz)
-                parsed_times.append(local_dt)
+            local_dt = localize_time_to_datetime(parsed_time, basis_tz)
+            parsed_times.append(local_dt)
 
     if not parsed_times:
         return [], failed
