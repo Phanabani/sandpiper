@@ -71,7 +71,7 @@ class TestConversion(DiscordMockingTestCase):
     @mock.patch('sandpiper.common.time.dt', autospec=True)
     async def test_time_conversion(self, mock_datetime, mock_localzone):
         mock_localzone.return_value = pytz.UTC
-        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1)
+        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
         mock_datetime.datetime.side_effect = (
             lambda *args, **kw: dt.datetime(*args, **kw))
         mock_datetime.date.side_effect = (
