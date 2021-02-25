@@ -40,11 +40,7 @@ class TestConversion(DiscordMockingTestCase):
         bot.add_cog(UserData(bot))
 
     async def test_unit_conversion(self):
-        dutch_user = 123
-        await self.db.set_timezone(dutch_user, pytz.timezone('Europe/Amsterdam'))
-        await self.db.set_privacy_timezone(dutch_user, PrivacyType.PUBLIC)
-
-        self.msg.author.id = dutch_user
+        self.msg.author.id = 0
         msgs = await self.dispatch_msg_get_msgs(
             "guys it's {30f} outside today, I'm so cold...")
         self.assertIn('30.00 °F', msgs[0])

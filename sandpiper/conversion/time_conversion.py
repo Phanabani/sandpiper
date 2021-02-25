@@ -41,14 +41,11 @@ async def convert_time_to_user_timezones(
                                          if guild.get_member(user_id)}
     logger.debug(f"Filtered timezones: {user_timezones}")
 
-    basis_tz = await db.get_timezone(user_id)
-    if basis_tz is None:
-        raise UserTimezoneUnset()
-
     # Attempt to parse the strings as times and populate success and failure
     # lists accordingly
     parsed_times: List[dt.datetime] = []
     failed: List[str] = []
+    basis_tz = None
     for tstr in time_strs:
         if tstr.lower() == 'noon':
             tstr = "12:00"
@@ -69,6 +66,12 @@ async def convert_time_to_user_timezones(
                 logger.warning(f"Unhandled exception while parsing time string "
                             f"(string={tstr!r})", exc_info=True)
             else:
+                # Only get this once
+                if basis_tz is None:
+                    basis_tz = await db.get_timezone(user_id)
+                    if basis_tz is None:
+                        raise UserTimezoneUnset()
+
                 local_dt = localize_time_to_datetime(parsed_time, basis_tz)
                 parsed_times.append(local_dt)
 
