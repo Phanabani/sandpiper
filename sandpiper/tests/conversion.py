@@ -1,18 +1,83 @@
 import datetime as dt
+import unittest
 import unittest.mock as mock
+from typing import Optional, Union
 
 import discord.ext.commands as commands
 import pytz
 
 from ._test_helpers import DiscordMockingTestCase
-from ..user_data import DatabaseSQLite, UserData
 from sandpiper.conversion.cog import Conversion
+from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
+from sandpiper.user_data import DatabaseSQLite, UserData
+from sandpiper.user_data.enums import PrivacyType
 
-__all__ = ['TestConversion']
-
-from ..user_data.enums import PrivacyType
+__all__ = ['TestImperialShorthandRegex', 'TestConversion']
 
 CONNECTION = ':memory:'
+
+
+class TestImperialShorthandRegex(unittest.TestCase):
+
+    def assert_match(
+            self, test_str: str, foot: Optional[Union[int, float]],
+            inch: Optional[Union[int, float]]
+    ):
+        match = imperial_shorthand_pattern.match(test_str)
+
+        if foot is None and inch is None:
+            self.assertIsNone(match)
+        else:
+            match_foot = match['foot']
+            match_inch = match['inch']
+            # Coerce the matched strings into their expected types
+            if foot is not None and match_foot is not None:
+                match_foot = type(foot)(match_foot)
+            if inch is not None and match_inch is not None:
+                match_inch = type(inch)(match_inch)
+
+            self.assertEqual(match_foot, foot)
+            self.assertEqual(match_inch, inch)
+
+    def test_int_feet(self):
+        self.assert_match("1'", 1, None)
+        self.assert_match("23'", 23, None)
+        self.assert_match("-4'", None, None)
+        self.assert_match(" 5'", None, None)
+
+    def test_int_inches(self):
+        self.assert_match("1\"", None, 1)
+        self.assert_match("23\"", None, 23)
+        self.assert_match("-4\"", None, None)
+        self.assert_match(" 5\"", None, None)
+
+    def test_int_both(self):
+        self.assert_match("1'2\"", 1, 2)
+        self.assert_match("3' 4\"", 3, 4)
+        self.assert_match("56' 78\"", 56, 78)
+        self.assert_match("0' 1\"", 0, 1)
+        self.assert_match("1' 0\"", 1, 0)
+
+    def test_decimal_feet(self):
+        # Decimal feet are not allowed (yet?)
+        self.assert_match("1.2'", None, None)
+        self.assert_match("0.3'", None, None)
+        self.assert_match(".4'", None, None)
+
+    def test_decimal_inches(self):
+        self.assert_match("1.2\"", None, 1.2)
+        self.assert_match("0.3\"", None, 0.3)
+        self.assert_match(".4\"", None, 0.4)
+
+    def test_decimal_both(self):
+        self.assert_match("1' 2.3\"", 1, 2.3)
+        self.assert_match(".4' 5.6\"", None, None)
+        self.assert_match("1' 2.3.4\"", None, None)
+
+    def test_other_garbage(self):
+        self.assert_match("", None, None)
+        self.assert_match("5", None, None)
+        self.assert_match("30.00 °F", None, None)
 
 
 class TestConversion(DiscordMockingTestCase):
