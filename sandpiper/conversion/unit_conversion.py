@@ -46,8 +46,20 @@ unit_map = bidict({
     ureg['°C'].u: ureg['°F'].u
 })
 
-imperial_height_pattern = re.compile(
-    r'^((?P<foot>[\d]+)\')?(\s)*((?P<inch>[\d]+)\")?$')
+imperial_shorthand_pattern = re.compile(
+    # Either feet or inches may be excluded, but not both, so make sure
+    # at least one of them matches with this lookahead
+    r'^(?=.)'
+    # Only allow integer foot values
+    r'(?:(?P<foot>[\d]+)\')?'
+    r'(?:'
+        # Allow a space if foot is matched
+        r'(?(foot) ?|)'
+        # Allow integer or decimal inch values
+        r'(?P<inch>(?:\d+)|(?:\d*\.\d+))\"'
+    r')?'
+    r'$'
+)
 
 
 def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
@@ -62,7 +74,7 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
 
     logger.info(f"Attempting unit conversion for {quantity_str!r}")
 
-    if height := imperial_height_pattern.match(quantity_str):
+    if height := imperial_shorthand_pattern.match(quantity_str):
         # Added support for imperial shorthand units for length
         # e.g. 5' 8" == 5 feet + 8 inches
         logger.info('Imperial length shorthand detected')
