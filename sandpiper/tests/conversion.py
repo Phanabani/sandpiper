@@ -57,6 +57,16 @@ class TestConversion(DiscordMockingTestCase):
         self.assertIn('1.88 m', msgs[0])
 
         msgs = await self.dispatch_msg_get_msgs(
+            "I'm only {5'11\"} though!")
+        self.assertIn('5.92 ft', msgs[0])
+        self.assertIn('1.80 m', msgs[0])
+
+        msgs = await self.dispatch_msg_get_msgs(
+            "Is that a {33ft} boat, TJ?")
+        self.assertIn('33.00 ft', msgs[0])
+        self.assertIn('10.06 m', msgs[0])
+
+        msgs = await self.dispatch_msg_get_msgs(
             "Lou lives about {15km} from me and TJ's staying at a hotel "
             "{2.5km} away, so he and I are gonna meet up and drive over to "
             "Lou."

@@ -47,7 +47,7 @@ unit_map = bidict({
 })
 
 imperial_height_pattern = re.compile(
-    r'^(?=.)(?:(?P<foot>[\d]+)\')?(?:(?(foot) |)(?P<inch>[\d.]+)\")?$')
+    r'^((?P<foot>[\d]+)\')?(\s)*((?P<inch>[\d]+)\")?$')
 
 
 def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
