@@ -14,7 +14,7 @@ TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 
 time_pattern = re.compile(
     r'^(?P<hour>[0-2]?\d)'
-    r'(?::*(?P<minute>\d{2}))?'
+    r'(?::?(?P<minute>\d{2}))?'
     r'\s*'
     r'(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?$',
     re.I
