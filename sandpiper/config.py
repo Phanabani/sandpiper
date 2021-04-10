@@ -6,23 +6,25 @@ from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 
 DEFAULTS = {
-  "bot": {
-    "command_prefix": "!piper ",
-    "description":
-        "A bot that makes it easier to communicate with friends around the "
-        "world.\nVisit my GitHub page for more info about commands and "
-        "features: https://github.com/Hawkpath/sandpiper#commands-and-features"
-  },
-
-  "logging": {
-    "sandpiper_logging_level": "INFO",
-    "discord_logging_level": "WARNING",
-    "output_file": "./logs/sandpiper.log",
-    "when": "midnight",
-    "interval": 1,
-    "backup_count": 7,
-    "format": "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
-  }
+    "bot": {
+        "command_prefix": "!piper ",
+        "description":
+            "A bot that makes it easier to communicate with friends around the "
+            "world.\nVisit my GitHub page for more info about commands and "
+            "features: https://github.com/Hawkpath/sandpiper#commands-and-features"
+    },
+    "commands": {
+        "allow_public_bio_setting": False,
+    },
+    "logging": {
+        "sandpiper_logging_level": "INFO",
+        "discord_logging_level": "WARNING",
+        "output_file": "./logs/sandpiper.log",
+        "when": "midnight",
+        "interval": 1,
+        "backup_count": 7,
+        "format": "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
+    }
 }
 
 
@@ -59,11 +61,27 @@ class Config:
             if not isinstance(self.description, str):
                 raise ConfigError('bot.description must be a string')
 
+    class Commands:
+
+        __slots__ = ['allow_public_bio_setting']
+
+        allow_public_bio_setting: bool
+
+        def __init__(self, config: Dict[str, Any]):
+            """Parse commands-specific config"""
+
+            self.allow_public_bio_setting = get_default(
+                config, 'commands', 'allow_public_bio_setting'
+            )
+            if not isinstance(self.allow_public_bio_setting, str):
+                raise ConfigError('commands.allow_public_bio_setting must be a bool')
+
     class Logging:
 
-        __slots__ = ['sandpiper_logging_level', 'discord_logging_level',
-                     'output_path', 'when', 'interval', 'backup_count',
-                     'format', 'formatter', 'handler']
+        __slots__ = [
+            'sandpiper_logging_level', 'discord_logging_level', 'output_path',
+            'when', 'interval', 'backup_count', 'format', 'formatter', 'handler'
+        ]
 
         sandpiper_logging_level: str
         discord_logging_level: str
