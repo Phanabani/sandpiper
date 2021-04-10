@@ -677,7 +677,7 @@ class Bios(commands.Cog):
         ),
         example="whois hawk"
     )
-    async def whois(self, ctx: commands.Context, name: str):
+    async def whois(self, ctx: commands.Context, *, name: str):
         if len(name) < 2:
             raise BadArgument("Name must be at least 2 characters.")
 
