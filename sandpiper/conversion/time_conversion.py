@@ -48,7 +48,7 @@ async def convert_time_to_user_timezones(
     basis_tz = None
     for tstr in time_strs:
         if tstr.lower() == 'now':
-            local_dt = dt.datetime.now()
+            local_dt = utc_now()
             parsed_times.append(local_dt)
             continue
 
