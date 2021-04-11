@@ -7,6 +7,7 @@ import discord.ext.commands as commands
 import pytz
 
 from ._test_helpers import DiscordMockingTestCase
+from sandpiper.common.time import utc_now
 from sandpiper.conversion.cog import Conversion
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
 from sandpiper.user_data import DatabaseSQLite, UserData
@@ -164,13 +165,13 @@ class TestConversion(DiscordMockingTestCase):
 
         dutch_user = 123
         dutch_tz = pytz.timezone('Europe/Amsterdam')
-        dutch_now = dt.datetime.now().astimezone(dutch_tz)
+        dutch_now = utc_now().astimezone(dutch_tz)
         british_user = 456
         british_tz = pytz.timezone('Europe/London')
-        british_now = dt.datetime.now().astimezone(british_tz)
+        british_now = utc_now().astimezone(british_tz)
         american_user = 789
         american_tz = pytz.timezone('America/New_York')
-        american_now = dt.datetime.now().astimezone(american_tz)
+        american_now = utc_now().astimezone(american_tz)
         await self.db.set_timezone(dutch_user, dutch_tz)
         await self.db.set_timezone(british_user, british_tz)
         await self.db.set_timezone(american_user, american_tz)
