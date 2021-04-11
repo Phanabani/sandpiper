@@ -39,6 +39,8 @@ unit_map: UnitMap[Unit] = UnitMap(
     },
     one_way={
         ureg.yard: ureg.meter,
+        ureg.kelvin: ureg.celsius,
+        ureg.stone: ureg.kilogram,
     }
 )
 
