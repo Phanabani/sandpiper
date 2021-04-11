@@ -16,8 +16,14 @@ ureg = UnitRegistry(
     autoconvert_offset_to_baseunit=True,  # For temperatures
     non_int_type=D
 )
-ureg.define('@alias degreeC = c = C = degreec = degc = degC')
-ureg.define('@alias degreeF = f = F = degreef = degf = degF')
+ureg.define(
+    '@alias degreeC = c = C = degreec = degc = degC = °C = °c '
+    '= Celsius = celsius'
+)
+ureg.define(
+    '@alias degreeF = f = F = degreef = degf = degF = °F = °f '
+    '= Fahrenheit = fahrenheit'
+)
 Q_ = ureg.Quantity
 
 unit_map: UnitMap[Unit] = UnitMap(
