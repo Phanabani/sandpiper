@@ -141,6 +141,12 @@ class TestConversion(DiscordMockingTestCase):
         self.assertIn('1.55 mi', msgs[0])
         self.assertIn('2.50 km', msgs[0])
 
+        msgs = await self.dispatch_msg_get_msgs(
+            "I was only {4 yards} away in geoguessr!!"
+        )
+        self.assertIn('4.00 yd', msgs[0])
+        self.assertIn('3.66 m', msgs[0])
+
     # @mock.patch('sandpiper.tests.conversion.dt.datetime')
     @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
     @mock.patch('sandpiper.common.time.dt', autospec=True)

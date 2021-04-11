@@ -3,9 +3,10 @@ import logging
 import re
 from typing import Optional, Tuple
 
-from bidict import bidict as bidict_base
-from pint import UndefinedUnitError, UnitRegistry
+from pint import UndefinedUnitError, UnitRegistry, Unit
 from pint.quantity import Quantity
+
+from sandpiper.conversion.unit_map import UnitMap
 
 __all__ = ['imperial_metric']
 
@@ -19,32 +20,21 @@ ureg.define('@alias degreeC = c = C = degreec = degc = degC')
 ureg.define('@alias degreeF = f = F = degreef = degf = degF')
 Q_ = ureg.Quantity
 
-
-# noinspection PyPep8Naming
-class bidict(bidict_base):
-
-    def __contains__(self, item):
-        return (super(bidict, self).__contains__(item)
-                or super(bidict, self.inverse).__contains__(item))
-
-    # noinspection PyArgumentList
-    def __getitem__(self, item):
-        try:
-            return super(bidict, self).__getitem__(item)
-        except KeyError:
-            return super(bidict, self.inverse).__getitem__(item)
-
-
-unit_map = bidict({
-    # Length
-    ureg.km: ureg.mile,
-    ureg.meter: ureg.foot,
-    ureg.cm: ureg.inch,
-    # Mass
-    ureg.kilogram: ureg.pound,
-    # Temperature
-    ureg['°C'].u: ureg['°F'].u
-})
+unit_map: UnitMap[Unit] = UnitMap(
+    two_way={
+        # Length
+        ureg.km: ureg.mile,
+        ureg.meter: ureg.foot,
+        ureg.cm: ureg.inch,
+        # Mass
+        ureg.kilogram: ureg.pound,
+        # Temperature
+        ureg['°C'].u: ureg['°F'].u,
+    },
+    one_way={
+        ureg.yard: ureg.meter,
+    }
+)
 
 imperial_shorthand_pattern = re.compile(
     # Either feet or inches may be excluded, but not both, so make sure
@@ -98,6 +88,8 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
     conversion_unit = unit_map[quantity.units]
 
     quantity_to = quantity.to(conversion_unit)
-    logger.info(f"Conversion successful: "
-                f"{quantity:.2f~P} -> {quantity_to:.2f~P}")
+    logger.info(
+        f"Conversion successful: "
+        f"{quantity:.2f~P} -> {quantity_to:.2f~P}"
+    )
     return quantity, quantity_to
