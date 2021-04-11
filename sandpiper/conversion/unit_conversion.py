@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from pint import UndefinedUnitError, UnitRegistry, Unit
 from pint.quantity import Quantity
 
-from sandpiper.common.priority_bidict import PriorityBidict
+from sandpiper.conversion.unit_map import UnitMap
 
 __all__ = ['imperial_metric']
 
@@ -20,20 +20,20 @@ ureg.define('@alias degreeC = c = C = degreec = degc = degC')
 ureg.define('@alias degreeF = f = F = degreef = degf = degF')
 Q_ = ureg.Quantity
 
-unit_map: PriorityBidict[Unit] = PriorityBidict(
-    priority=(
+unit_map: UnitMap[Unit] = UnitMap(
+    two_way={
         # Length
-        (ureg.km, ureg.mile),
-        (ureg.meter, ureg.foot),
-        (ureg.cm, ureg.inch),
+        ureg.km: ureg.mile,
+        ureg.meter: ureg.foot,
+        ureg.cm: ureg.inch,
         # Mass
-        (ureg.kilogram, ureg.pound),
+        ureg.kilogram: ureg.pound,
         # Temperature
-        (ureg['°C'].u, ureg['°F'].u),
-    ),
-    other=(
-        (ureg.yard, ureg.meter),
-    )
+        ureg['°C'].u: ureg['°F'].u,
+    },
+    one_way={
+        ureg.yard: ureg.meter,
+    }
 )
 
 imperial_shorthand_pattern = re.compile(
