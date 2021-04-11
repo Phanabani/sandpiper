@@ -8,7 +8,7 @@ from pint.quantity import Quantity
 
 from sandpiper.conversion.unit_map import UnitMap
 
-__all__ = ['imperial_metric']
+__all__ = ['convert_measurement']
 
 logger = logging.getLogger('sandpiper.conversion.unit_conversion')
 
@@ -52,7 +52,9 @@ imperial_shorthand_pattern = re.compile(
 )
 
 
-def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
+def convert_measurement(
+        quantity_str: str, unit: str = None
+) -> Optional[Tuple[Quantity, Quantity]]:
     """
     Parse and convert a quantity string between imperial and metric
 
@@ -82,10 +84,14 @@ def imperial_metric(quantity_str: str) -> Optional[Tuple[Quantity, Quantity]]:
     if not isinstance(quantity, Quantity):
         logger.info('Not a quantity')
         return None
-    if quantity.units not in unit_map:
-        logger.info(f"Unit not supported {quantity.units}")
-        return None
-    conversion_unit = unit_map[quantity.units]
+
+    if unit:
+        conversion_unit = unit
+    else:
+        if quantity.units not in unit_map:
+            logger.info(f"Unit not supported {quantity.units}")
+            return None
+        conversion_unit = unit_map[quantity.units]
 
     quantity_to = quantity.to(conversion_unit)
     logger.info(
