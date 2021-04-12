@@ -4,7 +4,6 @@ from typing import List, Set, Tuple
 
 import discord
 
-from sandpiper.bios.misc import fuzzy_match_timezone
 from sandpiper.common.time import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.user_data.database import Database
