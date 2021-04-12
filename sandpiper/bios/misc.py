@@ -16,8 +16,9 @@ class TimezoneMatches:
     has_multiple_best_matches: bool = False
 
 
-def fuzzy_match_timezone(tz_str: str, best_match_threshold=75,
-                         lower_score_cutoff=50, limit=5) -> TimezoneMatches:
+def fuzzy_match_timezone(
+        tz_str: str, best_match_threshold=75, lower_score_cutoff=50, limit=5
+) -> TimezoneMatches:
     """
     Fuzzily match a timezone based on given timezone name.
 
@@ -30,12 +31,14 @@ def fuzzy_match_timezone(tz_str: str, best_match_threshold=75,
         ``TimezoneMatches.matches``
     """
 
-    # ratio (aka token_sort_ratio) provides the best output.
-    # partial_ratio finds substrings, which isn't really what users will be
-    # searching by, and the _set_ratio methods are totally unusable.
+    # I think partial_token_sort_ratio provides the best experience.
+    # The regular token_sort_ratio just feels weird because it doesn't support
+    # substrings. Searching "Amst" would pick "GMT" rather than "Amsterdam".
+    # The _set_ratio methods are totally unusable.
     matches: List[Tuple[str, int]] = fuzzy_process.extractBests(
-        tz_str, pytz.common_timezones, scorer=fuzz.ratio,
-        score_cutoff=lower_score_cutoff, limit=limit)
+        tz_str, pytz.common_timezones, scorer=fuzz.partial_token_sort_ratio,
+        score_cutoff=lower_score_cutoff, limit=limit
+    )
     tz_matches = TimezoneMatches(matches)
 
     if matches and matches[0][1] >= best_match_threshold:
