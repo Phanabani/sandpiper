@@ -109,6 +109,7 @@ async def convert_time_to_user_timezones(
                 runtime_msgs += TimezoneNotFound(timezone)
                 continue
 
+            runtime_msgs += f"Using timezone **{tz_matches.best_match}**"
             local_dt = localize_time_to_datetime(parsed_time, tz_matches.best_match)
             parsed_times.append(local_dt)
 

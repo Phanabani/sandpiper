@@ -76,10 +76,11 @@ class Conversion(commands.Cog):
             return time_strs
 
         if localized_times:
-            output = []
+            output = runtime_msgs.info
             for tz_name, times in localized_times:
-                times = ' | '.join(f'`{time.strftime(time_format)}`'
-                                   for time in times)
+                times = ' | '.join(
+                    f'`{time.strftime(time_format)}`' for time in times
+                )
                 output.append(f'**{tz_name}**: {times}')
             await msg.channel.send('\n'.join(output))
 
