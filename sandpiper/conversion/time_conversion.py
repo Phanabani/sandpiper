@@ -5,8 +5,8 @@ from typing import List, Set, Tuple
 import discord
 
 from sandpiper.bios.misc import fuzzy_match_timezone
-from sandpiper.common.exceptions import AggregateException
 from sandpiper.common.time import *
+from sandpiper.common.misc import RuntimeMessages
 from sandpiper.user_data.database import Database
 
 __all__ = ['UserTimezoneUnset', 'convert_time_to_user_timezones']
@@ -38,7 +38,7 @@ async def convert_time_to_user_timezones(
 ) -> Tuple[
     List[Tuple[str, List[dt.datetime]]],
     List[Tuple[str, str]],
-    AggregateException
+    RuntimeMessages
 ]:
     """
     Convert times.
@@ -70,7 +70,7 @@ async def convert_time_to_user_timezones(
     parsed_times: List[dt.datetime] = []
     failed: List[Tuple[str, str]] = []  # Strings that should pass on to unit conversion
     user_tz = None
-    aggregate_exc = AggregateException()
+    runtime_msgs = RuntimeMessages()
     for tstr, timezone in time_strs:
         # Keyword times
         if tstr.lower() == 'now':
@@ -102,12 +102,11 @@ async def convert_time_to_user_timezones(
         if timezone:
             # User supplied a source timezone
             tz_matches = fuzzy_match_timezone(
-                timezone, best_match_threshold=50, lower_score_cutoff=50,
-                limit=1
+                timezone, best_match_threshold=50, limit=1
             )
             if not tz_matches.best_match:
                 # We don't want this to pass on to unit conversion
-                aggregate_exc += TimezoneNotFound(timezone)
+                runtime_msgs += TimezoneNotFound(timezone)
                 continue
 
             local_dt = localize_time_to_datetime(parsed_time, tz_matches.best_match)
@@ -118,14 +117,14 @@ async def convert_time_to_user_timezones(
             if user_tz is None:
                 # Only get this once
                 user_tz = await db.get_timezone(user_id)
-                if user_tz is None and UserTimezoneUnset not in aggregate_exc:
-                    aggregate_exc += UserTimezoneUnset()
+                if user_tz is None:
+                    runtime_msgs.add_type_once(UserTimezoneUnset())
 
             local_dt = localize_time_to_datetime(parsed_time, user_tz)
             parsed_times.append(local_dt)
 
     if not parsed_times:
-        return [], failed, aggregate_exc
+        return [], failed, runtime_msgs
 
     # Iterate over each timezone and convert all times to that timezone
     conversions = []
@@ -135,4 +134,4 @@ async def convert_time_to_user_timezones(
         conversions.append((tz_name, times))
     conversions.sort(key=lambda conv: conv[1][0].utcoffset())
 
-    return conversions, failed, aggregate_exc
+    return conversions, failed, runtime_msgs

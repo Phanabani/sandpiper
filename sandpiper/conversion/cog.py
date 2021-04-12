@@ -66,12 +66,12 @@ class Conversion(commands.Cog):
         except DatabaseUnavailable:
             return time_strs
 
-        localized_times, failed, exc = await convert_time_to_user_timezones(
+        localized_times, failed, runtime_msgs = await convert_time_to_user_timezones(
             db, msg.author.id, msg.guild, time_strs
         )
-        if exc:
+        if runtime_msgs.exceptions:
             await Embeds.error(
-                msg.channel, '\n'.join(str(e) for e in exc)
+                msg.channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
             )
             return time_strs
 
