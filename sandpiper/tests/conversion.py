@@ -1,7 +1,7 @@
 import datetime as dt
 import unittest
 import unittest.mock as mock
-from typing import Optional, Union
+from typing import *
 
 import discord.ext.commands as commands
 import pytz
@@ -105,50 +105,52 @@ class TestConversion(DiscordMockingTestCase):
         bot.add_cog(Conversion(bot))
         bot.add_cog(UserData(bot))
 
+    async def assert_in_reply(self, msg: str, *substrings: str):
+        msgs = await self.dispatch_msg_get_msgs(msg)
+        self.assertEqual(len(msgs), 1)
+        for substr in substrings:
+            self.assertIn(substr, msgs[0])
+
+    async def assert_regex_reply(self, msg: str, *patterns: str):
+        msgs = await self.dispatch_msg_get_msgs(msg)
+        self.assertEqual(len(msgs), 1)
+        for pattern in patterns:
+            self.assertRegex(msgs[0], pattern)
+
     async def test_unit_conversion(self):
         self.msg.author.id = 0
-        msgs = await self.dispatch_msg_get_msgs(
-            "guys it's {30f} outside today, I'm so cold...")
-        self.assertIn('30.00 °F', msgs[0])
-        self.assertIn('-1.11 °C', msgs[0])
-
-        msgs = await self.dispatch_msg_get_msgs(
-            "I've been working out a lot lately and I've already lost {2 kg}!!")
-        self.assertIn('4.41 lb', msgs[0])
-        self.assertIn('2.00 kg', msgs[0])
-
-        msgs = await self.dispatch_msg_get_msgs(
-            "I think Jason is like {6' 2\"} tall")
-        self.assertIn('6.17 ft', msgs[0])
-        self.assertIn('1.88 m', msgs[0])
-
-        msgs = await self.dispatch_msg_get_msgs(
-            "I'm only {5'11\"} though!")
-        self.assertIn('5.92 ft', msgs[0])
-        self.assertIn('1.80 m', msgs[0])
-
-        msgs = await self.dispatch_msg_get_msgs(
-            "Is that a {33ft} boat, TJ?")
-        self.assertIn('33.00 ft', msgs[0])
-        self.assertIn('10.06 m', msgs[0])
-
-        msgs = await self.dispatch_msg_get_msgs(
+        await self.assert_in_reply(
+            "guys it's {30f} outside today, I'm so cold...",
+            '30.00 °F', '-1.11 °C'
+        )
+        await self.assert_in_reply(
+            "I've been working out a lot lately and I've already lost {2 kg}!!",
+            '4.41 lb', '2.00 kg'
+        )
+        await self.assert_in_reply(
+            "I think Jason is like {6' 2\"} tall",
+            '6.17 ft', '1.88 m'
+        )
+        await self.assert_in_reply(
+            "I'm only {5'11\"} though!",
+            '5.92 ft', '1.80 m'
+        )
+        await self.assert_in_reply(
+            "Is that a {33ft} boat, TJ?",
+            '33.00 ft', '10.06 m'
+        )
+        await self.assert_in_reply(
             "Lou lives about {15km} from me and TJ's staying at a hotel "
             "{2.5km} away, so he and I are gonna meet up and drive over to "
-            "Lou."
+            "Lou.",
+            '9.32 mi', '15.00 km',
+            '1.55 mi', '2.50 km'
         )
-        self.assertIn('9.32 mi', msgs[0])
-        self.assertIn('15.00 km', msgs[0])
-        self.assertIn('1.55 mi', msgs[0])
-        self.assertIn('2.50 km', msgs[0])
-
-        msgs = await self.dispatch_msg_get_msgs(
-            "I was only {4 yards} away in geoguessr!!"
+        await self.assert_in_reply(
+            "I was only {4 yards} away in geoguessr!!",
+            '4.00 yd', '3.66 m'
         )
-        self.assertIn('4.00 yd', msgs[0])
-        self.assertIn('3.66 m', msgs[0])
 
-    # @mock.patch('sandpiper.tests.conversion.dt.datetime')
     @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
     @mock.patch('sandpiper.common.time.dt', autospec=True)
     async def test_time_conversion(self, mock_datetime, mock_localzone):
@@ -180,60 +182,66 @@ class TestConversion(DiscordMockingTestCase):
         await self.db.set_privacy_timezone(american_user, PrivacyType.PUBLIC)
 
         self.msg.author.id = dutch_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "do you guys wanna play at {9pm}?")
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+9:00 PM')
-        self.assertRegex(msgs[0], r'Europe/London.+8:00 PM')
-        self.assertRegex(msgs[0], r'America/New_York.+3:00 PM')
+        await self.assert_regex_reply(
+            "do you guys wanna play at {9pm}?",
+            r'Europe/Amsterdam.+9:00 PM',
+            r'Europe/London.+8:00 PM',
+            r'America/New_York.+3:00 PM'
+        )
 
         self.msg.author.id = american_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "I wish I could, but I'm busy from {14} to {17:45}")
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+8:00 PM.+11:45 PM')
-        self.assertRegex(msgs[0], r'Europe/London.+7:00 PM.+10:45 PM')
-        self.assertRegex(msgs[0], r'America/New_York.+2:00 PM.+5:45 PM')
+        await self.assert_regex_reply(
+            "I wish I could, but I'm busy from {14} to {17:45}",
+            r'Europe/Amsterdam.+8:00 PM.+11:45 PM',
+            r'Europe/London.+7:00 PM.+10:45 PM',
+            r'America/New_York.+2:00 PM.+5:45 PM'
+        )
 
         self.msg.author.id = american_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "I get off work at {330pm}")
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+9:30 PM')
-        self.assertRegex(msgs[0], r'Europe/London.+8:30 PM')
-        self.assertRegex(msgs[0], r'America/New_York.+3:30 PM')
+        await self.assert_regex_reply(
+            "I get off work at {330pm}",
+            r'Europe/Amsterdam.+9:30 PM',
+            r'Europe/London.+8:30 PM',
+            r'America/New_York.+3:30 PM'
+        )
 
         self.msg.author.id = american_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "In 24-hour time that's {1530}")
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+9:30 PM')
-        self.assertRegex(msgs[0], r'Europe/London.+8:30 PM')
-        self.assertRegex(msgs[0], r'America/New_York.+3:30 PM')
+        await self.assert_regex_reply(
+            "In 24-hour time that's {1530}",
+            r'Europe/Amsterdam.+9:30 PM',
+            r'Europe/London.+8:30 PM',
+            r'America/New_York.+3:30 PM'
+        )
 
         self.msg.author.id = american_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "Dude, it's {midnight} :gobed:!")
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+6:00 AM')
-        self.assertRegex(msgs[0], r'Europe/London.+5:00 AM')
-        self.assertRegex(msgs[0], r'America/New_York.+12:00 AM')
+        await self.assert_regex_reply(
+            "Dude, it's {midnight} :gobed:!",
+            r'Europe/Amsterdam.+6:00 AM',
+            r'Europe/London.+5:00 AM',
+            r'America/New_York.+12:00 AM'
+        )
 
         self.msg.author.id = british_user
-        msgs = await self.dispatch_msg_get_msgs(
+        await self.assert_regex_reply(
             "yeah I've gotta wake up at {5} for work tomorrow, so it's an "
-            "early bedtime for me"
+            "early bedtime for me",
+            r'Europe/Amsterdam.+6:00 AM',
+            r'Europe/London.+5:00 AM',
+            r'America/New_York.+12:00 AM'
         )
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+6:00 AM')
-        self.assertRegex(msgs[0], r'Europe/London.+5:00 AM')
-        self.assertRegex(msgs[0], r'America/New_York.+12:00 AM')
 
         self.msg.author.id = dutch_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "It's nearly {noon}. Time for lunch!")
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+12:00 PM')
-        self.assertRegex(msgs[0], r'Europe/London.+11:00 AM')
-        self.assertRegex(msgs[0], r'America/New_York.+6:00 AM')
+        await self.assert_regex_reply(
+            "It's nearly {noon}. Time for lunch!",
+            r'Europe/Amsterdam.+12:00 PM',
+            r'Europe/London.+11:00 AM',
+            r'America/New_York.+6:00 AM'
+        )
 
         self.msg.author.id = british_user
-        msgs = await self.dispatch_msg_get_msgs(
-            "I'm free {now}, anyone want to do something?"
+        await self.assert_regex_reply(
+            "I'm free {now}, anyone want to do something?",
+            r'Europe/Amsterdam.+' + dutch_now.strftime("%I:%M %p").lstrip("0"),
+            r'Europe/London.+' + british_now.strftime("%I:%M %p").lstrip("0"),
+            r'America/New_York.+' + american_now.strftime("%I:%M %p").lstrip("0")
         )
-        self.assertRegex(msgs[0], r'Europe/Amsterdam.+' + dutch_now.strftime("%I:%M %p").lstrip("0"))
-        self.assertRegex(msgs[0], r'Europe/London.+' + british_now.strftime("%I:%M %p").lstrip("0"))
-        self.assertRegex(msgs[0], r'America/New_York.+' + american_now.strftime("%I:%M %p").lstrip("0"))
