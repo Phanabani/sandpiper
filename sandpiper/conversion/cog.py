@@ -88,7 +88,7 @@ class Conversion(commands.Cog):
 
     async def convert_measurements(
             self, channel: discord.TextChannel,
-            quantity_strs: List[str]
+            quantity_strs: List[Tuple[str, str]]
     ) -> List[Tuple[str, str]]:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
