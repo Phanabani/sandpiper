@@ -1,7 +1,7 @@
 from decimal import Decimal as D
 import logging
 import re
-from typing import Optional, Tuple
+from typing import *
 
 from pint import UndefinedUnitError, UnitRegistry, Unit
 from pint.quantity import Quantity
@@ -87,7 +87,7 @@ imperial_shorthand_pattern = re.compile(
         # Allow a space if foot is matched
         r'(?(foot) ?|)'
         # Allow integer or decimal inch values
-        r'(?P<inch>(?:\d+)|(?:\d*\.\d+))\"'
+        r'(?P<inch>\d+|\d*\.\d+)\"'
     r')?'
     r'$'
 )
@@ -111,9 +111,9 @@ def convert_measurement(
         # Added support for imperial shorthand units for length
         # e.g. 5' 8" == 5 feet + 8 inches
         logger.info('Imperial length shorthand detected')
-        foot = Q_(D(foot), 'foot') if (foot := height.group('foot')) else 0
-        inch = Q_(D(inch), 'inch') if (inch := height.group('inch')) else 0
-        quantity = foot + inch
+        foot = Q_(D(foot), 'foot') if (foot := height['foot']) else 0
+        inch = Q_(D(inch), 'inch') if (inch := height['inch']) else 0
+        quantity: Quantity = foot + inch
     else:
         # Regular parsing
         try:
@@ -127,8 +127,10 @@ def convert_measurement(
         return None
 
     if unit:
+        # User specified an output unit
         conversion_unit = unit
     else:
+        # Try getting the output unit from the unit map
         if quantity.units not in unit_map:
             logger.info(f"Unit not supported {quantity.units}")
             return None
