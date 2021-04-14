@@ -32,15 +32,48 @@ unit_map: UnitMap[Unit] = UnitMap(
         ureg.km: ureg.mile,
         ureg.meter: ureg.foot,
         ureg.cm: ureg.inch,
+        # Area
+        ureg.hectare: ureg.acre,
+        # Speed
+        ureg.kilometer_per_hour: ureg.mile_per_hour,
         # Mass
+        ureg.gram: ureg.ounce,
         ureg.kilogram: ureg.pound,
+        # Volume
+        ureg.liter: ureg.gallon,
+        ureg.milliliter: ureg.cup,
+        # Pressure
+        ureg.pascal: ureg.pound_force_per_square_inch,
         # Temperature
-        ureg['°C'].u: ureg['°F'].u,
+        ureg.celsius: ureg.fahrenheit,
+        # Energy
+        ureg.joule: ureg.foot_pound,
+        # Angle
+        ureg.radian: ureg.degree,
     },
     one_way={
+        # Length
         ureg.yard: ureg.meter,
-        ureg.kelvin: ureg.celsius,
+        # Speed
+        ureg.meter_per_second: ureg.kilometer_per_hour,
+        ureg.foot_per_second: ureg.mile_per_hour,
+        # Mass
         ureg.stone: ureg.kilogram,
+        # Volume
+        ureg.pint: ureg.liter,
+        ureg.fluid_ounce: ureg.milliliter,
+        # Pressure
+        # These two are both derived from pascals, so I think these one-way
+        # mappings are reasonable
+        ureg.atmosphere: ureg.pound_force_per_square_inch,
+        ureg.bar: ureg.pound_force_per_square_inch,
+        # Temperature
+        ureg.kelvin: ureg.celsius,
+        # Time
+        ureg.second: ureg.minute,
+        ureg.minute: ureg.hour,
+        ureg.hour: ureg.day,
+        ureg.day: ureg.week,
     }
 )
 
