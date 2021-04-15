@@ -25,7 +25,11 @@ class MagicMock_(mock.MagicMock):
 
 class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
+    _next_user_id: int
     msg: mock.MagicMock
+
+    def setUp(self):
+        self._next_user_id = 1
 
     async def asyncSetUp(self):
         # This is the meat of the operation; it allows for message properties
@@ -254,3 +258,20 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Info', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
+
+    async def assert_in_reply(self, msg: str, *substrings: str):
+        msgs = await self.dispatch_msg_get_msgs(msg)
+        self.assertEqual(len(msgs), 1)
+        for substr in substrings:
+            self.assertIn(substr, msgs[0])
+
+    async def assert_regex_reply(self, msg: str, *patterns: str):
+        msgs = await self.dispatch_msg_get_msgs(msg)
+        self.assertEqual(len(msgs), 1)
+        for pattern in patterns:
+            self.assertRegex(msgs[0], pattern)
+
+    def new_user_id(self) -> int:
+        uid = self._next_user_id
+        self._next_user_id += 1
+        return uid

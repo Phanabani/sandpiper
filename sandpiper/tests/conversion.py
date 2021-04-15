@@ -13,7 +13,11 @@ from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
 from sandpiper.user_data import DatabaseSQLite, UserData
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = ['TestImperialShorthandRegex', 'TestConversion']
+__all__ = (
+    'TestImperialShorthandRegex',
+    'TestUnitConversion',
+    'TestTimeConversion'
+)
 
 CONNECTION = ':memory:'
 
@@ -101,55 +105,12 @@ class TestImperialShorthandRegex(unittest.TestCase):
         self.assert_match("30.00 °F", None, None)
 
 
-class TestConversion(DiscordMockingTestCase):
-
-    db: DatabaseSQLite
-    next_user_id: int
-
-    def setUp(self):
-        self.next_user_id = 1
-
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
-        # Connect to a dummy database
-        self.db = DatabaseSQLite(CONNECTION)
-        await self.db.connect()
-
-        # Bypass UserData cog lookup by patching in the database
-        patcher = mock.patch(
-            'sandpiper.user_data.UserData.get_database',
-            return_value=self.db
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    async def asyncTearDown(self):
-        await self.db.disconnect()
+class TestUnitConversion(DiscordMockingTestCase):
 
     def setup_cogs(self, bot: commands.Bot):
         bot.add_cog(Conversion(bot))
-        bot.add_cog(UserData(bot))
-
-    def new_user_id(self) -> int:
-        uid = self.next_user_id
-        self.next_user_id += 1
-        return uid
-
-    async def assert_in_reply(self, msg: str, *substrings: str):
-        msgs = await self.dispatch_msg_get_msgs(msg)
-        self.assertEqual(len(msgs), 1)
-        for substr in substrings:
-            self.assertIn(substr, msgs[0])
-
-    async def assert_regex_reply(self, msg: str, *patterns: str):
-        msgs = await self.dispatch_msg_get_msgs(msg)
-        self.assertEqual(len(msgs), 1)
-        for pattern in patterns:
-            self.assertRegex(msgs[0], pattern)
 
     async def test_unit_conversion(self):
-        self.msg.author.id = self.new_user_id()
         await self.assert_in_reply(
             "guys it's {30f} outside today, I'm so cold...",
             '30.00 °F', '-1.11 °C'
@@ -181,6 +142,33 @@ class TestConversion(DiscordMockingTestCase):
             "I was only {4 yards} away in geoguessr!!",
             '4.00 yd', '3.66 m'
         )
+
+
+class TestTimeConversion(DiscordMockingTestCase):
+
+    db: DatabaseSQLite
+
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+
+        # Connect to a dummy database
+        self.db = DatabaseSQLite(CONNECTION)
+        await self.db.connect()
+
+        # Bypass UserData cog lookup by patching in the database
+        patcher = mock.patch(
+            'sandpiper.user_data.UserData.get_database',
+            return_value=self.db
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    async def asyncTearDown(self):
+        await self.db.disconnect()
+
+    def setup_cogs(self, bot: commands.Bot):
+        bot.add_cog(Conversion(bot))
+        bot.add_cog(UserData(bot))
 
     async def add_timezone_user(self, timezone: str) -> Tuple[int, dt.datetime]:
         uid = self.new_user_id()
