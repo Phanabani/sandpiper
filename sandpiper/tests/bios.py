@@ -34,7 +34,7 @@ class TestBios(DiscordMockingTestCase):
     async def asyncTearDown(self):
         await self.db.disconnect()
 
-    def setup_cogs(self, bot: commands.Bot):
+    def add_cogs(self, bot: commands.Bot):
         self.bios = Bios(bot)
         bot.add_cog(self.bios)
 

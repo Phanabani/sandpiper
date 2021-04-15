@@ -107,7 +107,7 @@ class TestImperialShorthandRegex(unittest.TestCase):
 
 class TestUnitConversion(DiscordMockingTestCase):
 
-    def setup_cogs(self, bot: commands.Bot):
+    def add_cogs(self, bot: commands.Bot):
         bot.add_cog(Conversion(bot))
 
     async def test_unit_conversion(self):
@@ -166,7 +166,7 @@ class TestTimeConversion(DiscordMockingTestCase):
     async def asyncTearDown(self):
         await self.db.disconnect()
 
-    def setup_cogs(self, bot: commands.Bot):
+    def add_cogs(self, bot: commands.Bot):
         bot.add_cog(Conversion(bot))
         bot.add_cog(UserData(bot))
 

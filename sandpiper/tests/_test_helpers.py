@@ -47,7 +47,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         # Create a dummy bot that will never actually connect but will help
         # with invocation
         self.bot = commands.Bot(command_prefix='')
-        self.setup_cogs(self.bot)
+        self.add_cogs(self.bot)
 
         # This function checks if message author is the self bot and skips
         # context creation (meaning we won't get command invocation), so
@@ -68,7 +68,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.init_mock_userdata()
 
-    def setup_cogs(self, bot: commands.Bot):
+    def add_cogs(self, bot: commands.Bot):
         """Override to add cogs to the bot!"""
         pass
 
