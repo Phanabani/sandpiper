@@ -25,6 +25,8 @@ class MagicMock_(mock.MagicMock):
 
 class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
+    msg: mock.MagicMock
+
     async def asyncSetUp(self):
         # This is the meat of the operation; it allows for message properties
         # to be set where normally it is prohibited

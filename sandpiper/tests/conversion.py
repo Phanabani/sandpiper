@@ -18,6 +18,26 @@ __all__ = ['TestImperialShorthandRegex', 'TestConversion']
 CONNECTION = ':memory:'
 
 
+def patch_time(f: Callable):
+    @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
+    @mock.patch('sandpiper.common.time.dt', autospec=True)
+    async def decorated(self, mock_datetime, mock_localzone):
+        mock_localzone.return_value = pytz.UTC
+        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
+        mock_datetime.datetime.side_effect = (
+            lambda *a, **kw: dt.datetime(*a, **kw)
+        )
+        mock_datetime.date.side_effect = (
+            lambda *a, **kw: dt.date(*a, **kw)
+        )
+        mock_datetime.time.side_effect = (
+            lambda *a, **kw: dt.time(*a, **kw)
+        )
+        await f(self, mock_datetime, mock_localzone)
+
+    return decorated
+
+
 class TestImperialShorthandRegex(unittest.TestCase):
 
     def assert_match(
@@ -83,6 +103,12 @@ class TestImperialShorthandRegex(unittest.TestCase):
 
 class TestConversion(DiscordMockingTestCase):
 
+    db: DatabaseSQLite
+    next_user_id: int
+
+    def setUp(self):
+        self.next_user_id = 1
+
     async def asyncSetUp(self):
         await super().asyncSetUp()
 
@@ -105,6 +131,11 @@ class TestConversion(DiscordMockingTestCase):
         bot.add_cog(Conversion(bot))
         bot.add_cog(UserData(bot))
 
+    def new_user_id(self) -> int:
+        uid = self.next_user_id
+        self.next_user_id += 1
+        return uid
+
     async def assert_in_reply(self, msg: str, *substrings: str):
         msgs = await self.dispatch_msg_get_msgs(msg)
         self.assertEqual(len(msgs), 1)
@@ -118,7 +149,7 @@ class TestConversion(DiscordMockingTestCase):
             self.assertRegex(msgs[0], pattern)
 
     async def test_unit_conversion(self):
-        self.msg.author.id = 0
+        self.msg.author.id = self.new_user_id()
         await self.assert_in_reply(
             "guys it's {30f} outside today, I'm so cold...",
             '30.00 °F', '-1.11 °C'
@@ -151,35 +182,20 @@ class TestConversion(DiscordMockingTestCase):
             '4.00 yd', '3.66 m'
         )
 
-    @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
-    @mock.patch('sandpiper.common.time.dt', autospec=True)
+    async def add_timezone_user(self, timezone: str) -> Tuple[int, dt.datetime]:
+        uid = self.new_user_id()
+        tz = pytz.timezone(timezone)
+        now = utc_now().astimezone(tz)
+        await self.db.set_timezone(uid, tz)
+        await self.db.set_privacy_timezone(uid, PrivacyType.PUBLIC)
+        return uid, now
+
+    # noinspection PyUnusedLocal
+    @patch_time
     async def test_time_conversion(self, mock_datetime, mock_localzone):
-        mock_localzone.return_value = pytz.UTC
-        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
-        mock_datetime.datetime.side_effect = (
-            lambda *args, **kw: dt.datetime(*args, **kw))
-        mock_datetime.date.side_effect = (
-            lambda *args, **kw: dt.date(*args, **kw))
-        mock_datetime.time.side_effect = (
-            lambda *args, **kw: dt.time(*args, **kw))
-
-        self.msg.guild.get_member.return_value = True
-
-        dutch_user = 123
-        dutch_tz = pytz.timezone('Europe/Amsterdam')
-        dutch_now = utc_now().astimezone(dutch_tz)
-        british_user = 456
-        british_tz = pytz.timezone('Europe/London')
-        british_now = utc_now().astimezone(british_tz)
-        american_user = 789
-        american_tz = pytz.timezone('America/New_York')
-        american_now = utc_now().astimezone(american_tz)
-        await self.db.set_timezone(dutch_user, dutch_tz)
-        await self.db.set_timezone(british_user, british_tz)
-        await self.db.set_timezone(american_user, american_tz)
-        await self.db.set_privacy_timezone(dutch_user, PrivacyType.PUBLIC)
-        await self.db.set_privacy_timezone(british_user, PrivacyType.PUBLIC)
-        await self.db.set_privacy_timezone(american_user, PrivacyType.PUBLIC)
+        dutch_user, dutch_now = await self.add_timezone_user('Europe/Amsterdam')
+        british_user, british_now = await self.add_timezone_user('Europe/London')
+        american_user, american_now = await self.add_timezone_user('America/New_York')
 
         self.msg.author.id = dutch_user
         await self.assert_regex_reply(
