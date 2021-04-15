@@ -22,26 +22,6 @@ __all__ = (
 CONNECTION = ':memory:'
 
 
-def patch_time(f: Callable):
-    @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
-    @mock.patch('sandpiper.common.time.dt', autospec=True)
-    async def decorated(self, mock_datetime, mock_localzone):
-        mock_localzone.return_value = pytz.UTC
-        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
-        mock_datetime.datetime.side_effect = (
-            lambda *a, **kw: dt.datetime(*a, **kw)
-        )
-        mock_datetime.date.side_effect = (
-            lambda *a, **kw: dt.date(*a, **kw)
-        )
-        mock_datetime.time.side_effect = (
-            lambda *a, **kw: dt.time(*a, **kw)
-        )
-        await f(self, mock_datetime, mock_localzone)
-
-    return decorated
-
-
 class TestImperialShorthandRegex(unittest.TestCase):
 
     def assert_match(
@@ -142,6 +122,26 @@ class TestUnitConversion(DiscordMockingTestCase):
             "I was only {4 yards} away in geoguessr!!",
             '4.00 yd', '3.66 m'
         )
+
+
+def patch_time(f: Callable):
+    @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
+    @mock.patch('sandpiper.common.time.dt', autospec=True)
+    async def decorated(self, mock_datetime, mock_localzone):
+        mock_localzone.return_value = pytz.UTC
+        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
+        mock_datetime.datetime.side_effect = (
+            lambda *a, **kw: dt.datetime(*a, **kw)
+        )
+        mock_datetime.date.side_effect = (
+            lambda *a, **kw: dt.date(*a, **kw)
+        )
+        mock_datetime.time.side_effect = (
+            lambda *a, **kw: dt.time(*a, **kw)
+        )
+        await f(self, mock_datetime, mock_localzone)
+
+    return decorated
 
 
 class TestTimeConversion(DiscordMockingTestCase):
