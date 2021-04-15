@@ -90,22 +90,22 @@ class TestUnitConversion(DiscordMockingTestCase):
     def add_cogs(self, bot: commands.Bot):
         bot.add_cog(Conversion(bot))
 
-    async def test_unit_conversion(self):
+    async def test_two_way(self):
         await self.assert_in_reply(
             "guys it's {30f} outside today, I'm so cold...",
             '30.00 °F', '-1.11 °C'
         )
         await self.assert_in_reply(
+            "guys it's {-1.11c} outside today, I'm so cold...",
+            '30.00 °F', '-1.11 °C'
+        )
+        await self.assert_in_reply(
             "I've been working out a lot lately and I've already lost {2 kg}!!",
-            '4.41 lb', '2.00 kg'
+            '2.00 kg', '4.41 lb'
         )
         await self.assert_in_reply(
-            "I think Jason is like {6' 2\"} tall",
-            '6.17 ft', '1.88 m'
-        )
-        await self.assert_in_reply(
-            "I'm only {5'11\"} though!",
-            '5.92 ft', '1.80 m'
+            "I've been working out a lot lately and I've already lost {4.41 lb}!!",
+            '2.00 kg', '4.41 lb'
         )
         await self.assert_in_reply(
             "Is that a {33ft} boat, TJ?",
@@ -118,9 +118,48 @@ class TestUnitConversion(DiscordMockingTestCase):
             '9.32 mi', '15.00 km',
             '1.55 mi', '2.50 km'
         )
+
+    async def test_one_way(self):
         await self.assert_in_reply(
             "I was only {4 yards} away in geoguessr!!",
             '4.00 yd', '3.66 m'
+        )
+        await self.assert_in_reply(
+            "I weigh around {9.3 stone}. whatever that means...",
+            '9.30 stone', '59.06 kg'
+        )
+        await self.assert_in_reply(
+            "any scientists in the chat?? {0 K}",
+            '0.00 K', '-273.15 °C'
+        )
+
+
+    async def test_imperial_shorthand(self):
+        await self.assert_in_reply(
+            "I think Jason is like {6' 2\"} tall",
+            '6.17 ft', '1.88 m'
+        )
+        await self.assert_in_reply(
+            "I'm only {5'11\"} though!",
+            '5.92 ft', '1.80 m'
+        )
+
+    async def test_explicit(self):
+        await self.assert_in_reply(
+            "{-5 f > kelvin} it's too late for apologies, imperial system",
+            '-5.00 °F', '252.59 K'
+        )
+        await self.assert_in_reply(
+            "how much is {9.3 stone > lbs}",
+            '9.30 stone', '130.20 lb'
+        )
+        await self.assert_in_reply(
+            "bc this is totally useful.. {5 mi > ft}"
+            '5 mi', '26400.00 ft'
+        )
+        await self.assert_in_reply(
+            "can't believe {3.000 hogshead > gallon} is even real"
+            '3 hogshead', '189.00 gal'
         )
 
 
