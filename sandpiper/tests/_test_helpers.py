@@ -333,41 +333,41 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     # region Embed assertions
 
-    def assert_success(self, embed: discord.Embed, description: str = None):
+    def assert_success(self, embed: discord.Embed, *substrings: str):
         """
         Assert ``embed`` is a success embed and that its description contains
-        ``description``.
+        each substring in ``substrings``.
         """
         self.assertIn('Success', embed.title)
-        if description is not None:
-            self.assertIn(description, embed.description)
+        for substr in substrings:
+            self.assertIn(substr, embed.description)
 
-    def assert_warning(self, embed: discord.Embed, description: str = None):
+    def assert_warning(self, embed: discord.Embed, *substrings: str):
         """
         Assert ``embed`` is a warning embed and that its description contains
-        ``description``.
+        each substring in ``substrings``.
         """
         self.assertIn('Warning', embed.title)
-        if description is not None:
-            self.assertIn(description, embed.description)
+        for substr in substrings:
+            self.assertIn(substr, embed.description)
 
-    def assert_error(self, embed: discord.Embed, description: str = None):
+    def assert_error(self, embed: discord.Embed, *substrings: str):
         """
         Assert ``embed`` is an error embed and that its description contains
-        ``description``.
+        each substring in ``substrings``.
         """
         self.assertIn('Error', embed.title)
-        if description is not None:
-            self.assertIn(description, embed.description)
+        for substr in substrings:
+            self.assertIn(substr, embed.description)
 
-    def assert_info(self, embed: discord.Embed, description: str = None):
+    def assert_info(self, embed: discord.Embed, *substrings: str):
         """
         Assert ``embed`` is an info embed and that its description contains
-        ``description``.
+        each substring in ``substrings``.
         """
         self.assertIn('Info', embed.title)
-        if description is not None:
-            self.assertIn(description, embed.description)
+        for substr in substrings:
+            self.assertIn(substr, embed.description)
 
     # endregion
 
