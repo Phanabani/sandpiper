@@ -6,6 +6,7 @@ import discord
 import discord.ext.commands as commands
 
 from sandpiper.common.embeds import Embeds
+from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
 from sandpiper.conversion.time_conversion import *
 import sandpiper.conversion.unit_conversion as unit_conversion
@@ -89,7 +90,7 @@ class Conversion(commands.Cog):
     async def convert_measurements(
             self, channel: discord.TextChannel,
             quantity_strs: List[Tuple[str, str]]
-    ) -> List[Tuple[str, str]]:
+    ) -> NoReturn:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
         metric and reply with the conversions.
@@ -101,14 +102,21 @@ class Conversion(commands.Cog):
 
         conversions = []
         failed: List[Tuple[str, str]] = []
+        runtime_msgs = RuntimeMessages()
         for qstr, unit in quantity_strs:
-            q = unit_conversion.convert_measurement(qstr, unit)
+            q = unit_conversion.convert_measurement(
+                qstr, unit, runtime_msgs=runtime_msgs
+            )
             if q is not None:
                 conversions.append(f'`{q[0]:.2f~P}` = `{q[1]:.2f~P}`')
             else:
                 failed.append((qstr, unit))
 
+        if runtime_msgs.exceptions:
+            # Send embed with any errors that happened during conversion
+            await Embeds.error(
+                channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
+            )
+
         if conversions:
             await channel.send('\n'.join(conversions))
-
-        return failed
