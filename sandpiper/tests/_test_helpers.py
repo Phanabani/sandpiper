@@ -88,6 +88,8 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.bot.guilds = self.guilds
         self.bot.users = self.users
 
+    # region Mock Discord data
+
     def add_user(
             self, id: int, name: Optional[str] = None,
             discriminator: Optional[int] = None, **kwargs
@@ -175,6 +177,10 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         guild.members.append(member)
         guild._members_map[user_id] = member
         return member
+
+    # endregion
+
+    # region Message dispatching and command invocation
 
     @staticmethod
     def get_embeds(mock_: MagicMock_) -> List[discord.Embed]:
@@ -323,6 +329,10 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
             return embeds[0]
         return embeds
 
+    # endregion
+
+    # region Embed assertions
+
     def assert_success(self, embed: discord.Embed, description: str = None):
         """
         Assert ``embed`` is a success embed and that its description contains
@@ -359,6 +369,10 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         if description is not None:
             self.assertIn(description, embed.description)
 
+    # endregion
+
+    # region Content assertions
+
     async def assert_in_reply(self, msg: str, *substrings: str) -> NoReturn:
         """
         Dispatch ``msg`` to the bot and assert that it replies with one
@@ -376,6 +390,8 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         msg = await self.dispatch_msg_get_contents(msg, only_one=True)
         for pattern in patterns:
             self.assertRegex(msg, pattern)
+
+    # endregion
 
     def new_user_id(self) -> int:
         """
