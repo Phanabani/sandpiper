@@ -88,8 +88,10 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         self.bot.guilds = self.guilds
         self.bot.users = self.users
 
-    def add_user(self, id: int, name: Optional[str] = None,
-                 discriminator: Optional[int] = None, **kwargs) -> discord.User:
+    def add_user(
+            self, id: int, name: Optional[str] = None,
+            discriminator: Optional[int] = None, **kwargs
+    ) -> discord.User:
         """
         Add a mock user to the client. You can access users through the list
         `self.bot.users` or the id->user dict `self.bot.users_map`.
@@ -174,6 +176,28 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         guild._members_map[user_id] = member
         return member
 
+    @staticmethod
+    def get_embeds(mock_: MagicMock_) -> List[discord.Embed]:
+        """
+        :param mock_: a mock ``send`` method
+        :return: a list of embeds sent in each message
+        """
+        return [
+            embed for call in mock_.call_args_list
+            if (embed := call.kwargs.get('embed'))
+        ]
+
+    @staticmethod
+    def get_contents(mock_: MagicMock_) -> List[str]:
+        """
+        :param mock_: a mock ``send`` method
+        :return: a list of each message's contents
+        """
+        return [
+            content for call in mock_.call_args_list
+            if (content := call.args[0]) is not None
+        ]
+
     async def invoke_cmd(self, message_content: str) -> mock.AsyncMock:
         """
         Invoke a command with ``self.msg``.
@@ -193,7 +217,8 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         return ctx.send
 
     async def invoke_cmd_get_embeds(
-            self, message_content: str) -> List[discord.Embed]:
+            self, message_content: str
+    ) -> List[discord.Embed]:
         """
         Invoke a command with ``invoke_cmd`` and return the embeds sent back.
 
@@ -202,10 +227,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         """
 
         send = await self.invoke_cmd(message_content)
-        return [
-            embed for call in send.call_args_list
-            if (embed := call.kwargs.get('embed'))
-        ]
+        return self.get_embeds(send)
 
     async def dispatch_msg(self, message_content: str) -> mock.AsyncMock:
         """
@@ -224,54 +246,141 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
             await listener(self.msg)
         return self.msg.channel.send
 
-    async def dispatch_msg_get_msgs(self, message_content: str) -> List[str]:
+    @overload
+    async def dispatch_msg_get_contents(
+            self, message_content: str
+    ) -> List[str]:
+        pass
+
+    @overload
+    async def dispatch_msg_get_contents(
+            self, message_content: str, only_one: Literal[False]
+    ) -> List[str]:
+        pass
+
+    @overload
+    async def dispatch_msg_get_contents(
+            self, message_content: str, only_one: Literal[True]
+    ) -> str:
+        pass
+
+    async def dispatch_msg_get_contents(
+            self, message_content: str, only_one = False
+    ) -> Union[List[str], str]:
         """
         Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
-        return a list of message contents that were sent back.
+        return the message contents that were sent back.
 
         :param message_content: the message content to be dispatched
-        :return: a list of the contents of each message sent back
+        :return: one or more message contents sent back
         """
 
         send = await self.dispatch_msg(message_content)
-        return [
-            content for call in send.call_args_list
-            if (content := call.args[0]) is not None
-        ]
+        contents = self.get_contents(send)
+        if only_one:
+            self.assertEqual(
+                len(contents), 1, msg=f"Expected 1 message, got {len(contents)}"
+            )
+            return contents[0]
+        return contents
+
+    @overload
+    async def dispatch_msg_get_embeds(
+            self, message_content: str
+    ) -> List[discord.Embed]:
+        pass
+
+    @overload
+    async def dispatch_msg_get_embeds(
+            self, message_content: str, only_one: Literal[False] = False
+    ) -> List[discord.Embed]:
+        pass
+
+    @overload
+    async def dispatch_msg_get_embeds(
+            self, message_content: str, only_one: Literal[True] = False
+    ) -> discord.Embed:
+        pass
+
+    async def dispatch_msg_get_embeds(
+            self, message_content: str, only_one = False
+    ) -> Union[List[discord.Embed], discord.Embed]:
+        """
+        Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
+        return a list of embeds that were sent back.
+
+        :param message_content: the message content to be dispatched
+        :param only_one: assert the number of embeds is 1 and return it
+        :return: one or more embeds that were sent back
+        """
+
+        send = await self.dispatch_msg(message_content)
+        embeds = self.get_embeds(send)
+        if only_one:
+            self.assertEqual(
+                len(embeds), 1, msg=f"Expected 1 embed, got {len(embeds)}"
+            )
+            return embeds[0]
+        return embeds
 
     def assert_success(self, embed: discord.Embed, description: str = None):
+        """
+        Assert ``embed`` is a success embed and that its description contains
+        ``description``.
+        """
         self.assertIn('Success', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
 
     def assert_warning(self, embed: discord.Embed, description: str = None):
+        """
+        Assert ``embed`` is a warning embed and that its description contains
+        ``description``.
+        """
         self.assertIn('Warning', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
 
     def assert_error(self, embed: discord.Embed, description: str = None):
+        """
+        Assert ``embed`` is an error embed and that its description contains
+        ``description``.
+        """
         self.assertIn('Error', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
 
     def assert_info(self, embed: discord.Embed, description: str = None):
+        """
+        Assert ``embed`` is an info embed and that its description contains
+        ``description``.
+        """
         self.assertIn('Info', embed.title)
         if description is not None:
             self.assertIn(description, embed.description)
 
-    async def assert_in_reply(self, msg: str, *substrings: str):
-        msgs = await self.dispatch_msg_get_msgs(msg)
-        self.assertEqual(len(msgs), 1)
+    async def assert_in_reply(self, msg: str, *substrings: str) -> NoReturn:
+        """
+        Dispatch ``msg`` to the bot and assert that it replies with one
+        message and contains each substring in ``substrings``.
+        """
+        msg = await self.dispatch_msg_get_contents(msg, only_one=True)
         for substr in substrings:
-            self.assertIn(substr, msgs[0])
+            self.assertIn(substr, msg)
 
-    async def assert_regex_reply(self, msg: str, *patterns: str):
-        msgs = await self.dispatch_msg_get_msgs(msg)
-        self.assertEqual(len(msgs), 1)
+    async def assert_regex_reply(self, msg: str, *patterns: str) -> NoReturn:
+        """
+        Dispatch ``msg`` to the bot and assert that it replies with one
+        message and matches each regex pattern in ``patterns``.
+        """
+        msg = await self.dispatch_msg_get_contents(msg, only_one=True)
         for pattern in patterns:
-            self.assertRegex(msgs[0], pattern)
+            self.assertRegex(msg, pattern)
 
     def new_user_id(self) -> int:
+        """
+        Get a new, unique user ID (increments by one each call).
+        """
         uid = self._next_user_id
         self._next_user_id += 1
         return uid
