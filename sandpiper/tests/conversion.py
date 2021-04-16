@@ -133,7 +133,6 @@ class TestUnitConversion(DiscordMockingTestCase):
             '0.00 K', '-273.15 °C'
         )
 
-
     async def test_imperial_shorthand(self):
         await self.assert_in_reply(
             "I think Jason is like {6' 2\"} tall",
@@ -160,6 +159,25 @@ class TestUnitConversion(DiscordMockingTestCase):
         await self.assert_in_reply(
             "can't believe {3.000 hogshead > gallon} is even real"
             '3 hogshead', '189.00 gal'
+        )
+
+    async def assert_error(self, msg: str, *substrings: str):
+        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
+        super().assert_error(embed, *substrings)
+
+    async def test_error(self):
+        await self.assert_error(
+            "that's like {12.5 donuts} wide!",
+            'Unknown unit "donuts"'
+        )
+        await self.assert_error(
+            "how far away is that in blehs? {6 km > bleh}",
+            'Unknown unit "bleh"'
+        )
+        await self.assert_error(
+            "{5 hogshead} is a real unit, but not really useful enough to be "
+            "mapped. fun name though",
+            '{5 hogshead > otherunit}'
         )
 
 
