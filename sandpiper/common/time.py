@@ -8,18 +8,44 @@ import pytz
 import tzlocal
 
 __all__ = [
-    'TimezoneType', 'time_format', 'parse_time', 'parse_date', 'format_date',
-    'utc_now', 'localize_time_to_datetime', 'TimezoneMatches',
-    'fuzzy_match_timezone'
+    'TimezoneType',
+    'time_format', 'parse_time',
+    'parse_date', 'format_date',
+    'utc_now',
+    'localize_time_to_datetime',
+    'TimezoneMatches', 'fuzzy_match_timezone'
 ]
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 
 time_pattern = re.compile(
-    r'^(?P<hour>[0-2]?\d)'
+    r'^'
+    r'(?P<hour>[0-2]?\d)'
     r'(?::?(?P<minute>\d{2}))?'
     r'\s*'
-    r'(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?$',
+    r'(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?'
+    r'$',
+    re.I
+)
+
+time_pattern_with_timezone = re.compile(
+    r'^'
+    r'(?P<hour>[0-2]?\d)'
+    r'(?:'
+        r'(?P<colon>:)?'
+        r'(?P<minute>\d{2})'
+    r')?'
+    r'(?: ?(?P<period>'
+        r'(?P<period_am>a|am)'
+        r'|(?P<period_pm>p|pm)'
+    r'))?'
+    r'(?(period)'
+        r' (?P<timezone>\S.*)'
+        r'|(?(colon)'
+            r' (?P<timezone2>\S.*)'
+        r')'
+    r')?'
+    r'$',
     re.I
 )
 
@@ -32,18 +58,18 @@ date_pattern_simple = re.compile(
 date_pattern_words = re.compile(
     r'^(?:(?P<day1>\d{1,2}) )?'
     r'(?P<month>'
-        r'(?:jan(?:uary)?)'
-        r'|(?:feb(?:ruary)?)'
-        r'|(?:mar(?:ch)?)'
-        r'|(?:apr(?:il)?)'
-        r'|(?:may)'
-        r'|(?:june?)'
-        r'|(?:july?)'
-        r'|(?:aug(?:ust)?)'
-        r'|(?:sep(?:t(?:ember)?)?)'
-        r'|(?:oct(?:ober)?)'
-        r'|(?:nov(?:ember)?)'
-        r'|(?:dec(?:ember)?)'
+        r'jan(?:uary)?'
+        r'|feb(?:ruary)?'
+        r'|mar(?:ch)?'
+        r'|apr(?:il)?'
+        r'|may'
+        r'|june?'
+        r'|july?'
+        r'|aug(?:ust)?'
+        r'|sep(?:t(?:ember)?)?'
+        r'|oct(?:ober)?'
+        r'|nov(?:ember)?'
+        r'|dec(?:ember)?'
     r')'
     r'(?: (?P<day2>\d{1,2}))?'
     r'(?: (?P<year>\d{4}))?$',
@@ -77,22 +103,25 @@ def utc_now() -> dt.datetime:
     return local_tz.localize(dt.datetime.now())
 
 
-def parse_time(time_str: str) -> dt.time:
+def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
     """
     Parse a string as a time specifier of the general format "12:34 PM".
+    Can optionally include a timezone name.
+
+    :return: A tuple of (time, timezone_name)
     """
 
-    match = time_pattern.match(time_str)
+    match = time_pattern_with_timezone.match(time_str)
     if not match:
         raise ValueError('No match')
 
-    hour = int(match.group('hour'))
-    minute = int(match.group('minute') or 0)
+    hour = int(match['hour'])
+    minute = int(match['minute'] or 0)
 
     if (0 > hour > 23) or (0 > minute > 59):
         raise ValueError('Hour or minute is out of range')
 
-    if match.group('period_pm'):
+    if match['period_pm']:
         if hour < 12:
             # This is PM and we use 24 hour times in datetime, so add 12 hours
             hour += 12
@@ -101,7 +130,7 @@ def parse_time(time_str: str) -> dt.time:
             pass
         else:
             raise ValueError('24 hour times do not use AM or PM')
-    elif match.group('period_am'):
+    elif match['period_am']:
         if hour < 12:
             # AM, so no change
             pass
@@ -111,20 +140,20 @@ def parse_time(time_str: str) -> dt.time:
         else:
             raise ValueError('24 hour times do not use AM or PM')
 
-    return dt.time(hour, minute)
+    return dt.time(hour, minute), match['timezone'] or match['timezone2'] or None
 
 
 def parse_date(date_str: str) -> dt.date:
     if match := date_pattern_simple.match(date_str):
-        year = int(match.group('year'))
-        month = int(match.group('month'))
-        day = int(match.group('day'))
+        year = int(match['year'])
+        month = int(match['month'])
+        day = int(match['day'])
 
     elif match := date_pattern_words.match(date_str):
-        year = int(match.group('year') or 1)
-        month = months[match.group('month')[:3].lower()]
-        day1 = match.group('day1')
-        day2 = match.group('day2')
+        year = int(match['year'] or 1)
+        month = months[match['month'][:3].lower()]
+        day1 = match['day1']
+        day2 = match['day2']
         if (day1 is None) == (day2 is None):
             raise ValueError("You must specify the day")
         day = int(day1 if day1 is not None else day2)
@@ -143,8 +172,9 @@ def format_date(date: Optional[dt.date]):
     return date.strftime('%Y-%m-%d')
 
 
-def localize_time_to_datetime(time: dt.time,
-                              basis_tz: TimezoneType) -> dt.datetime:
+def localize_time_to_datetime(
+        time: dt.time, basis_tz: TimezoneType
+) -> dt.datetime:
     """
     Turn a time into a datetime, localized in the given timezone based on the
     current day in that timezone.
@@ -152,7 +182,7 @@ def localize_time_to_datetime(time: dt.time,
     :param time: the time in `basis_tz`'s current day
     :param basis_tz: the timezone for localizing the datetime. It is also used
         to determine the datetime's date.
-    :returns: An aware timezone where the date is the current day in `basis_tz`
+    :returns: An aware datetime where the date is the current day in `basis_tz`
         and the time is equal to `time`.
     """
 
@@ -162,8 +192,9 @@ def localize_time_to_datetime(time: dt.time,
     # Create the datetime we think the user is trying to specify by using
     # their current local day and adding the hour and minute arguments.
     # Return the localized datetime
-    basis_time = dt.datetime(now_basis.year, now_basis.month, now_basis.day,
-                             time.hour, time.minute)
+    basis_time = dt.datetime(
+        now_basis.year, now_basis.month, now_basis.day, time.hour, time.minute
+    )
     return basis_tz.localize(basis_time)
 
 
