@@ -21,6 +21,8 @@ class TestParseTime(unittest.TestCase):
         self.assertEqual(time_parsed, time)
         if tz is not None:
             self.assertEqual(tz_parsed, tz)
+        else:
+            self.assertIsNone(tz_parsed)
 
     def test_hour(self):
         self.assert_time(
