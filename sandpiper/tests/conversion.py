@@ -160,12 +160,16 @@ class TestUnitConversion(DiscordMockingTestCase):
             "can't believe {3.000 hogshead > gallon} is even real"
             '3 hogshead', '189.00 gal'
         )
+        await self.assert_in_reply(
+            "ma'am you forgot your spaces {5ft>yd}",
+            '5.00 ft', '1.67 m'
+        )
 
     async def assert_error(self, msg: str, *substrings: str):
         embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
         super().assert_error(embed, *substrings)
 
-    async def test_error(self):
+    async def test_units_error(self):
         await self.assert_error(
             "that's like {12.5 donuts} wide!",
             'Unknown unit "donuts"'
@@ -178,6 +182,24 @@ class TestUnitConversion(DiscordMockingTestCase):
             "{5 hogshead} is a real unit, but not really useful enough to be "
             "mapped. fun name though",
             '{5 hogshead > otherunit}'
+        )
+
+    async def test_missing_units_error(self):
+        await self.assert_error(
+            "oops I dropped my unit {5 ft >}",
+            "Missing output unit"
+        )
+        await self.assert_error(
+            "oh crap not again {5 ft > }",
+            "Missing output unit"
+        )
+        await self.assert_error(
+            "okay this is just disgusting {5 >}",
+            ""
+        )
+        await self.assert_error(
+            "dude! {5 > }",
+            ""
         )
 
 
@@ -247,6 +269,12 @@ class TestTimeConversion(DiscordMockingTestCase):
         await self.db.set_privacy_timezone(uid, PrivacyType.PUBLIC)
         return uid, now
 
+    async def assert_error(self, msg: str, *substrings: str):
+        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
+        super().assert_error(embed, *substrings)
+
+    # region Get user's timezone
+
     async def test_basic(self):
         self.msg.author.id = self.dutch_user
         await self.assert_regex_reply(
@@ -307,6 +335,7 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+12:00 AM'
         )
 
+    async def test_now(self):
         self.msg.author.id = self.british_user
         await self.assert_regex_reply(
             "I'm free {now}, anyone want to do something?",
@@ -314,3 +343,176 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
             r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
         )
+
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "I'm free {now}, anyone want to do something?",
+            r'Europe/Amsterdam.+' + self.dutch_now.strftime("%I:%M %p").lstrip("0"),
+            r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
+            r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
+        )
+
+    async def test_error(self):
+        pass
+
+    # endregion
+
+    # region Specified input timezone
+
+    async def test_in_basic(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "Jaakko's getting on at {8 pm helsinki}",
+            r'Europe/Amsterdam.+7:00 PM',
+            r'Europe/London.+6:00 PM',
+            r'America/New_York.+1:00 PM'
+        )
+
+        self.msg.author.id = self.british_user
+        await self.assert_regex_reply(
+            "aka {8pm helsinki}",
+            r'Europe/Amsterdam.+7:00 PM',
+            r'Europe/London.+6:00 PM',
+            r'America/New_York.+1:00 PM'
+        )
+
+        self.msg.author.id = self.dutch_user
+        await self.assert_regex_reply(
+            "aka {20:00 helsinki}",
+            r'Europe/Amsterdam.+7:00 PM',
+            r'Europe/London.+6:00 PM',
+            r'America/New_York.+1:00 PM'
+        )
+
+    async def test_in_multiple(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "my flight took off at {7pm new york} and landed at {8 AM london}",
+            r'Europe/Amsterdam.+1:00 AM.+9:00 AM',
+            r'Europe/London.+12:00 AM.+8:00 AM',
+            r'America/New_York.+7:00 PM.+3:00 AM'
+        )
+
+    async def test_in_keyword(self):
+        self.msg.author.id = self.british_user
+        await self.assert_regex_reply(
+            "he's getting lunch around {noon los angeles}",
+            r'Europe/Amsterdam.+9:00 PM',
+            r'Europe/London.+8:00 PM',
+            r'America/New_York.+3:00 PM'
+        )
+
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "My flight's landing at {midnight brussels}",
+            r'Europe/Amsterdam.+12:00 AM',
+            r'Europe/London.+11:00 PM',
+            r'America/New_York.+6:00 PM'
+        )
+
+    async def test_in_now(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "{now amsterdam} is redundant but it shouldn't fail",
+            r'Europe/Amsterdam.+10:32 PM',
+            r'Europe/London.+9:32 PM',
+            r'America/New_York.+4:32 PM'
+        )
+
+    async def test_in_error(self):
+        self.msg.author.id = self.american_user
+        await self.assert_error(
+            "{20 helsinki} (8:00 pm Helsinki time) isn't allowed because it's "
+            "ambiguous with a unit 'helsinki' with magnitude 20. You must add "
+            "AM/PM or use a colon.",
+            'Unknown unit "helsinki"',
+        )
+
+    # endregion
+
+    # region Specified output timezone
+
+    async def test_out_basic(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "alex, I'm gonna restart the server at {11 > amsterdam}",
+            r'Europe/Amsterdam.+5:00 PM',
+        )
+
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "or I can wait until {8pm > amsterdam}",
+            r'Europe/Helsinki.+2:00 AM',
+        )
+
+    async def test_out_multiple(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "hey bruce I wanna show you something, I'm free between "
+            "{11am > london} and {3 PM > Europe/London}",
+            r'Europe/London.+4:00 PM.+8:00 PM',
+        )
+
+        self.msg.author.id = self.dutch_user
+        await self.assert_regex_reply(
+            "the game's releasing for americans at {1 PM > new york} and "
+            "{1500 > london} for europeans"
+            r'America/New_York.+1:00 PM',
+            r'Europe/London.+8:00 PM',
+        )
+
+    async def test_out_keyword(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "the solar eclipse will be happening here while the hawaiians "
+            "are sleeping! {noon > honolulu}",
+            r'America/Honolulu.+6:00 AM'
+        )
+
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "and while I'm sleeping, they'll be eating dinner "
+            "{midnight > honolulu}",
+            r'America/Honolulu.+6:00 PM'
+        )
+
+    async def test_out_now(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "what time is it in dubai? {now > dubai}",
+            r'Asia/Dubai.+12:32 AM',
+        )
+
+    async def test_out_error(self):
+        self.msg.author.id = self.american_user
+        await self.assert_error(
+            "no timezone {8:00 > }",
+            "Empty output timezone",
+        )
+
+        self.msg.author.id = self.american_user
+        await self.assert_error(
+            "no timezone {8:00 > ZBNMBSAEFHJBGEWB}",
+            "Couldn't find a matching timezone",
+        )
+
+    # endregion
+
+    # region Specified input and output timezone
+
+    async def test_in_out_basic(self):
+        pass
+
+    async def test_in_out_multiple(self):
+        pass
+
+    async def test_in_out_keyword(self):
+        pass
+
+    async def test_in_out_now(self):
+        pass
+
+    async def test_in_out_error(self):
+        pass
+
+    # endregion
