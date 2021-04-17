@@ -181,26 +181,6 @@ class TestUnitConversion(DiscordMockingTestCase):
         )
 
 
-def patch_time(f: Callable):
-    @mock.patch('sandpiper.common.time.tzlocal.get_localzone', autospec=True)
-    @mock.patch('sandpiper.common.time.dt', autospec=True)
-    async def decorated(self, mock_datetime, mock_localzone):
-        mock_localzone.return_value = pytz.UTC
-        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
-        mock_datetime.datetime.side_effect = (
-            lambda *a, **kw: dt.datetime(*a, **kw)
-        )
-        mock_datetime.date.side_effect = (
-            lambda *a, **kw: dt.date(*a, **kw)
-        )
-        mock_datetime.time.side_effect = (
-            lambda *a, **kw: dt.time(*a, **kw)
-        )
-        await f(self, mock_datetime, mock_localzone)
-
-    return decorated
-
-
 class TestTimeConversion(DiscordMockingTestCase):
 
     db: DatabaseSQLite
@@ -220,6 +200,38 @@ class TestTimeConversion(DiscordMockingTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.patch_time()
+
+        self.dutch_user, self.dutch_now = await self.add_timezone_user('Europe/Amsterdam')
+        self.british_user, self.british_now = await self.add_timezone_user('Europe/London')
+        self.american_user, self.american_now = await self.add_timezone_user('America/New_York')
+
+    def patch_time(self):
+        # Patch datetime to use a static datetime
+        patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
+        mock_datetime = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
+        mock_datetime.datetime.side_effect = (
+            lambda *a, **kw: dt.datetime(*a, **kw)
+        )
+        mock_datetime.date.side_effect = (
+            lambda *a, **kw: dt.date(*a, **kw)
+        )
+        mock_datetime.time.side_effect = (
+            lambda *a, **kw: dt.time(*a, **kw)
+        )
+
+        # Patch localzone to use UTC
+        patcher = mock.patch(
+            'sandpiper.common.time.tzlocal.get_localzone', autospec=True
+        )
+        mock_localzone = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_localzone.return_value = pytz.UTC
+
     async def asyncTearDown(self):
         await self.db.disconnect()
 
@@ -235,14 +247,8 @@ class TestTimeConversion(DiscordMockingTestCase):
         await self.db.set_privacy_timezone(uid, PrivacyType.PUBLIC)
         return uid, now
 
-    # noinspection PyUnusedLocal
-    @patch_time
-    async def test_time_conversion(self, mock_datetime, mock_localzone):
-        dutch_user, dutch_now = await self.add_timezone_user('Europe/Amsterdam')
-        british_user, british_now = await self.add_timezone_user('Europe/London')
-        american_user, american_now = await self.add_timezone_user('America/New_York')
-
-        self.msg.author.id = dutch_user
+    async def test_basic(self):
+        self.msg.author.id = self.dutch_user
         await self.assert_regex_reply(
             "do you guys wanna play at {9pm}?",
             r'Europe/Amsterdam.+9:00 PM',
@@ -250,15 +256,7 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+3:00 PM'
         )
 
-        self.msg.author.id = american_user
-        await self.assert_regex_reply(
-            "I wish I could, but I'm busy from {14} to {17:45}",
-            r'Europe/Amsterdam.+8:00 PM.+11:45 PM',
-            r'Europe/London.+7:00 PM.+10:45 PM',
-            r'America/New_York.+2:00 PM.+5:45 PM'
-        )
-
-        self.msg.author.id = american_user
+        self.msg.author.id = self.american_user
         await self.assert_regex_reply(
             "I get off work at {330pm}",
             r'Europe/Amsterdam.+9:30 PM',
@@ -266,7 +264,7 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+3:30 PM'
         )
 
-        self.msg.author.id = american_user
+        self.msg.author.id = self.american_user
         await self.assert_regex_reply(
             "In 24-hour time that's {1530}",
             r'Europe/Amsterdam.+9:30 PM',
@@ -274,15 +272,7 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+3:30 PM'
         )
 
-        self.msg.author.id = american_user
-        await self.assert_regex_reply(
-            "Dude, it's {midnight} :gobed:!",
-            r'Europe/Amsterdam.+6:00 AM',
-            r'Europe/London.+5:00 AM',
-            r'America/New_York.+12:00 AM'
-        )
-
-        self.msg.author.id = british_user
+        self.msg.author.id = self.british_user
         await self.assert_regex_reply(
             "yeah I've gotta wake up at {5} for work tomorrow, so it's an "
             "early bedtime for me",
@@ -291,7 +281,17 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+12:00 AM'
         )
 
-        self.msg.author.id = dutch_user
+    async def test_multiple(self):
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "I wish I could, but I'm busy from {14} to {17:45}",
+            r'Europe/Amsterdam.+8:00 PM.+11:45 PM',
+            r'Europe/London.+7:00 PM.+10:45 PM',
+            r'America/New_York.+2:00 PM.+5:45 PM'
+        )
+
+    async def test_keyword(self):
+        self.msg.author.id = self.dutch_user
         await self.assert_regex_reply(
             "It's nearly {noon}. Time for lunch!",
             r'Europe/Amsterdam.+12:00 PM',
@@ -299,10 +299,18 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+6:00 AM'
         )
 
-        self.msg.author.id = british_user
+        self.msg.author.id = self.american_user
+        await self.assert_regex_reply(
+            "Dude, it's {midnight} :gobed:!",
+            r'Europe/Amsterdam.+6:00 AM',
+            r'Europe/London.+5:00 AM',
+            r'America/New_York.+12:00 AM'
+        )
+
+        self.msg.author.id = self.british_user
         await self.assert_regex_reply(
             "I'm free {now}, anyone want to do something?",
-            r'Europe/Amsterdam.+' + dutch_now.strftime("%I:%M %p").lstrip("0"),
-            r'Europe/London.+' + british_now.strftime("%I:%M %p").lstrip("0"),
-            r'America/New_York.+' + american_now.strftime("%I:%M %p").lstrip("0")
+            r'Europe/Amsterdam.+' + self.dutch_now.strftime("%I:%M %p").lstrip("0"),
+            r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
+            r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
         )
