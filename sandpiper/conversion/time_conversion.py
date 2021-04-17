@@ -31,13 +31,26 @@ class TimezoneNotFound(Exception):
         return f"Timezone \"{self.timezone}\" not found"
 
 
+def _get_timezone(name: str, msgs: RuntimeMessages):
+    matches = fuzzy_match_timezone(
+        name, best_match_threshold=50, limit=1
+    )
+    if not matches.best_match:
+        # We don't want this to pass on to unit conversion
+        msgs += TimezoneNotFound(name)
+        return None
+
+    msgs += f"Using timezone **{matches.best_match}**"
+    return matches.best_match
+
+
 async def convert_time_to_user_timezones(
         db: Database, user_id: int, guild: discord.Guild,
-        time_strs: List[Tuple[str, str]]
+        time_strs: List[Tuple[str, str]],
+        *, runtime_msgs: RuntimeMessages
 ) -> Tuple[
     List[Tuple[str, List[dt.datetime]]],
-    List[Tuple[str, str]],
-    RuntimeMessages
+    List[Tuple[str, str]]
 ]:
     """
     Convert times.
@@ -69,8 +82,7 @@ async def convert_time_to_user_timezones(
     parsed_times: List[dt.datetime] = []
     failed: List[Tuple[str, str]] = []  # Strings that should pass on to unit conversion
     user_tz = None
-    runtime_msgs = RuntimeMessages()
-    for tstr, timezone in time_strs:
+    for tstr, timezone_out_str in time_strs:
         # Keyword times
         if tstr.lower() == 'now':
             local_dt = utc_now()
@@ -83,13 +95,13 @@ async def convert_time_to_user_timezones(
             tstr = "00:00"
 
         try:
-            parsed_time = parse_time(tstr)
+            parsed_time, timezone_in_str = parse_time(tstr)
         except ValueError as e:
             logger.info(
                 f"Failed to parse time string (string={tstr!r}, reason={e})"
             )
             # Failed to parse as a time, so pass it on to unit conversion
-            failed.append((tstr, timezone))
+            failed.append((tstr, timezone_out_str))
             continue
         except:
             logger.warning(
@@ -98,20 +110,11 @@ async def convert_time_to_user_timezones(
             )
             continue
 
-        if timezone:
+        if timezone_in_str is not None:
             # User supplied a source timezone
-            tz_matches = fuzzy_match_timezone(
-                timezone, best_match_threshold=50, limit=1
-            )
-            if not tz_matches.best_match:
-                # We don't want this to pass on to unit conversion
-                runtime_msgs += TimezoneNotFound(timezone)
+            timezone_in = _get_timezone(timezone_in_str, runtime_msgs)
+            if timezone_in is None:
                 continue
-
-            runtime_msgs += f"Using timezone **{tz_matches.best_match}**"
-            local_dt = localize_time_to_datetime(parsed_time, tz_matches.best_match)
-            parsed_times.append(local_dt)
-
         else:
             # Use the user's timezone
             if user_tz is None:
@@ -119,12 +122,13 @@ async def convert_time_to_user_timezones(
                 user_tz = await db.get_timezone(user_id)
                 if user_tz is None:
                     runtime_msgs.add_type_once(UserTimezoneUnset())
+            timezone_in = user_tz
 
-            local_dt = localize_time_to_datetime(parsed_time, user_tz)
-            parsed_times.append(local_dt)
+        local_dt = localize_time_to_datetime(parsed_time, timezone_in)
+        parsed_times.append(local_dt)
 
     if not parsed_times:
-        return [], failed, runtime_msgs
+        return [], failed
 
     # Iterate over each timezone and convert all times to that timezone
     conversions = []
@@ -134,4 +138,4 @@ async def convert_time_to_user_timezones(
         conversions.append((tz_name, times))
     conversions.sort(key=lambda conv: conv[1][0].utcoffset())
 
-    return conversions, failed, runtime_msgs
+    return conversions, failed
