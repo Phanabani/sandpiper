@@ -1,7 +1,7 @@
 import datetime as dt
+from typing import *
 import unittest
 import unittest.mock as mock
-from typing import *
 
 import discord.ext.commands as commands
 import pytz
@@ -162,7 +162,7 @@ class TestUnitConversion(DiscordMockingTestCase):
         )
         await self.assert_in_reply(
             "ma'am you forgot your spaces {5ft>yd}",
-            '5.00 ft', '1.67 m'
+            '5.00 ft', '1.67 yd'
         )
 
     async def assert_error(self, msg: str, *substrings: str):
