@@ -15,9 +15,9 @@ from sandpiper.user_data import DatabaseUnavailable, UserData
 logger = logging.getLogger('sandpiper.unit_conversion')
 
 conversion_pattern = re.compile(
-    r'{'
-    r'(?P<quantity>.+?)'
-    r'(?: ?> ?(?P<to_unit>.+?))?'
+    r'{ *'
+    r'(?P<quantity>[^>]+?) *'
+    r'(?:> *(?P<out_unit>\S.*?) *)?'
     r'}'
 )
 
