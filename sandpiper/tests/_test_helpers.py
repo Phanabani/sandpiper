@@ -201,7 +201,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         """
         return [
             content for call in mock_.call_args_list
-            if (content := call.args[0]) is not None
+            if len(call.args) > 0 and (content := call.args[0]) is not None
         ]
 
     async def invoke_cmd(self, message_content: str) -> mock.AsyncMock:
