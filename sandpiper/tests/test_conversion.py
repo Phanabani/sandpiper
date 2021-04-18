@@ -470,21 +470,21 @@ class TestTimeConversion(DiscordMockingTestCase):
         await self.assert_regex_reply(
             "the solar eclipse will be happening here while the hawaiians "
             "are sleeping! {noon > honolulu}",
-            r'America/Honolulu.+6:00 AM'
+            r'Pacific/Honolulu.+6:00 AM'
         )
 
         self.msg.author.id = self.american_user
         await self.assert_regex_reply(
             "and while I'm sleeping, they'll be eating dinner "
             "{midnight > honolulu}",
-            r'America/Honolulu.+6:00 PM'
+            r'Pacific/Honolulu.+6:00 PM'
         )
 
     async def test_out_now(self):
         self.msg.author.id = self.american_user
         await self.assert_regex_reply(
             "what time is it in dubai? {now > dubai}",
-            r'Asia/Dubai.+12:32 AM',
+            r'Asia/Dubai.+1:32 PM',
         )
 
     async def test_out_error(self):
