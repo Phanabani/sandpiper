@@ -418,9 +418,9 @@ class TestTimeConversion(DiscordMockingTestCase):
         self.msg.author.id = self.american_user
         await self.assert_regex_reply(
             "{now amsterdam} is redundant but it shouldn't fail",
-            r'Europe/Amsterdam.+10:32 PM',
-            r'Europe/London.+9:32 PM',
-            r'America/New_York.+4:32 PM'
+            r'Europe/Amsterdam.+11:32 AM',
+            r'Europe/London.+10:32 AM',
+            r'America/New_York.+5:32 AM'
         )
 
     async def test_in_error(self):
