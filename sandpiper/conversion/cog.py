@@ -77,7 +77,7 @@ class Conversion(commands.Cog):
             await Embeds.error(
                 msg.channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
             )
-            return time_strs
+            return failed
 
         if converted_times:
             # Send successful conversions
