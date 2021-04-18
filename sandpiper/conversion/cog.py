@@ -68,7 +68,7 @@ class Conversion(commands.Cog):
             return time_strs
 
         runtime_msgs = RuntimeMessages()
-        localized_times, failed = await convert_time_to_user_timezones(
+        converted_times, failed = await convert_time_to_user_timezones(
             db, msg.author.id, msg.guild, time_strs, runtime_msgs=runtime_msgs
         )
 
@@ -79,15 +79,20 @@ class Conversion(commands.Cog):
             )
             return time_strs
 
-        if localized_times:
+        if converted_times:
             # Send successful conversions
-            output = runtime_msgs.info
-            for tz_name, times in localized_times:
-                times = ' | '.join(
-                    f'`{time.strftime(time_format)}`' for time in times
-                )
-                output.append(f'**{tz_name}**: {times}')
-            await msg.channel.send('\n'.join(output))
+            output = []
+            for timezone_in, conversions in converted_times:
+                if timezone_in is not None:
+                    output.append(f"Using timezone **{timezone_in}**")
+                for timezone_out, times in conversions:
+                    times = '  |  '.join(
+                        f'`{time.strftime(time_format)}`' for time in times
+                    )
+                    output.append(f'**{timezone_out}**  -  {times}')
+                output.append('')
+
+            await msg.channel.send('\n'.join(output[:-1]))
 
         return failed
 

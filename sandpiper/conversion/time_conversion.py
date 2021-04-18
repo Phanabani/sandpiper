@@ -1,6 +1,7 @@
+from collections import defaultdict
 import datetime as dt
 import logging
-from typing import List, Set, Tuple
+from typing import *
 
 import discord
 
@@ -11,6 +12,9 @@ from sandpiper.user_data.database import Database
 __all__ = ['UserTimezoneUnset', 'convert_time_to_user_timezones']
 
 logger = logging.getLogger('sandpiper.conversion.time_conversion')
+
+T_ConvertedTimes = List[Tuple[str, List[dt.datetime]]]
+T_ConvertedTimesGroupedUnderInputTimezones = List[Tuple[Optional[str], T_ConvertedTimes]]
 
 
 class UserTimezoneUnset(Exception):
@@ -31,7 +35,11 @@ class TimezoneNotFound(Exception):
         return f"Timezone \"{self.timezone}\" not found"
 
 
-def _get_timezone(name: str, msgs: RuntimeMessages):
+def _get_timezone(name: str, msgs: RuntimeMessages) -> Optional[TimezoneType]:
+    """
+    Get the timezone that best matches this name. May return None if the fuzzy
+    search score is less than 50.
+    """
     matches = fuzzy_match_timezone(
         name, best_match_threshold=50, limit=1
     )
@@ -40,8 +48,47 @@ def _get_timezone(name: str, msgs: RuntimeMessages):
         msgs += TimezoneNotFound(name)
         return None
 
-    msgs += f"Using timezone **{matches.best_match}**"
     return matches.best_match
+
+
+async def _get_guild_timezones(db: Database, guild: discord.Guild) -> Set[TimezoneType]:
+    """
+    Get all user timezones from the given guild.
+
+    :param db: the Database to get user data from
+    :param guild: the guild to limit the search to
+    :return: a set of user timezones in this guild
+    """
+    all_timezones = await db.get_all_timezones()
+    return {
+        # Filter out timezones of users outside this guild
+        tz for user_id, tz in all_timezones if guild.get_member(user_id)
+    }
+
+
+async def _convert_times(
+        times: List[dt.datetime],
+        out_timezones: Union[TimezoneType, Iterable[TimezoneType]]
+) -> T_ConvertedTimes:
+    """
+    Convert a list of datetimes to the given timezones.
+
+    :param times: a list of timezone-aware datetimes to convert
+    :param out_timezones: one or more timezones to convert each datetime to
+    :return: a list of tuples of (timezone_name, converted_times), where
+        ``converted_times`` is a list of datetimes converted to that timezone
+    """
+    if isinstance(out_timezones, TimezoneType.__args__):
+        out_timezones = (out_timezones,)
+
+    conversions: T_ConvertedTimes = []
+    for tz in out_timezones:
+        times = [
+            time.astimezone(tz) for time in times
+        ]
+        conversions.append((tz.zone, times))
+    conversions.sort(key=lambda conv: conv[1][0].utcoffset())
+    return conversions
 
 
 async def convert_time_to_user_timezones(
@@ -49,7 +96,7 @@ async def convert_time_to_user_timezones(
         time_strs: List[Tuple[str, str]],
         *, runtime_msgs: RuntimeMessages
 ) -> Tuple[
-    List[Tuple[str, List[dt.datetime]]],
+    T_ConvertedTimesGroupedUnderInputTimezones,
     List[Tuple[str, str]]
 ]:
     """
@@ -61,6 +108,8 @@ async def convert_time_to_user_timezones(
     :param time_strs: a list of tuples of (time, timezone) where ``time`` is a
         string that may be a time and ``timezone`` is an optional timezone
         name
+    :param runtime_msgs: A collection of messages that were generated during
+        runtime. These may be reported back to the user.
     :returns: A tuple of (conversions, failed, exceptions).
         ``failed`` is a list of tuples of (quantity, unit) that could not be converted.
         ``conversions`` is a list of tuples of (tz_name, converted_times).
@@ -69,31 +118,21 @@ async def convert_time_to_user_timezones(
             occupied by users in the guild.
     """
 
-    # Filter out repeat timezones and timezones of users outside this guild
-    all_timezones = await db.get_all_timezones()
-    logger.debug(f"All timezones: {all_timezones}")
-    user_timezones: Set[TimezoneType] = (
-        {tz for user_id, tz in all_timezones if guild.get_member(user_id)}
-    )
-    logger.debug(f"Filtered timezones: {user_timezones}")
+    # region Parse input
 
     # Attempt to parse the strings as times and populate success and failure
     # lists accordingly
-    parsed_times: List[dt.datetime] = []
+
+    # This dict is a mapping of timezone keys to datetimes
+    # Each datetime under a given timezone will be converted to that timezone
+    # only. The None key is a special case, where each datetime mapped to it
+    # will be converted to all user timezones in the database
+    out_timezone_map: Dict[Optional[TimezoneType], List[dt.datetime]] = (
+        defaultdict(list)
+    )
     failed: List[Tuple[str, str]] = []  # Strings that should pass on to unit conversion
     user_tz = None
     for tstr, timezone_out_str in time_strs:
-        # Keyword times
-        if tstr.lower() == 'now':
-            local_dt = utc_now()
-            parsed_times.append(local_dt)
-            continue
-
-        if tstr.lower() == 'noon':
-            tstr = "12:00"
-        elif tstr.lower() == 'midnight':
-            tstr = "00:00"
-
         try:
             parsed_time, timezone_in_str = parse_time(tstr)
         except ValueError as e:
@@ -124,18 +163,48 @@ async def convert_time_to_user_timezones(
                     runtime_msgs.add_type_once(UserTimezoneUnset())
             timezone_in = user_tz
 
-        local_dt = localize_time_to_datetime(parsed_time, timezone_in)
-        parsed_times.append(local_dt)
+        if timezone_out_str:
+            # Parse the output timezone specified by the user
+            timezone_out = _get_timezone(timezone_out_str, runtime_msgs)
+        else:
+            timezone_out = None
 
-    if not parsed_times:
+        local_dt = localize_time_to_datetime(parsed_time, timezone_in)
+        out_timezone_map[timezone_out].append(local_dt)
+
+    if not out_timezone_map:
         return [], failed
 
-    # Iterate over each timezone and convert all times to that timezone
-    conversions = []
-    for tz in user_timezones:
-        tz_name: str = tz.zone
-        times = [time.astimezone(tz) for time in parsed_times]
-        conversions.append((tz_name, times))
-    conversions.sort(key=lambda conv: conv[1][0].utcoffset())
+    # endregion
+    # region Do conversions
+    conversions: T_ConvertedTimesGroupedUnderInputTimezones = []
+
+    if out_timezone_map[None]:
+        # No specific output timezone, so use all the timezones in the guild
+        converted = await _convert_times(
+            out_timezone_map[None], await _get_guild_timezones(db, guild)
+        )
+        if len(out_timezone_map) == 1:
+            # If there aren't any other out timezones, don't print the timezone
+            # name header
+            conversions.append((None, converted))
+        else:
+            # Otherwise, print this header to distinguish it from the others
+            conversions.append(('All timezones', converted))
+
+    # Handle any other output timezones
+    for timezone_out, times in out_timezone_map.items():
+        if timezone_out is None:
+            # We already did this first
+            continue
+        if not times:
+            continue
+        converted = await _convert_times(times, timezone_out)
+        conversions.append((
+            cast(TimezoneType, times[0].tzinfo).zone,
+            converted
+        ))
 
     return conversions, failed
+
+    # endregion
