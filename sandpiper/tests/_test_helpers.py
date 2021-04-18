@@ -377,6 +377,12 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     # region Content assertions
 
+    async def assert_no_reply(self, msg: str) -> NoReturn:
+        """Dispatch ``msg`` to the bot and assert that it doesn't reply."""
+        __tracebackhide__ = True
+        send = await self.dispatch_msg(msg)
+        assert not send.called, "Bot replied when it shouldn't have"
+
     async def assert_in_reply(self, msg: str, *substrings: str) -> NoReturn:
         """
         Dispatch ``msg`` to the bot and assert that it replies with one
