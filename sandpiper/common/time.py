@@ -30,19 +30,29 @@ time_pattern = re.compile(
 
 time_pattern_with_timezone = re.compile(
     r'^'
-    r'(?P<hour>[0-2]?\d)'
     r'(?:'
-        r'(?P<colon>:)?'
-        r'(?P<minute>\d{2})'
-    r')?'
-    r'(?: ?(?P<period>'
-        r'(?P<period_am>a|am)'
-        r'|(?P<period_pm>p|pm)'
-    r'))?'
+        r'(?P<hour>[0-2]?\d)'
+        r'(?:'
+            r'(?P<colon>:)?'
+            r'(?P<minute>\d{2})'
+        r')?'
+        r'(?: ?(?P<period>'
+            r'(?P<period_am>a|am)'
+            r'|(?P<period_pm>p|pm)'
+        r'))?'
+        r'|(?P<keyword>'
+            r'(?P<now>now)'
+            r'|(?P<noon>noon)'
+            r'|(?P<midnight>midnight)'
+        r')'
+    r')'
     r'(?(period)'
-        r' (?P<timezone>\S.*)'
+        r' (?P<timezone1>\S.*)'
         r'|(?(colon)'
             r' (?P<timezone2>\S.*)'
+            r'|(?(keyword)'
+                r' (?P<timezone_keyword>\S.*)'
+            r')'
         r')'
     r')?'
     r'$',
@@ -115,6 +125,25 @@ def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
     if not match:
         raise ValueError('No match')
 
+    # Handle keyword times
+    if match['keyword']:
+        if match['now']:
+            now = utc_now()
+            # This is a little heavy-handed because instead of just passing
+            # back the localized datetime, we're passing the time and the
+            # timezone name which will then be fuzzily matched elsewhere...
+            # but it's the simplest way for now since this method doesn't
+            # handle the timezone parsing. Maybe it could change in the future.
+            return now.time(), cast(TimezoneType, now.tzinfo).zone
+
+        if match['midnight']:
+            time = dt.time(0, 0)
+        elif match['noon']:
+            time = dt.time(12, 0)
+        else:
+            raise ValueError("This should be impossible but let's be safe")
+        return time, match['timezone_keyword'] or None
+
     hour = int(match['hour'])
     minute = int(match['minute'] or 0)
 
@@ -140,7 +169,10 @@ def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
         else:
             raise ValueError('24 hour times do not use AM or PM')
 
-    return dt.time(hour, minute), match['timezone'] or match['timezone2'] or None
+    return (
+        dt.time(hour, minute),
+        match['timezone1'] or match['timezone2'] or None
+    )
 
 
 def parse_date(date_str: str) -> dt.date:

@@ -1,11 +1,45 @@
 import datetime as dt
 from typing import *
 import unittest
+import unittest.mock as mock
+
+import pytz
 
 from sandpiper.common.time import parse_time
 
 
 class TestParseTime(unittest.TestCase):
+
+    STATIC_NOW = dt.datetime(2020, 6, 1, 9, 32)
+
+    def setUp(self):
+        self.patch_time()
+
+    def patch_time(self):
+        # Patch datetime to use a static datetime
+        patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
+        mock_datetime = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_datetime.datetime.now.return_value = self.STATIC_NOW
+        mock_datetime.datetime.side_effect = (
+            lambda *a, **kw: dt.datetime(*a, **kw)
+        )
+        mock_datetime.date.side_effect = (
+            lambda *a, **kw: dt.date(*a, **kw)
+        )
+        mock_datetime.time.side_effect = (
+            lambda *a, **kw: dt.time(*a, **kw)
+        )
+
+        # Patch localzone to use UTC
+        patcher = mock.patch(
+            'sandpiper.common.time.tzlocal.get_localzone', autospec=True
+        )
+        mock_localzone = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_localzone.return_value = pytz.UTC
 
     def assert_time(
             self, timestr: str, time: Optional[dt.time], tz: Optional[str]
@@ -166,3 +200,21 @@ class TestParseTime(unittest.TestCase):
         self.assert_time(
             '530 PM new york', dt.time(17, 30), 'new york'
         )
+
+    def test_random_string(self):
+        self.assert_time('hello', None, None)
+
+    def test_keywords_basic(self):
+        self.assert_time('now', self.STATIC_NOW.time(), 'UTC')
+        self.assert_time('noon', dt.time(12, 0), None)
+        self.assert_time('midnight', dt.time(0, 0), None)
+
+    def test_keywords_with_am(self):
+        self.assert_time('now am', self.STATIC_NOW.time(), 'UTC')
+        self.assert_time('noon am', dt.time(12, 0), 'am')
+        self.assert_time('midnight am', dt.time(0, 0), 'am')
+
+    def test_keywords_timezone(self):
+        self.assert_time('now new york', self.STATIC_NOW.time(), 'UTC')
+        self.assert_time('noon new york', dt.time(12, 0), 'new york')
+        self.assert_time('midnight new york', dt.time(0, 0), 'new york')
