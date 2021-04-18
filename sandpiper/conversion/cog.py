@@ -83,13 +83,20 @@ class Conversion(commands.Cog):
             # Send successful conversions
             output = []
             for timezone_in, conversions in converted_times:
+                # There may be multiple input timezones
+                # We will group them under a header of that timezone name
                 if timezone_in is not None:
+                    # But if no input timezone was specified, don't print any
+                    # header
                     output.append(f"Using timezone **{timezone_in}**")
+
                 for timezone_out, times in conversions:
+                    # Print the converted times for each timezone on a new line
                     times = '  |  '.join(
                         f'`{time.strftime(time_format)}`' for time in times
                     )
                     output.append(f'**{timezone_out}**  -  {times}')
+
                 output.append('')
 
             await msg.channel.send('\n'.join(output[:-1]))
