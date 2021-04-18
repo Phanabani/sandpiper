@@ -28,10 +28,11 @@ class TestImperialShorthandRegex(unittest.TestCase):
             self, test_str: str, foot: Optional[Union[int, float]],
             inch: Optional[Union[int, float]]
     ):
+        __tracebackhide__ = True
         match = imperial_shorthand_pattern.match(test_str)
 
         if foot is None and inch is None:
-            self.assertIsNone(match)
+            assert match is None
         else:
             match_foot = match['foot']
             match_inch = match['inch']
@@ -41,8 +42,8 @@ class TestImperialShorthandRegex(unittest.TestCase):
             if inch is not None and match_inch is not None:
                 match_inch = type(inch)(match_inch)
 
-            self.assertEqual(match_foot, foot)
-            self.assertEqual(match_inch, inch)
+            assert match_foot == foot
+            assert match_inch == inch
 
     def test_int_feet(self):
         self.assert_match("1'", 1, None)
@@ -89,6 +90,11 @@ class TestUnitConversion(DiscordMockingTestCase):
 
     def add_cogs(self, bot: commands.Bot):
         bot.add_cog(Conversion(bot))
+
+    async def assert_error(self, msg: str, *substrings: str):
+        __tracebackhide__ = True
+        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
+        super().assert_error(embed, *substrings)
 
     async def test_two_way(self):
         await self.assert_in_reply(
@@ -164,10 +170,6 @@ class TestUnitConversion(DiscordMockingTestCase):
             "ma'am you forgot your spaces {5ft>yd}",
             '5.00 ft', '1.67 yd'
         )
-
-    async def assert_error(self, msg: str, *substrings: str):
-        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
-        super().assert_error(embed, *substrings)
 
     async def test_units_error(self):
         await self.assert_error(
@@ -270,6 +272,7 @@ class TestTimeConversion(DiscordMockingTestCase):
         return uid, now
 
     async def assert_error(self, msg: str, *substrings: str):
+        __tracebackhide__ = True
         embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
         super().assert_error(embed, *substrings)
 

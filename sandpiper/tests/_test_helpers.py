@@ -338,6 +338,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         Assert ``embed`` is a success embed and that its description contains
         each substring in ``substrings``.
         """
+        __tracebackhide__ = True
         self.assertIn('Success', embed.title)
         for substr in substrings:
             self.assertIn(substr, embed.description)
@@ -347,6 +348,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         Assert ``embed`` is a warning embed and that its description contains
         each substring in ``substrings``.
         """
+        __tracebackhide__ = True
         self.assertIn('Warning', embed.title)
         for substr in substrings:
             self.assertIn(substr, embed.description)
@@ -356,6 +358,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         Assert ``embed`` is an error embed and that its description contains
         each substring in ``substrings``.
         """
+        __tracebackhide__ = True
         self.assertIn('Error', embed.title)
         for substr in substrings:
             self.assertIn(substr, embed.description)
@@ -365,6 +368,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         Assert ``embed`` is an info embed and that its description contains
         each substring in ``substrings``.
         """
+        __tracebackhide__ = True
         self.assertIn('Info', embed.title)
         for substr in substrings:
             self.assertIn(substr, embed.description)
@@ -378,6 +382,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         Dispatch ``msg`` to the bot and assert that it replies with one
         message and contains each substring in ``substrings``.
         """
+        __tracebackhide__ = True
         msg = await self.dispatch_msg_get_contents(msg, only_one=True)
         for substr in substrings:
             self.assertIn(substr, msg)
@@ -387,6 +392,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         Dispatch ``msg`` to the bot and assert that it replies with one
         message and matches each regex pattern in ``patterns``.
         """
+        __tracebackhide__ = True
         msg = await self.dispatch_msg_get_contents(msg, only_one=True)
         for pattern in patterns:
             self.assertRegex(msg, pattern)
