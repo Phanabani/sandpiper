@@ -446,7 +446,7 @@ class TestTimeConversion(DiscordMockingTestCase):
         self.msg.author.id = self.american_user
         await self.assert_regex_reply(
             "or I can wait until {8pm > amsterdam}",
-            r'Europe/Helsinki.+2:00 AM',
+            r'Europe/Amsterdam.+2:00 AM',
         )
 
     async def test_out_multiple(self):
