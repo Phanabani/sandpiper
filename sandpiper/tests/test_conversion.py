@@ -208,6 +208,7 @@ class TestUnitConversion(DiscordMockingTestCase):
 class TestTimeConversion(DiscordMockingTestCase):
 
     db: DatabaseSQLite
+    MOCK_NOW = dt.datetime(2020, 6, 1, 9, 32)
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
@@ -236,7 +237,7 @@ class TestTimeConversion(DiscordMockingTestCase):
         mock_datetime = patcher.start()
         self.addCleanup(patcher.stop)
 
-        mock_datetime.datetime.now.return_value = dt.datetime(2020, 6, 1, 9, 32)
+        mock_datetime.datetime.now.return_value = self.MOCK_NOW
         mock_datetime.datetime.side_effect = (
             lambda *a, **kw: dt.datetime(*a, **kw)
         )
