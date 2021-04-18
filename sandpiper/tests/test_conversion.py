@@ -8,7 +8,7 @@ import pytz
 
 from ._test_helpers import DiscordMockingTestCase
 from sandpiper.common.time import utc_now
-from sandpiper.conversion.cog import Conversion
+from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
 from sandpiper.user_data import DatabaseSQLite, UserData
 from sandpiper.user_data.enums import PrivacyType
@@ -84,6 +84,50 @@ class TestImperialShorthandRegex(unittest.TestCase):
         self.assert_match("", None, None)
         self.assert_match("5", None, None)
         self.assert_match("30.00 °F", None, None)
+
+
+
+class TestConversionStringRegex(unittest.TestCase):
+
+    def assert_match(
+            self, in_: str, quantity: Optional[str], out_unit: Optional[str]
+    ):
+        __tracebackhide__ = True
+        match = conversion_pattern.match(in_)
+
+        if quantity is None:
+            if out_unit is not None:
+                raise ValueError("Cannot test for only out_unit")
+            assert match is None, "Pattern matched when it shouldn't have"
+            return
+
+        assert match['quantity'] == quantity, (
+            f"Matched quantity {match['quantity']} does not equal input "
+            f"{quantity}"
+        )
+        assert match['out_unit'] == out_unit, (
+            f"Matched out unit {match['out_unit']} does not equal input "
+            f"{out_unit}"
+        )
+
+    def test_simple(self):
+        self.assert_match('{5pm}', '5pm', None)
+        self.assert_match('{ 5 ft }', '5 ft', None)
+
+    def test_specifier_with_out_unit(self):
+        self.assert_match('{5ft>m}', '5ft', 'm')
+        self.assert_match('{5ft > m}', '5ft', 'm')
+        self.assert_match('{5 ft > m}', '5 ft', 'm')
+        self.assert_match('{5 km  >  mi}', '5 km', 'mi')
+        self.assert_match('{ 5pm  > new york}', '5pm', 'new york')
+        self.assert_match('{ 5pm  > new york   }', '5pm', 'new york')
+
+    def test_specifier_no_out_unit(self):
+        self.assert_match('{5pm>}', None, None)
+        self.assert_match('{5pm >}', None, None)
+        self.assert_match('{5pm> }', None, None)
+        self.assert_match('{5pm > }', None, None)
+        self.assert_match('{8:00 > }', None, None)
 
 
 class TestUnitConversion(DiscordMockingTestCase):
@@ -186,22 +230,18 @@ class TestUnitConversion(DiscordMockingTestCase):
             '{5 hogshead > otherunit}'
         )
 
-    async def test_missing_units_error(self):
-        await self.assert_error(
+    async def test_bad_conversion_string(self):
+        await self.assert_no_reply(
             "oops I dropped my unit {5 ft >}",
-            "Missing output unit"
         )
-        await self.assert_error(
+        await self.assert_no_reply(
             "oh crap not again {5 ft > }",
-            "Missing output unit"
         )
-        await self.assert_error(
+        await self.assert_no_reply(
             "okay this is just disgusting {5 >}",
-            ""
         )
-        await self.assert_error(
+        await self.assert_no_reply(
             "dude! {5 > }",
-            ""
         )
 
 
