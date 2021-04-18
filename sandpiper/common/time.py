@@ -113,12 +113,15 @@ def utc_now() -> dt.datetime:
     return local_tz.localize(dt.datetime.now())
 
 
-def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
+def parse_time(time_str: str) -> Tuple[dt.time, Optional[str], bool]:
     """
     Parse a string as a time specifier of the general format "12:34 PM".
     Can optionally include a timezone name.
 
-    :return: A tuple of (time, timezone_name)
+    :return: A tuple of (time, timezone_name, definitely_time), where
+        ``definitely_time`` is a bool representing whether you can be certain
+        the string is a time (a colon or AM/PM was matched, or a keyword was
+        used). This is helpful for meaningful error feedback.
     """
 
     match = time_pattern_with_timezone.match(time_str)
@@ -134,7 +137,7 @@ def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
             # timezone name which will then be fuzzily matched elsewhere...
             # but it's the simplest way for now since this method doesn't
             # handle the timezone parsing. Maybe it could change in the future.
-            return now.time(), cast(TimezoneType, now.tzinfo).zone
+            return now.time(), cast(TimezoneType, now.tzinfo).zone, True
 
         if match['midnight']:
             time = dt.time(0, 0)
@@ -142,7 +145,7 @@ def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
             time = dt.time(12, 0)
         else:
             raise ValueError("This should be impossible but let's be safe")
-        return time, match['timezone_keyword'] or None
+        return time, match['timezone_keyword'] or None, True
 
     hour = int(match['hour'])
     minute = int(match['minute'] or 0)
@@ -171,7 +174,8 @@ def parse_time(time_str: str) -> Tuple[dt.time, Optional[str]]:
 
     return (
         dt.time(hour, minute),
-        match['timezone1'] or match['timezone2'] or None
+        match['timezone1'] or match['timezone2'] or None,
+        bool(match['colon'] or match['period'])
     )
 
 

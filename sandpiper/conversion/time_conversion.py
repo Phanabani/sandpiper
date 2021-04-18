@@ -9,7 +9,11 @@ from sandpiper.common.time import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.user_data.database import Database
 
-__all__ = ['UserTimezoneUnset', 'convert_time_to_user_timezones']
+__all__ = (
+    'UserTimezoneUnset',
+    'TimezoneNotFound',
+    'convert_time_to_user_timezones'
+)
 
 logger = logging.getLogger('sandpiper.conversion.time_conversion')
 
@@ -35,20 +39,13 @@ class TimezoneNotFound(Exception):
         return f"Timezone \"{self.timezone}\" not found"
 
 
-def _get_timezone(name: str, msgs: RuntimeMessages) -> Optional[TimezoneType]:
+def _get_timezone(name: str) -> Optional[TimezoneType]:
     """
     Get the timezone that best matches this name. May return None if the fuzzy
     search score is less than 50.
     """
-    matches = fuzzy_match_timezone(
-        name, best_match_threshold=50, limit=1
-    )
-    if not matches.best_match:
-        # We don't want this to pass on to unit conversion
-        msgs += TimezoneNotFound(name)
-        return None
-
-    return matches.best_match
+    matches = fuzzy_match_timezone(name, best_match_threshold=50, limit=1)
+    return matches.best_match or None
 
 
 async def _get_guild_timezones(db: Database, guild: discord.Guild) -> Set[TimezoneType]:
@@ -134,7 +131,7 @@ async def convert_time_to_user_timezones(
     user_tz = None
     for tstr, timezone_out_str in time_strs:
         try:
-            parsed_time, timezone_in_str = parse_time(tstr)
+            parsed_time, timezone_in_str, definitely_time = parse_time(tstr)
         except ValueError as e:
             logger.info(
                 f"Failed to parse time string (string={tstr!r}, reason={e})"
@@ -151,8 +148,11 @@ async def convert_time_to_user_timezones(
 
         if timezone_in_str is not None:
             # User supplied a source timezone
-            timezone_in = _get_timezone(timezone_in_str, runtime_msgs)
+            timezone_in = _get_timezone(timezone_in_str)
             if timezone_in is None:
+                # If we matched timezone_in, we already know tstr is definitely
+                # a time
+                runtime_msgs += TimezoneNotFound(timezone_in_str)
                 continue
         else:
             # Use the user's timezone
@@ -165,7 +165,15 @@ async def convert_time_to_user_timezones(
 
         if timezone_out_str:
             # Parse the output timezone specified by the user
-            timezone_out = _get_timezone(timezone_out_str, runtime_msgs)
+            timezone_out = _get_timezone(timezone_out_str)
+            if timezone_out is None:
+                if definitely_time:
+                    # We know this is a time, so this unfound timezone should
+                    # be reported and not passed on to unit conversion
+                    runtime_msgs += TimezoneNotFound(timezone_out_str)
+                else:
+                    # This might be a unit
+                    failed.append((tstr, timezone_out_str))
         else:
             timezone_out = None
 
@@ -177,6 +185,7 @@ async def convert_time_to_user_timezones(
 
     # endregion
     # region Do conversions
+
     conversions: T_ConvertedTimesGroupedUnderInputTimezones = []
 
     if out_timezone_map[None]:
