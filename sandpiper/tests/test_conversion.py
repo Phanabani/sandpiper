@@ -86,7 +86,6 @@ class TestImperialShorthandRegex(unittest.TestCase):
         self.assert_match("30.00 °F", None, None)
 
 
-
 class TestConversionStringRegex(unittest.TestCase):
 
     def assert_match(
@@ -215,7 +214,7 @@ class TestUnitConversion(DiscordMockingTestCase):
             '5.00 ft', '1.67 yd'
         )
 
-    async def test_units_error(self):
+    async def test_unknown_unit(self):
         await self.assert_error(
             "that's like {12.5 donuts} wide!",
             'Unknown unit "donuts"'
@@ -224,6 +223,8 @@ class TestUnitConversion(DiscordMockingTestCase):
             "how far away is that in blehs? {6 km > bleh}",
             'Unknown unit "bleh"'
         )
+
+    async def test_unmapped_unit(self):
         await self.assert_error(
             "{5 hogshead} is a real unit, but not really useful enough to be "
             "mapped. fun name though",
@@ -231,18 +232,10 @@ class TestUnitConversion(DiscordMockingTestCase):
         )
 
     async def test_bad_conversion_string(self):
-        await self.assert_no_reply(
-            "oops I dropped my unit {5 ft >}",
-        )
-        await self.assert_no_reply(
-            "oh crap not again {5 ft > }",
-        )
-        await self.assert_no_reply(
-            "okay this is just disgusting {5 >}",
-        )
-        await self.assert_no_reply(
-            "dude! {5 > }",
-        )
+        await self.assert_no_reply("oops I dropped my unit {5 ft >}",)
+        await self.assert_no_reply("oh crap not again {5 ft > }",)
+        await self.assert_no_reply("okay this is just disgusting {5 >}",)
+        await self.assert_no_reply("dude! {5 > }",)
 
 
 class TestTimeConversion(DiscordMockingTestCase):
@@ -396,9 +389,6 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
         )
 
-    async def test_error(self):
-        pass
-
     # endregion
 
     # region Specified input timezone
@@ -463,13 +453,21 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'America/New_York.+5:32 AM'
         )
 
-    async def test_in_error(self):
+    async def test_in_ambiguous_with_unit(self):
         self.msg.author.id = self.american_user
         await self.assert_error(
             "{20 helsinki} (8:00 pm Helsinki time) isn't allowed because it's "
             "ambiguous with a unit 'helsinki' with magnitude 20. You must add "
             "AM/PM or use a colon.",
+
             'Unknown unit "helsinki"',
+        )
+
+    async def test_in_unknown_timezone(self):
+        self.msg.author.id = self.american_user
+        await self.assert_error(
+            "this don't exist {8:00 ZBNMBSAEFHJBGEWB}",
+            'Timezone "ZBNMBSAEFHJBGEWB" not found'
         )
 
     # endregion
@@ -527,18 +525,16 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'Asia/Dubai.+1:32 PM',
         )
 
-    async def test_out_error(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
-            "no timezone {8:00 > }",
-            "Empty output timezone",
-        )
-
+    async def test_out_unknown_timezone(self):
         self.msg.author.id = self.american_user
         await self.assert_error(
             "no timezone {8:00 > ZBNMBSAEFHJBGEWB}",
-            "Couldn't find a matching timezone",
+            'Timezone "ZBNMBSAEFHJBGEWB" not found',
         )
+
+    async def test_out_empty(self):
+        self.msg.author.id = self.american_user
+        await self.assert_no_reply("no timezone {8:00 > }")
 
     # endregion
 
@@ -585,7 +581,7 @@ class TestTimeConversion(DiscordMockingTestCase):
             r'Europe/Amsterdam.+11:32 AM',
         )
 
-    async def test_in_out_error(self):
+    async def test_in_out_unknown_timezone(self):
         self.msg.author.id = self.dutch_user
         await self.assert_error(
             ":( {10 amsterdam > london}",
