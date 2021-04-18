@@ -461,8 +461,8 @@ class TestTimeConversion(DiscordMockingTestCase):
         await self.assert_regex_reply(
             "the game's releasing for americans at {1 PM > new york} and "
             "{1500 > london} for europeans"
-            r'America/New_York.+1:00 PM',
-            r'Europe/London.+8:00 PM',
+            r'America/New_York.+7:00 AM',
+            r'Europe/London.+2:00 PM',
         )
 
     async def test_out_keyword(self):
