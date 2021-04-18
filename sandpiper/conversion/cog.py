@@ -6,6 +6,7 @@ import discord
 import discord.ext.commands as commands
 
 from sandpiper.common.embeds import Embeds
+from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
 from sandpiper.conversion.time_conversion import *
 import sandpiper.conversion.unit_conversion as unit_conversion
@@ -14,9 +15,9 @@ from sandpiper.user_data import DatabaseUnavailable, UserData
 logger = logging.getLogger('sandpiper.unit_conversion')
 
 conversion_pattern = re.compile(
-    r'{'
-    r'(?P<quantity>.+?)'
-    r'(?: ?> ?(?P<to_unit>.+?))?'
+    r'{ *'
+    r'(?P<quantity>[^>]+?) *'
+    r'(?:> *(?P<out_unit>\S.*?) *)?'
     r'}'
 )
 
@@ -66,29 +67,46 @@ class Conversion(commands.Cog):
         except DatabaseUnavailable:
             return time_strs
 
-        localized_times, failed, exc = await convert_time_to_user_timezones(
-            db, msg.author.id, msg.guild, time_strs
+        runtime_msgs = RuntimeMessages()
+        converted_times, failed = await convert_time_to_user_timezones(
+            db, msg.author.id, msg.guild, time_strs, runtime_msgs=runtime_msgs
         )
-        if exc:
-            await Embeds.error(
-                msg.channel, '\n'.join(str(e) for e in exc)
-            )
-            return time_strs
 
-        if localized_times:
+        if runtime_msgs.exceptions:
+            # Send embed with any errors that happened during conversion
+            await Embeds.error(
+                msg.channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
+            )
+            return failed
+
+        if converted_times:
+            # Send successful conversions
             output = []
-            for tz_name, times in localized_times:
-                times = ' | '.join(f'`{time.strftime(time_format)}`'
-                                   for time in times)
-                output.append(f'**{tz_name}**: {times}')
-            await msg.channel.send('\n'.join(output))
+            for timezone_in, conversions in converted_times:
+                # There may be multiple input timezones
+                # We will group them under a header of that timezone name
+                if timezone_in is not None:
+                    # But if no input timezone was specified, don't print any
+                    # header
+                    output.append(f"Using timezone **{timezone_in}**")
+
+                for timezone_out, times in conversions:
+                    # Print the converted times for each timezone on a new line
+                    times = '  |  '.join(
+                        f'`{time.strftime(time_format)}`' for time in times
+                    )
+                    output.append(f'**{timezone_out}**  -  {times}')
+
+                output.append('')
+
+            await msg.channel.send('\n'.join(output[:-1]))
 
         return failed
 
     async def convert_measurements(
             self, channel: discord.TextChannel,
-            quantity_strs: List[str]
-    ) -> List[Tuple[str, str]]:
+            quantity_strs: List[Tuple[str, str]]
+    ) -> NoReturn:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
         metric and reply with the conversions.
@@ -100,14 +118,21 @@ class Conversion(commands.Cog):
 
         conversions = []
         failed: List[Tuple[str, str]] = []
+        runtime_msgs = RuntimeMessages()
         for qstr, unit in quantity_strs:
-            q = unit_conversion.convert_measurement(qstr, unit)
+            q = unit_conversion.convert_measurement(
+                qstr, unit, runtime_msgs=runtime_msgs
+            )
             if q is not None:
                 conversions.append(f'`{q[0]:.2f~P}` = `{q[1]:.2f~P}`')
             else:
                 failed.append((qstr, unit))
 
+        if runtime_msgs.exceptions:
+            # Send embed with any errors that happened during conversion
+            await Embeds.error(
+                channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
+            )
+
         if conversions:
             await channel.send('\n'.join(conversions))
-
-        return failed
