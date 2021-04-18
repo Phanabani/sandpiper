@@ -505,18 +505,51 @@ class TestTimeConversion(DiscordMockingTestCase):
     # region Specified input and output timezone
 
     async def test_in_out_basic(self):
-        pass
+        self.msg.author.id = self.dutch_user
+        await self.assert_regex_reply(
+            "I've run out of interesting message ideas "
+            "{5:00 pm honolulu > los angeles}",
+
+            r'America/Los_Angeles.+8:00 PM',
+        )
 
     async def test_in_out_multiple(self):
-        pass
+        self.msg.author.id = self.british_user
+        await self.assert_regex_reply(
+            "you probably get the idea by now "
+            "{5:00 pm honolulu > los angeles} and also "
+            "{10:00 amsterdam > london} annnd back to "
+            "{1am new york > los angeles}",
+
+            r'America/Los_Angeles.+8:00 PM.+10:00 PM',
+            r'Europe/London.+9:00 AM',
+        )
 
     async def test_in_out_keyword(self):
-        pass
+        self.msg.author.id = self.dutch_user
+        await self.assert_regex_reply(
+            ":) {midnight los angeles > honolulu}",
+            r'Pacific/Honolulu.+9:00 PM',
+        )
+
+        self.msg.author.id = self.dutch_user
+        await self.assert_regex_reply(
+            ":D {noon london > new york}",
+            r'America/New_York.+7:00 AM',
+        )
 
     async def test_in_out_now(self):
-        pass
+        self.msg.author.id = self.dutch_user
+        await self.assert_regex_reply(
+            ":O {now new york > amsterdam}",
+            r'Europe/Amsterdam.+11:32 AM',
+        )
 
     async def test_in_out_error(self):
-        pass
+        self.msg.author.id = self.dutch_user
+        await self.assert_error(
+            ":( {10 amsterdam > london}",
+            'Unknown unit "amsterdam"',
+        )
 
     # endregion
