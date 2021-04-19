@@ -82,8 +82,8 @@ Stone `stone` | Kilogram `kg`
 ### Volume
 From | To
 ---- | ---
-Pint `pint` | Litre `L`
-Fluid ounce `floz` | Millilitre `ml`
+Pint (US) `pint` | Litre `L`
+Fluid ounce (US) `floz` | Millilitre `ml`
 
 ### Pressure
 From | To
