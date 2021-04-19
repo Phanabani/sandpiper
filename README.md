@@ -158,8 +158,18 @@ In servers, commands must be prefixed with the configured command prefix
 ### Unit conversion
 
 Convert measurements written in regular messages! Just surround a measurement
-in {curly brackets} and Sandpiper will convert it for you. You can put
-multiple measurements in a message as long as each is put in its own brackets.
+in curly brackets -- like this: `{5 ft}` -- and Sandpiper will convert it for
+you. You can put multiple measurements in a message as long as each is put in
+its own brackets.
+
+Many measurements are converted by default without needing to specify an output
+unit. Read [Default unit mappings](docs/default_unit_mappings.md) to see all
+currently supported default conversions.
+
+You can explicitly specify an output unit like this: `{2 tonnes > lbs}`.
+This opens up to you nearly any unit conversion you may need.
+
+Lastly, you can do math in conversions, too! `{2.3 ft + 5 in}`
 
 #### Examples
 
@@ -171,6 +181,11 @@ multiple measurements in a message as long as each is put in its own brackets.
 
 > Lou lives about **{15km}** from me and TJ's staying at a hotel **{1.5km}**
 > away, so he and I are gonna meet up and drive over to Lou.
+
+> I weigh about 9.3 stone. For you americans, that's **{9.3 stone > lbs}**
+
+> my two favorite songs are **{5min+27s}** and **{4min+34s}**. that's a total
+> time of **{5min+27s + 4min+34s > s}** seconds
 
 ### Time conversion
 
