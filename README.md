@@ -156,27 +156,49 @@ Lastly, you can do math in conversions, too! `{2.3 ft + 5 in}`
 ### Time conversion
 
 Just like [unit conversion](#unit-conversion), you can also convert times
-between timezones! Surround a time in {curly brackets} and Sandpiper will
-convert it to the different timezones of users in your server.
+between timezones! Surround a time in curly brackets `{5:30pm}` and Sandpiper
+will convert it to the different timezones of users in your server.
 
 Times can be formatted in 12- or 24-hour time and use colon separators (HH:MM).
 12-hour times can optionally include AM or PM to specify what half of the day
 you mean. If you don't specify, AM will be assumed.
+
+You can use the keywords `now`, `midnight`, and `noon` instead of a numeric time.
  
 You can put multiple times in a message as long as each is put in its own brackets.
 
-To use this feature, you and your friends need to set your timezones with the
-`timezone set` command (see the [bio commands section](#setting-your-info)
-for more info).
+You can explicitly specify input and output timezones very similarly to
+how units are specified in unit conversion:
+
+Timezone specification | How to write | What it does
+---------------------- | ------------ | ------------
+Input timezone | `{5:45 PM London}` | Converts 5:45 PM in London time to all timezones of users in your server
+Output timezone | `{5:45 PM > Los Angeles}` | Converts 5:45 PM from your timezone to Los Angeles time
+Input & output timezone | `{5:45 PM Amsterdam > Helsinki}` | Converts 5:45 PM in Amsterdam time to Helsinki time
+
+To use this feature without having to specify input/output timezones every time,
+you and your friends need to set your timezones with the `timezone set` command
+(see the [bio commands section](#setting-your-info) for more info).
 
 #### Examples
 
-> do you guys wanna play at {9pm}?
+> do you guys wanna play at **{9pm}**?
 
-> I wish I could, but I'm busy from {14} to {17:45}
+> I wish I could, but I'm busy from **{14}** to **{17:45}**
 
-> yeah I've gotta wake up at {5} for work tomorrow, so it's an early bedtime
+> yeah I've gotta wake up at **{5}** for work tomorrow, so it's an early bedtime
 > for me
+
+> ugh I have a 2 hr meeting at **{noon}** tomorrow
+
+> my flight took off at **{7pm new york}** and landed at **{8 AM london}**
+
+> what time is it in dubai right now? **{now > dubai}**
+
+> the game's releasing at **{1 PM > new york}** for americans and
+> **{1500 > london}** for europeans
+
+> hey alex, jaakko's getting on at **{8 pm helsinki > amsterdam}**
 
 ### Bios
 
