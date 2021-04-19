@@ -288,13 +288,13 @@ python -m pip install -r requirements-dev.txt
 #### Run unit tests
 
 ```bash
-python -m sandpiper.tests
+python -m pytest --pyargs sandpiper
 ```
 
 #### Run tests with code coverage
 
 ```bash
-coverage run -m sandpiper.tests
+coverage run -m pytest --pyargs sandpiper
 coverage html
 ```
 
