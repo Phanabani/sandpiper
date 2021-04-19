@@ -26,6 +26,7 @@ ureg.define(
     '@alias degreeF = f = F = degreef = degf = degF = °F = °f '
     '= Fahrenheit = fahrenheit'
 )
+ureg.define('@alias hour = h')
 Q_ = ureg.Quantity
 
 unit_map: UnitMap[Unit] = UnitMap(
