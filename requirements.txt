@@ -1,5 +1,4 @@
 aiosqlite>=0.15
-bidict>=0.21
 certifi; sys_platform == 'win32'
 discord.py>=1.5
 fuzzywuzzy[speedup]>=0.18

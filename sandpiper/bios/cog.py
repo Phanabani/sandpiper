@@ -5,11 +5,10 @@ import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
-from .misc import fuzzy_match_timezone
 from ..common.discord import *
 from ..common.embeds import Embeds
 from ..common.misc import join
-from ..common.time import format_date
+from ..common.time import format_date, fuzzy_match_timezone
 from ..user_data.cog import UserData, DatabaseUnavailable
 from ..user_data.database import Database, DatabaseError
 from ..user_data.enums import PrivacyType

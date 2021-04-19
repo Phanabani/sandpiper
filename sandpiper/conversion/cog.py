@@ -1,19 +1,26 @@
+from decimal import Decimal
 import logging
 import re
-from typing import List
+from typing import *
 
 import discord
 import discord.ext.commands as commands
 
-from ..common.embeds import Embeds
-from ..common.time import time_format
-from .time_conversion import *
-from .unit_conversion import *
-from ..user_data import DatabaseUnavailable, UserData
+from sandpiper.common.embeds import Embeds
+from sandpiper.common.misc import RuntimeMessages
+from sandpiper.common.time import time_format
+from sandpiper.conversion.time_conversion import *
+import sandpiper.conversion.unit_conversion as unit_conversion
+from sandpiper.user_data import DatabaseUnavailable, UserData
 
 logger = logging.getLogger('sandpiper.unit_conversion')
 
-conversion_pattern = re.compile(r'{(.+?)}')
+conversion_pattern = re.compile(
+    r'{ *'
+    r'(?P<quantity>[^>]+?) *'
+    r'(?:> *(?P<out_unit>\S.*?) *)?'
+    r'}'
+)
 
 
 class Conversion(commands.Cog):
@@ -36,10 +43,11 @@ class Conversion(commands.Cog):
             return
 
         conversion_strs = await self.convert_time(msg, conversion_strs)
-        await self.convert_imperial_metric(msg.channel, conversion_strs)
+        await self.convert_measurements(msg.channel, conversion_strs)
 
-    async def convert_time(self, msg: discord.Message,
-                           time_strs: List[str]) -> List[str]:
+    async def convert_time(
+            self, msg: discord.Message, time_strs: List[Tuple[str, str]]
+    ) -> List[Tuple[str, str]]:
         """
         Convert a list of time strings (like "5:45 PM") to different users'
         timezones and reply with the conversions.
@@ -60,32 +68,46 @@ class Conversion(commands.Cog):
         except DatabaseUnavailable:
             return time_strs
 
-        try:
-            localized_times, failed = await convert_time_to_user_timezones(
-                db, msg.author.id, msg.guild, time_strs
-            )
-        except UserTimezoneUnset:
-            cmd_prefix = self.bot.command_prefix(self.bot, msg)[-1]
-            await Embeds.error(
-                msg.channel,
-                f"You haven't set your timezone yet. Type "
-                f"`{cmd_prefix}help timezone set` for more info."
-            )
-            return time_strs
+        runtime_msgs = RuntimeMessages()
+        converted_times, failed = await convert_time_to_user_timezones(
+            db, msg.author.id, msg.guild, time_strs, runtime_msgs=runtime_msgs
+        )
 
-        if localized_times:
+        if runtime_msgs.exceptions:
+            # Send embed with any errors that happened during conversion
+            await Embeds.error(
+                msg.channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
+            )
+            return failed
+
+        if converted_times:
+            # Send successful conversions
             output = []
-            for tz_name, times in localized_times:
-                times = ' | '.join(f'`{time.strftime(time_format)}`'
-                                   for time in times)
-                output.append(f'**{tz_name}**: {times}')
-            await msg.channel.send('\n'.join(output))
+            for timezone_in, conversions in converted_times:
+                # There may be multiple input timezones
+                # We will group them under a header of that timezone name
+                if timezone_in is not None:
+                    # But if no input timezone was specified, don't print any
+                    # header
+                    output.append(f"Using timezone **{timezone_in}**")
+
+                for timezone_out, times in conversions:
+                    # Print the converted times for each timezone on a new line
+                    times = '  |  '.join(
+                        f'`{time.strftime(time_format)}`' for time in times
+                    )
+                    output.append(f'**{timezone_out}**  -  {times}')
+
+                output.append('')
+
+            await msg.channel.send('\n'.join(output[:-1]))
 
         return failed
 
-    async def convert_imperial_metric(
+    async def convert_measurements(
             self, channel: discord.TextChannel,
-            quantity_strs: List[str]) -> List[str]:
+            quantity_strs: List[Tuple[str, str]]
+    ) -> NoReturn:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
         metric and reply with the conversions.
@@ -96,15 +118,26 @@ class Conversion(commands.Cog):
         """
 
         conversions = []
-        failed = []
-        for qstr in quantity_strs:
-            q = imperial_metric(qstr)
-            if q is not None:
+        failed: List[Tuple[str, str]] = []
+        runtime_msgs = RuntimeMessages()
+        for qstr, unit in quantity_strs:
+            q = unit_conversion.convert_measurement(
+                qstr, unit, runtime_msgs=runtime_msgs
+            )
+            if isinstance(q, tuple):
+                # We parsed as a quantity and got a conversion
                 conversions.append(f'`{q[0]:.2f~P}` = `{q[1]:.2f~P}`')
+            elif isinstance(q, Decimal):
+                # We parsed as dimensionless and got a numeric type back
+                conversions.append(f'`{qstr}` = `{q}`')
             else:
-                failed.append(qstr)
+                failed.append((qstr, unit))
+
+        if runtime_msgs.exceptions:
+            # Send embed with any errors that happened during conversion
+            await Embeds.error(
+                channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
+            )
 
         if conversions:
             await channel.send('\n'.join(conversions))
-
-        return failed
