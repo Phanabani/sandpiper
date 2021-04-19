@@ -187,6 +187,8 @@ Lastly, you can do math in conversions, too! `{2.3 ft + 5 in}`
 > my two favorite songs are **{5min+27s}** and **{4min+34s}**. that's a total
 > time of **{5min+27s + 4min+34s > s}** seconds
 
+> hey sandpiper what's {30 * 7}?
+
 ### Time conversion
 
 Just like [unit conversion](#unit-conversion), you can also convert times
