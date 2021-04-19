@@ -1,4 +1,4 @@
-from decimal import Decimal as D
+from decimal import Decimal
 import logging
 import re
 from typing import *
@@ -16,7 +16,7 @@ logger = logging.getLogger('sandpiper.conversion.unit_conversion')
 
 ureg = UnitRegistry(
     autoconvert_offset_to_baseunit=True,  # For temperatures
-    non_int_type=D
+    non_int_type=Decimal
 )
 ureg.define(
     '@alias degreeC = c = C = degreec = degc = degC = °C = °c '
@@ -130,12 +130,15 @@ class UnmappedUnitError(Exception):
 def convert_measurement(
         quantity_str: str, unit: str = None,
         *, runtime_msgs: RuntimeMessages = None
-) -> Optional[Tuple[Quantity, Quantity]]:
+) -> Union[Tuple[Quantity, Quantity], Decimal, None]:
     """
     Parse and convert a quantity string between imperial and metric
 
     :param quantity_str: a string that may contain a quantity to be
         converted
+    :param unit: an explicit output unit to convert to
+    :param runtime_msgs: a RuntimeMessages object for storing messages to
+        report to the user
     :return: ``None`` if the string was not a known or supported quantity,
         otherwise a tuple of original quantity and converted quantity
     """
@@ -146,8 +149,8 @@ def convert_measurement(
         # User used imperial length shorthand
         # e.g. 5' 8" == 5 feet + 8 inches
         logger.info('Imperial length shorthand detected')
-        foot = Q_(D(foot), 'foot') if (foot := height['foot']) else 0
-        inch = Q_(D(inch), 'inch') if (inch := height['inch']) else 0
+        foot = Q_(Decimal(foot), 'foot') if (foot := height['foot']) else 0
+        inch = Q_(Decimal(inch), 'inch') if (inch := height['inch']) else 0
         quantity: Quantity = foot + inch
     else:
         # Regular parsing
@@ -159,12 +162,21 @@ def convert_measurement(
             if runtime_msgs is not None:
                 runtime_msgs += UndefinedUnitError(unit)
             return None
+        except Exception as e:
+            logger.error(
+                "Unexpected error while parsing in unit conversion", exc_info=e
+            )
+            return None
+
+    if isinstance(quantity, Decimal):
+        logger.info(f"Parsed as a decimal")
+        return quantity
 
     if not isinstance(quantity, Quantity):
-        # quantity_str can be parsed as an int
-        logger.info(f"Not a quantity ({type(quantity)})")
-        if runtime_msgs is not None:
-            runtime_msgs += NotAMeasurementError(quantity_str)
+        logger.warning(
+            f"Unexpected type {type(quantity)} encountered after parsing "
+            f"expression"
+        )
         return None
 
     if unit:

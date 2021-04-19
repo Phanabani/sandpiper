@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 import re
 from typing import *
@@ -123,8 +124,12 @@ class Conversion(commands.Cog):
             q = unit_conversion.convert_measurement(
                 qstr, unit, runtime_msgs=runtime_msgs
             )
-            if q is not None:
+            if isinstance(q, tuple):
+                # We parsed as a quantity and got a conversion
                 conversions.append(f'`{q[0]:.2f~P}` = `{q[1]:.2f~P}`')
+            elif isinstance(q, Decimal):
+                # We parsed as dimensionless and got a numeric type back
+                conversions.append(f'`{qstr}` = `{q}`')
             else:
                 failed.append((qstr, unit))
 
