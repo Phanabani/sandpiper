@@ -74,7 +74,9 @@ class Config:
                 config, 'commands', 'allow_public_bio_setting'
             )
             if not isinstance(self.allow_public_bio_setting, str):
-                raise ConfigError('commands.allow_public_bio_setting must be a bool')
+                raise ConfigError(
+                    'commands.allow_public_bio_setting must be a bool'
+                )
 
     class Logging:
 
@@ -94,7 +96,9 @@ class Config:
         handler: TimedRotatingFileHandler
 
         _allowed_whens = ('S', 'M', 'H', 'D', 'midnight')
-        _allowed_logging_levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+        _allowed_logging_levels = (
+            'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        )
 
         def __init__(self, config: Dict[str, Any]):
             """Parse logging-specific config"""
@@ -102,14 +106,18 @@ class Config:
             self.sandpiper_logging_level = get_default(
                 config, 'logging', 'sandpiper_logging_level')
             if self.sandpiper_logging_level not in self._allowed_logging_levels:
-                raise ConfigError(f"logging.sandpiper_logging_level must be "
-                                  f"one of {self._allowed_logging_levels!r}")
+                raise ConfigError(
+                    f"logging.sandpiper_logging_level must be one of "
+                    f"{self._allowed_logging_levels!r}"
+                )
 
             self.discord_logging_level = get_default(
                 config, 'logging', 'discord_logging_level')
             if self.discord_logging_level not in self._allowed_logging_levels:
-                raise ConfigError(f"logging.discord_logging_level must be "
-                                  f"one of {self._allowed_logging_levels!r}")
+                raise ConfigError(
+                    f"logging.discord_logging_level must be one of "
+                    f"{self._allowed_logging_levels!r}"
+                )
 
             output_file = get_default(config, 'logging', 'output_file')
             if not isinstance(output_file, str):
@@ -121,18 +129,22 @@ class Config:
 
             self.when = get_default(config, 'logging', 'when')
             if self.when not in self._allowed_whens:
-                raise ConfigError(f"logging.when must be one of "
-                                  f"{self._allowed_whens!r}")
+                raise ConfigError(
+                    f"logging.when must be one of {self._allowed_whens!r}"
+                )
 
             self.interval = get_default(config, 'logging', 'interval')
             if not isinstance(self.interval, int) or self.interval < 1:
-                raise ConfigError('logging.interval must be an integer greater '
-                                  'than 0')
+                raise ConfigError(
+                    'logging.interval must be an integer greater than 0'
+                )
 
             self.backup_count = get_default(config, 'logging', 'backup_count')
             if not isinstance(self.backup_count, int) or self.backup_count < 0:
-                raise ConfigError('logging.backup_count must be an integer '
-                                  'greater than or equal to 0')
+                raise ConfigError(
+                    'logging.backup_count must be an integer greater than or '
+                    'equal to 0'
+                )
 
             self.format = get_default(config, 'logging', 'format')
             if not isinstance(self.format, str):
