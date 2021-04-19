@@ -214,6 +214,34 @@ class TestUnitConversion(DiscordMockingTestCase):
             '5.00 ft', '1.67 yd'
         )
 
+    async def test_unit_math(self):
+        await self.assert_in_reply(
+            "I'm measuring wood planks, I need {2.3 ft + 5 in}",
+            '2.72 ft', '0.83 m'
+        )
+        await self.assert_in_reply(
+            "oops, I need that in inches {2.3 ft + 5 in > in}",
+            '2.72 ft', '32.60 in'
+        )
+        await self.assert_in_reply(
+            "my two favorite songs are a total of {5min+27s + 4min+34s > s}",
+            '10.02 min', '601.00 s'
+        )
+
+    async def test_dimensionless_math(self):
+        await self.assert_in_reply(
+            "what's {2 + 7}?",
+            '2 + 7', '9'
+        )
+        await self.assert_in_reply(
+            "how about {2.5 + 7.8}?",
+            '2.5 + 7.8', '10.3'
+        )
+        await self.assert_in_reply(
+            "and {2 * 7}?",
+            '2 * 7', '14'
+        )
+
     async def test_unknown_unit(self):
         await self.assert_error(
             "that's like {12.5 donuts} wide!",
