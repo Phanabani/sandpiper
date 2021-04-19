@@ -172,16 +172,6 @@ multiple measurements in a message as long as each is put in its own brackets.
 > Lou lives about **{15km}** from me and TJ's staying at a hotel **{1.5km}**
 > away, so he and I are gonna meet up and drive over to Lou.
 
-#### Supported units:
-
-Metric | Imperial
------- | --------
-Kilometer `km` | Mile `mi`
-Meter `m` | Foot `ft or '`
-Centimeter `cm` | Inch `in or "`
-Kilogram `kg` | Pound `lbs`
-Celsius `C or degC or °C` | Fahrenheit `F or degF or °F`
-
 ### Time conversion
 
 Just like [unit conversion](#unit-conversion), you can also convert times
