@@ -2,6 +2,7 @@ import json
 from typing import *
 from typing import TextIO
 
+from .converters import ConfigConverter
 from .exceptions import MissingFieldError, ParsingError
 from .misc import qualified
 
@@ -12,14 +13,14 @@ NoDefault = object()
 
 class ConfigCompound:
 
-    __config_path: str
+    __path: str
 
     @overload
     def __init__(self, config: Union[dict, str, TextIO]):
         pass
 
-    def __init__(self, config: Union[dict, str, TextIO], _config_path=''):
-        self.__config_path = _config_path
+    def __init__(self, config: Union[dict, str, TextIO], _compound_path=''):
+        self.__path = _compound_path
         self.__parse(config)
 
     def __parse(self, config: Union[dict, str, TextIO]):
@@ -32,26 +33,29 @@ class ConfigCompound:
                 f"config must be one of (TextIO, str), got {type(config)}"
             )
 
+        # Iterate through __dict__ to get fields with default values
         encountered = set()
         for field_name, default in self.__dict__.items():
             encountered.add(field_name)
             if field_name.startswith('_'):
                 continue
             field_type = type(default)
-            self.__parse_field(json_parsed, field_name, field_type)
+            self.__read_field(json_parsed, field_name, field_type)
 
+        # Iterate through __annotations__ to get the remaining fields with
+        # type annotations
         for field_name, field_type in self.__annotations__.items():
             if field_name in encountered or field_name.startswith('_'):
                 continue
-            self.__parse_field(json_parsed, field_name, field_type)
+            self.__read_field(json_parsed, field_name, field_type)
 
-    def __parse_field(
+    def __read_field(
             self, json_parsed: Dict[str, Any], field_name: str,
             field_type: Type, default: Any = NoDefault
     ):
         if issubclass(field_type, ConfigCompound):
             assert default is NoDefault, (
-                f"Config field {qualified(self.__config_path, field_name)} "
+                f"Config field {qualified(self.__path, field_name)} "
                 f"is annotated as a compound and should not have a default "
                 f"value"
             )
@@ -65,24 +69,28 @@ class ConfigCompound:
             value = json_parsed[field_name]
         except KeyError:
             if default is NoDefault:
-                raise MissingFieldError(self.__config_path, field_name)
-
-            assert isinstance(default, field_type), (
-                f"Default value for {qualified(self.__config_path, field_name)} "
-                f"({default!r}, type={type(default)}) is not of annotated "
-                f"type {field_type}"
-            )
+                raise MissingFieldError(self.__path, field_name)
             final_value = default
         else:
             # No default was used
-            if not isinstance(value, field_type):
-                # Try coercing the value into the target type
-                try:
-                    final_value = field_type(value)
-                except Exception as e:
-                    raise ParsingError(value, field_type, e)
-            else:
-                final_value = value
+            try:
+                final_value = self.__convert(value, field_type)
+            except ParsingError as e:
+                e.add_field_info(self.__path, field_name)
+                raise e
 
         setattr(self, field_name, final_value)
 
+    def __convert(self, value: Any, type_: Union[ConfigConverter, Type]):
+        if isinstance(type_, ConfigConverter):
+            # Use the special converter
+            return type_.convert(value)
+
+        if not isinstance(value, type_):
+            # Try coercing the value into the target type
+            try:
+                return type_(value)
+            except Exception as e:
+                raise ParsingError(value, type_, e)
+
+        return value
