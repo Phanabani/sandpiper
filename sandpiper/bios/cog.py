@@ -113,8 +113,9 @@ class Bios(commands.Cog):
         return await user_data.get_database()
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context,
-                               error: commands.CommandError):
+    async def on_command_error(
+            self, ctx: commands.Context, error: commands.CommandError
+    ):
         if isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, DatabaseUnavailable):
                 await Embeds.error(ctx, str(DatabaseUnavailable))

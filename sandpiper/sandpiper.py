@@ -48,7 +48,8 @@ class Sandpiper(commands.Bot):
             if ctx.prefix == '':
                 raise commands.BadArgument(
                     f'You don\'t need to prefix commands here. '
-                    f'Just type "{rest}".')
+                    f'Just type "{rest}".'
+                )
 
         self.load_extension('sandpiper.user_data')
         self.load_extension('sandpiper.bios')
