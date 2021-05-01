@@ -2,10 +2,6 @@ from abc import ABCMeta, abstractmethod
 from typing import *
 
 
-class ConversionFailed(Exception):
-    pass
-
-
 class ConfigConverter(metaclass=ABCMeta):
 
     @abstractmethod
