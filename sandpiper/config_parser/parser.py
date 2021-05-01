@@ -2,42 +2,12 @@ import json
 from typing import *
 from typing import TextIO
 
+from .exceptions import MissingFieldError, ParsingError
+from .misc import qualified
+
 __all__ = ('ConfigCompound',)
 
-
 NoDefault = object()
-
-
-def _qualified(parent: str, name: str) -> str:
-    return (parent + '.' if parent else '') + name
-
-
-class MissingFieldError(Exception):
-
-    def __init__(self, field_parent: str, field_name: str):
-        self.field_parent = field_parent
-        self.field_name = field_name
-
-    def __str__(self):
-
-        return (
-            "Missing required field "
-            + _qualified(self.field_parent, self.field_name)
-        )
-
-
-class ParsingError(Exception):
-    """Access the exception that raised this"""
-
-    def __init__(self, value: Any, target_type: Type, base_exc: Exception):
-        self.value = value
-        self.target_type = target_type
-        self.base_exc = base_exc
-
-    def __str__(self):
-        return (
-            f"Failed to parse {self.value!r} as {self.target_type}"
-        )
 
 
 class ConfigCompound:
@@ -81,7 +51,7 @@ class ConfigCompound:
     ):
         if issubclass(field_type, ConfigCompound):
             assert default is NoDefault, (
-                f"Config field {_qualified(self.__config_path, field_name)} "
+                f"Config field {qualified(self.__config_path, field_name)} "
                 f"is annotated as a compound and should not have a default "
                 f"value"
             )
@@ -98,7 +68,7 @@ class ConfigCompound:
                 raise MissingFieldError(self.__config_path, field_name)
 
             assert isinstance(default, field_type), (
-                f"Default value for {_qualified(self.__config_path, field_name)} "
+                f"Default value for {qualified(self.__config_path, field_name)} "
                 f"({default!r}, type={type(default)}) is not of annotated "
                 f"type {field_type}"
             )
