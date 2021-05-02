@@ -10,19 +10,19 @@ class ConfigConverterBase(metaclass=ABCMeta):
 
     @classmethod
     def _check_tuple(
-            cls, tuple_: Tuple, **fields: Union[Type, Tuple[Type, ...]]
+            cls, tuple_: Tuple, *field_names: str
     ) -> Tuple:
-        if len(tuple_) != len(fields):
+        if len(tuple_) != len(field_names):
             raise ValueError(
                 f"Missing type arguments. Expected "
-                f"{cls.__name__}[{', '.join(fields.keys())}]"
+                f"{cls.__name__}[{', '.join(field_names)}]"
             )
-        for value, name, type_ in zip(tuple_, fields.keys(), fields.values()):
-            cls._typecheck(type_, value, name)
         return tuple_
 
     @staticmethod
-    def _typecheck(type_: Type, value: Any, name: str) -> NoReturn:
+    def _typecheck(
+            type_: Union[Type, Tuple[Type, ...]], value: Any, name: str
+    ) -> NoReturn:
         if not isinstance(value, type_):
             raise TypeError(
                 f"{name}={value} must be "
@@ -38,6 +38,8 @@ V_Target = TypeVar('V_Target')
 class Convert(ConfigConverterBase):
 
     def __init__(self, base_type: Type[V_Base], target_type: Type[V_Target]):
+        self._typecheck(type, base_type, 'base_type')
+        self._typecheck(type, target_type, 'target_type')
         self.base_type = base_type
         self.target_type = target_type
 
@@ -45,7 +47,7 @@ class Convert(ConfigConverterBase):
             cls, base_and_target_types: Tuple[Type[V_Base], Type[V_Target]]
     ):
         base_type, target_type = cls._check_tuple(
-            base_and_target_types, base_type=type, target_type=type
+            base_and_target_types, 'base_type', 'target_type'
         )
         return cls(base_type, target_type)
 
@@ -59,11 +61,13 @@ class Convert(ConfigConverterBase):
 class BoundedInt(int, ConfigConverterBase):
 
     def __init__(self, min: Optional[int], max: Optional[int]):
+        self._typecheck((int, type(None)), min, 'min')
+        self._typecheck((int, type(None)), max, 'max')
         self.min = min
         self.max = max
 
     def __class_getitem__(cls, min_max: Tuple[Optional[int], Optional[int]]):
-        cls._check_tuple(min_max, min=(int, type(None)), max=(int, type(None)))
+        cls._check_tuple(min_max, 'min', 'max')
         return cls(min=min_max[0], max=min_max[1])
 
     def convert(self, value: Any) -> int:
