@@ -62,8 +62,8 @@ class BoundedInt(int, ConfigConverterBase):
 
     def __init__(self, min: Optional[int], max: Optional[int]):
         self._typecheck((int, type(None)), min=min, max=max)
-        self.min = min
-        self.max = max
+        self._converter_min = min
+        self._converter_max = max
 
     def __class_getitem__(cls, min_max: Tuple[Optional[int], Optional[int]]):
         cls._check_tuple(min_max, 'min', 'max')
@@ -71,10 +71,14 @@ class BoundedInt(int, ConfigConverterBase):
 
     def convert(self, value: Any) -> int:
         self._typecheck(int, value=value)
-        if self.min is not None and value < self.min:
-            raise ValueError(f"Value must be greater than or equal to {self.min}")
-        if self.max is not None and value > self.max:
-            raise ValueError(f"Value must be less than or equal to {self.max}")
+        if self._converter_min is not None and value < self._converter_min:
+            raise ValueError(
+                f"Value must be greater than or equal to {self._converter_min}"
+            )
+        if self._converter_max is not None and value > self._converter_max:
+            raise ValueError(
+                f"Value must be less than or equal to {self._converter_max}"
+            )
         return value
 
 
