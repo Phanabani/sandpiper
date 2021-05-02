@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from functools import wraps
 from pathlib import Path
 from typing import *
 
@@ -8,6 +9,11 @@ __all__ = (
 
 
 def lazy_field(f: Callable):
+    """
+    Execute the wrapped function on its first call, then return that value for
+    all subsequent calls
+    """
+    @wraps(f)
     def wrapped(*args, **kwargs):
         try:
             return f.__dict__['__lazy_evaluated']
