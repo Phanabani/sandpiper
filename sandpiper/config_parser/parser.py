@@ -15,11 +15,7 @@ class ConfigCompound:
 
     __path: str
 
-    @overload
-    def __init__(self, config: Union[dict, str, TextIO]):
-        pass
-
-    def __init__(self, config: Union[dict, str, TextIO], _compound_path=''):
+    def __init__(self, config: Union[dict, str, TextIO], *, _compound_path=''):
         self.__path = _compound_path
         self.__parse(config)
 
@@ -61,7 +57,10 @@ class ConfigCompound:
             )
             # The type is a compound tag, so pass the json-parsed dict into
             # the compound type for further parsing
-            final_value = field_type(json_parsed.get(field_name, {}))
+            final_value = field_type(
+                json_parsed.get(field_name, {}),
+                _compound_path=f"{self.__path}.{field_name}"
+            )
             setattr(self, field_name, final_value)
             return
 
