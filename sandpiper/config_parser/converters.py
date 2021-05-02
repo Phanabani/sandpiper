@@ -1,5 +1,21 @@
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 from typing import *
+
+__all__ = (
+    'lazy_field', 'Convert', 'BoundedInt', 'MaybeRelativePath'
+)
+
+
+def lazy_field(f: Callable):
+    def wrapped(*args, **kwargs):
+        try:
+            return f.__dict__['__lazy_evaluated']
+        except KeyError:
+            value = f(*args, **kwargs)
+            f.__dict__['__lazy_evaluated'] = value
+            return value
+    return wrapped
 
 
 class ConfigConverterBase(metaclass=ABCMeta):
@@ -82,3 +98,18 @@ class BoundedInt(int, ConfigConverterBase):
         return value
 
 
+class MaybeRelativePath(Path, ConfigConverterBase):
+
+    def __init__(self, root: Path):
+        self._typecheck(Path, root=root)
+        self._converter_root = root
+
+    def __class_getitem__(cls, root: Path):
+        return cls(root=root)
+
+    def convert(self, value: str) -> Path:
+        self._typecheck(str, value=value)
+        path = Path(value)
+        if not path.is_absolute():
+            return self._converter_root / path
+        return path
