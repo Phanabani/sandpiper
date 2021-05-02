@@ -80,57 +80,73 @@ class ConfigCompound:
         else:
             # No default was used
             try:
-                final_value = self.__convert(value, field_type, qualified_name)
+                final_value = _convert(value, field_type, qualified_name)
             except ParsingError as e:
                 raise e
 
         setattr(self, field_name, final_value)
 
-    @staticmethod
-    def __convert(
-            value: Any, type_: Any, qualified_name: str
-    ):
-        if isinstance(type_, ConfigConverterBase):
-            # Use a converter
-            return type_.convert(value)
 
-        if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
-            # Use special rules for typing module types
-            type_origin = type_.__origin__
-            type_args = type_.__args__
+def _convert(
+        value: Any, type_: Any, qualified_name: str
+):
+    if isinstance(type_, ConfigConverterBase):
+        # Use a converter
+        return type_.convert(value)
 
-            if type_origin is Union:
-                # Typecheck with a tuple of types
-                typecheck(type_args, value=value)
-                return value
+    if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
+        # Use special rules for typing module types
+        type_origin = type_.__origin__
+        type_args = type_.__args__
 
-            if type_origin is List:
-                # Typecheck every value in the list
-                typecheck(list, value=value)
-                for i in value:
-                    typecheck(type_args[0], value=i)
-                return value
-
-            if type_origin is Literal:
-                # Check equality with one of the literal values
-                if value not in type_args:
-                    raise ValueError(
-                        f"Value must be equal to one of {type_args}"
-                    )
-                return value
-
-            raise ConfigSchemaError(
-                f"Special type annotation {type_origin} is not accepted."
+        if type_origin is Union:
+            # The subtypes in a union might be other special typing types.
+            # Recursively call this function with each subtype
+            for subtype in type_args:
+                try:
+                    _convert(value, subtype, qualified_name)
+                except ConfigSchemaError as e:
+                    # If we get this error, something is wrong with the schema,
+                    # not the config value
+                    raise e
+                except Exception:
+                    # This is normal, ideally this will happen for all but
+                    # one matching subtype
+                    pass
+                else:
+                    # Successfully converted
+                    return value
+            raise ValueError(
+                f"Value at {qualified_name} didn't match any type in {type_}"
             )
 
-        if is_json_type(type_):
-            # Simple typecheck
-            typecheck(type_, value=value)
+        if type_origin is List:
+            # Typecheck every value in the list
+            typecheck(list, value=value)
+            for i in value:
+                typecheck(type_args[0], value=i)
             return value
 
-        # Some other annotation we can't handle
+        if type_origin is Literal:
+            # Check equality with one of the literal values
+            if value not in type_args:
+                raise ValueError(
+                    f"Value must be equal to one of {type_args}"
+                )
+            return value
+
         raise ConfigSchemaError(
-            f"Type annotation {type(type_)} for {qualified_name} is not "
-            f"accepted. Maybe you want to use the converters.Convert "
-            f"annotation?"
+            f"Special type annotation {type_origin} is not accepted."
         )
+
+    if is_json_type(type_):
+        # Simple typecheck
+        typecheck(type_, value=value)
+        return value
+
+    # Some other annotation we can't handle
+    raise ConfigSchemaError(
+        f"Type annotation {type(type_)} for {qualified_name} is not "
+        f"accepted. Maybe you want to use the converters.Convert "
+        f"annotation?"
+    )
