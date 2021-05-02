@@ -3,6 +3,8 @@ from functools import wraps
 from pathlib import Path
 from typing import *
 
+from .misc import typecheck
+
 __all__ = (
     'lazy_field', 'Convert', 'BoundedInt', 'MaybeRelativePath'
 )
@@ -41,18 +43,6 @@ class ConfigConverterBase(metaclass=ABCMeta):
             )
         return tuple_
 
-    @staticmethod
-    def _typecheck(
-            type_: Union[Type, Tuple[Type, ...]], **names_and_values: Any
-    ) -> NoReturn:
-        for name, value in names_and_values.items():
-            if not isinstance(value, type_):
-                raise TypeError(
-                    f"{name}={value} must be "
-                    f"{'one ' if isinstance(type_, tuple) else ''}"
-                    f"of type {type_}, not {type(value)}"
-                )
-
 
 V_Base = TypeVar('V_Base')
 V_Target = TypeVar('V_Target')
@@ -71,7 +61,7 @@ class Convert(ConfigConverterBase):
     """
 
     def __init__(self, base_type: Type[V_Base], target_type: Type[V_Target]):
-        self._typecheck(type, base_type=base_type, target_type=target_type)
+        typecheck(type, base_type=base_type, target_type=target_type)
         self.base_type = base_type
         self.target_type = target_type
 
@@ -104,7 +94,7 @@ class BoundedInt(int, ConfigConverterBase):
     """
 
     def __init__(self, min: Optional[int], max: Optional[int]):
-        self._typecheck((int, type(None)), min=min, max=max)
+        typecheck((int, type(None)), min=min, max=max)
         self._converter_min = min
         self._converter_max = max
 
@@ -113,7 +103,7 @@ class BoundedInt(int, ConfigConverterBase):
         return cls(min=min_max[0], max=min_max[1])
 
     def convert(self, value: Any) -> int:
-        self._typecheck(int, value=value)
+        typecheck(int, value=value)
         if self._converter_min is not None and value < self._converter_min:
             raise ValueError(
                 f"Value must be greater than or equal to {self._converter_min}"
@@ -138,14 +128,14 @@ class MaybeRelativePath(Path, ConfigConverterBase):
     """
 
     def __init__(self, root: Path):
-        self._typecheck(Path, root=root)
+        typecheck(Path, root=root)
         self._converter_root = root
 
     def __class_getitem__(cls, root: Path):
         return cls(root=root)
 
     def convert(self, value: str) -> Path:
-        self._typecheck(str, value=value)
+        typecheck(str, value=value)
         path = Path(value)
         if not path.is_absolute():
             return self._converter_root / path
