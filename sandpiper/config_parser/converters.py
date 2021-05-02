@@ -59,6 +59,16 @@ V_Target = TypeVar('V_Target')
 
 
 class Convert(ConfigConverterBase):
+    """
+    Convert[base_type: Type, target_type: Type]
+
+    Annotate a config field with this type to convert the field from `base_type`
+    to `target_type`. `target_type`'s constructor will be called with the
+    field's value as its only positional argument.
+
+    Example:
+        log_file: Convert[str, Path]
+    """
 
     def __init__(self, base_type: Type[V_Base], target_type: Type[V_Target]):
         self._typecheck(type, base_type=base_type, target_type=target_type)
@@ -81,6 +91,17 @@ class Convert(ConfigConverterBase):
 
 # noinspection PyMissingConstructor
 class BoundedInt(int, ConfigConverterBase):
+    """
+    BoundedInt[min: int, max: int]
+
+    Annotate a config field with this type to ensure the field's value is an
+    int where value >= `min` and value <= `max`. `min` and/or `max` may be None
+    to specify no lower or upper bound, respectively.
+
+    Example:
+        threads: BoundedInt[1, 8]
+        connection_retries: BoundedInt[1, None]
+    """
 
     def __init__(self, min: Optional[int], max: Optional[int]):
         self._typecheck((int, type(None)), min=min, max=max)
@@ -105,6 +126,16 @@ class BoundedInt(int, ConfigConverterBase):
 
 
 class MaybeRelativePath(Path, ConfigConverterBase):
+    """
+    MaybeRelativePath[root: Path]
+
+    Annotate a config field with this type to convert a string to a Path. If
+    the path is not an absolute path, it will be used as a path relative to
+    `root`.
+
+    Example:
+        logs_directory: MaybeRelativePath['/my/project/root']
+    """
 
     def __init__(self, root: Path):
         self._typecheck(Path, root=root)
