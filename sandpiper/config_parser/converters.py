@@ -1,29 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from functools import wraps
 from pathlib import Path
 from typing import *
 
 from .misc import typecheck
 
 __all__ = (
-    'lazy_field', 'Convert', 'BoundedInt', 'MaybeRelativePath'
+    'Convert', 'BoundedInt', 'MaybeRelativePath'
 )
-
-
-def lazy_field(f: Callable):
-    """
-    Execute the wrapped function on its first call, then return that value for
-    all subsequent calls
-    """
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        try:
-            return f.__dict__['__lazy_evaluated']
-        except KeyError:
-            value = f(*args, **kwargs)
-            f.__dict__['__lazy_evaluated'] = value
-            return value
-    return wrapped
 
 
 class ConfigConverterBase(metaclass=ABCMeta):
