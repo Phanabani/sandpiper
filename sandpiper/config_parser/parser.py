@@ -2,13 +2,20 @@ import json
 from typing import *
 from typing import TextIO
 
-from .converters import ConfigConverter
-from .exceptions import MissingFieldError, ParsingError
-from .misc import qualified
+from .converters import ConfigConverterBase
+from .exceptions import *
+from .misc import *
 
 __all__ = ('ConfigCompound',)
 
 NoDefault = object()
+
+
+def is_json_type(value: Any) -> bool:
+    return (
+        isinstance(value, (list, str, int, float))
+        or value in (True, False, None)
+    )
 
 
 class ConfigCompound:
@@ -47,7 +54,7 @@ class ConfigCompound:
 
     def __read_field(
             self, json_parsed: Dict[str, Any], field_name: str,
-            field_type: Type, default: Any = NoDefault
+            field_type: Any, default: Any = NoDefault
     ):
         qualified_name = qualified(self.__path, field_name)
         if issubclass(field_type, ConfigCompound):
@@ -79,16 +86,51 @@ class ConfigCompound:
 
         setattr(self, field_name, final_value)
 
-    def __convert(self, value: Any, type_: Union[ConfigConverter, Type]):
-        if isinstance(type_, ConfigConverter):
-            # Use the special converter
+    @staticmethod
+    def __convert(
+            value: Any, type_: Any, qualified_name: str
+    ):
+        if isinstance(type_, ConfigConverterBase):
+            # Use a converter
             return type_.convert(value)
 
-        if not isinstance(value, type_):
-            # Try coercing the value into the target type
-            try:
-                return type_(value)
-            except Exception as e:
-                raise ParsingError(value, type_, e)
+        if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
+            # Use special rules for typing module types
+            type_origin = type_.__origin__
+            type_args = type_.__args__
 
-        return value
+            if type_origin is Union:
+                # Typecheck with a tuple of types
+                typecheck(type_args, value=value)
+                return value
+
+            if type_origin is List:
+                # Typecheck every value in the list
+                typecheck(list, value=value)
+                for i in value:
+                    typecheck(type_args[0], value=i)
+                return value
+
+            if type_origin is Literal:
+                # Check equality with one of the literal values
+                if value not in type_args:
+                    raise ValueError(
+                        f"Value must be equal to one of {type_args}"
+                    )
+                return value
+
+            raise ConfigSchemaError(
+                f"Special type annotation {type_origin} is not accepted."
+            )
+
+        if is_json_type(type_):
+            # Simple typecheck
+            typecheck(type_, value=value)
+            return value
+
+        # Some other annotation we can't handle
+        raise ConfigSchemaError(
+            f"Type annotation {type(type_)} for {qualified_name} is not "
+            f"accepted. Maybe you want to use the converters.Convert "
+            f"annotation?"
+        )
