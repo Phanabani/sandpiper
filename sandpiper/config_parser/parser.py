@@ -12,10 +12,7 @@ NoDefault = object()
 
 
 def is_json_type(value: Any) -> bool:
-    return (
-        isinstance(value, (list, str, int, float))
-        or value in (True, False, None)
-    )
+    return value in (list, str, int, float, True, False, None)
 
 
 class ConfigCompound:
@@ -57,7 +54,8 @@ class ConfigCompound:
             field_type: Any, default: Any = NoDefault
     ):
         qualified_name = qualified(self.__path, field_name)
-        if issubclass(field_type, ConfigCompound):
+        if (isinstance(field_type, type)
+                and issubclass(field_type, ConfigCompound)):
             assert default is NoDefault, (
                 f"Config field {qualified_name} is annotated as a compound "
                 f"and should not have a default value"
@@ -121,7 +119,7 @@ def _convert(
                 f"Value at {qualified_name} didn't match any type in {type_}"
             )
 
-        if type_origin is Tuple:
+        if type_origin is tuple:
             # Convert every value in the tuple
             typecheck(list, **{qualified_name: value})
             converted_list = []
@@ -137,7 +135,7 @@ def _convert(
                 converted_list.append(converted)
             return tuple(converted_list)
 
-        if type_origin is List:
+        if type_origin is list:
             # Convert every value in the tuple
             typecheck(list, **{qualified_name: value})
             list_type = type_args[0]
