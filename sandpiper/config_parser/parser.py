@@ -53,11 +53,11 @@ class ConfigCompound:
             self, json_parsed: Dict[str, Any], field_name: str,
             field_type: Type, default: Any = NoDefault
     ):
+        qualified_name = qualified(self.__path, field_name)
         if issubclass(field_type, ConfigCompound):
             assert default is NoDefault, (
-                f"Config field {qualified(self.__path, field_name)} "
-                f"is annotated as a compound and should not have a default "
-                f"value"
+                f"Config field {qualified_name} is annotated as a compound "
+                f"and should not have a default value"
             )
             # The type is a compound tag, so pass the json-parsed dict into
             # the compound type for further parsing
@@ -69,14 +69,13 @@ class ConfigCompound:
             value = json_parsed[field_name]
         except KeyError:
             if default is NoDefault:
-                raise MissingFieldError(self.__path, field_name)
+                raise MissingFieldError(qualified_name)
             final_value = default
         else:
             # No default was used
             try:
-                final_value = self.__convert(value, field_type)
+                final_value = self.__convert(value, field_type, qualified_name)
             except ParsingError as e:
-                e.add_field_info(self.__path, field_name)
                 raise e
 
         setattr(self, field_name, final_value)
