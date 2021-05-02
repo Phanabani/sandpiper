@@ -90,6 +90,10 @@ class ConfigCompound:
 def _convert(
         value: Any, type_: Any, qualified_name: str
 ):
+    if type_ is Any:
+        # Any type is accepted
+        return value
+
     if isinstance(type_, ConfigConverterBase):
         # Use a converter
         return type_.convert(value)
@@ -104,7 +108,7 @@ def _convert(
             # Recursively call this function with each subtype
             for subtype in type_args:
                 try:
-                    _convert(value, subtype, qualified_name)
+                    return _convert(value, subtype, qualified_name)
                 except ConfigSchemaError as e:
                     # If we get this error, something is wrong with the schema,
                     # not the config value
@@ -113,19 +117,37 @@ def _convert(
                     # This is normal, ideally this will happen for all but
                     # one matching subtype
                     pass
-                else:
-                    # Successfully converted
-                    return value
             raise ValueError(
                 f"Value at {qualified_name} didn't match any type in {type_}"
             )
 
+        if type_origin is Tuple:
+            # Convert every value in the tuple
+            typecheck(list, **{qualified_name: value})
+            converted_list = []
+            if len(value) != len(type_args):
+                raise ValueError(
+                    f"Expected a tuple of length {len(type_args)}, got "
+                    f"{len(value)}"
+                )
+            for i, subtype in enumerate(type_args):
+                converted = _convert(
+                    value[i], subtype, f"{qualified_name}[{i}]"
+                )
+                converted_list.append(converted)
+            return tuple(converted_list)
+
         if type_origin is List:
-            # Typecheck every value in the list
-            typecheck(list, value=value)
-            for i in value:
-                typecheck(type_args[0], value=i)
-            return value
+            # Convert every value in the tuple
+            typecheck(list, **{qualified_name: value})
+            list_type = type_args[0]
+            converted_list = []
+            for i, subvalue in enumerate(value):
+                converted = _convert(
+                    subvalue, list_type, f"{qualified_name}[{i}]"
+                )
+                converted_list.append(converted)
+            return converted_list
 
         if type_origin is Literal:
             # Check equality with one of the literal values
