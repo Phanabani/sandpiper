@@ -71,7 +71,7 @@ class DatabaseSQLite(Database):
         except aiosqlite.Error:
             logger.error('Failed to create indices', exc_info=True)
 
-    async def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
+    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
         logger.info(f'Finding users by preferred name (name={name!r})')
         if name == '':
             logger.info('Skipping empty string')
@@ -85,11 +85,11 @@ class DatabaseSQLite(Database):
         args = {'name': f'%{name}%', 'privacy': PrivacyType.PUBLIC}
         try:
             cur = await self._con.execute(stmt, args)
-            return cast(List[Tuple[int, str]], await cur.fetchall())
+            return cast(list[tuple[int, str]], await cur.fetchall())
         except aiosqlite.Error:
             logger.error('Failed to find users by name', exc_info=True)
 
-    async def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
+    async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
         logger.info(f'Getting all user timezones')
         stmt = '''
             SELECT user_id, timezone FROM user_data

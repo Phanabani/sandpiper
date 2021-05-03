@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import *
+from typing import Optional, Union
 import unittest
 import unittest.mock as mock
 
@@ -325,7 +325,7 @@ class TestTimeConversion(DiscordMockingTestCase):
         bot.add_cog(Conversion(bot))
         bot.add_cog(UserData(bot))
 
-    async def add_timezone_user(self, timezone: str) -> Tuple[int, dt.datetime]:
+    async def add_timezone_user(self, timezone: str) -> tuple[int, dt.datetime]:
         uid = self.new_user_id()
         tz = pytz.timezone(timezone)
         now = utc_now().astimezone(tz)

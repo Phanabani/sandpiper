@@ -39,7 +39,7 @@ git clone https://github.com/hawkpath/sandpiper.git
 cd sandpiper
 ```
 
-With Python 3.8+, create a virtual environment and install dependencies.
+With Python 3.9+, create a virtual environment and install dependencies.
 
 ```shell script
 python -m venv venv
@@ -289,6 +289,7 @@ python -m pip install -r requirements-dev.txt
 
 ```bash
 python -m pytest --pyargs sandpiper
+# Add --profile and/or --profile-svg to run with profiling
 ```
 
 #### Run tests with code coverage

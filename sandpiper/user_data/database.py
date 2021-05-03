@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import datetime
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from ..common.time import TimezoneType
 from .enums import PrivacyType
@@ -31,11 +31,11 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def find_users_by_preferred_name(self, name: str) -> List[Tuple[int, str]]:
+    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
         pass
 
     @abstractmethod
-    async def get_all_timezones(self) -> List[Tuple[int, TimezoneType]]:
+    async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
         pass
 
     @abstractmethod

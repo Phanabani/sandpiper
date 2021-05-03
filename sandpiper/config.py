@@ -3,7 +3,7 @@ import json
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Union
 
 DEFAULTS = {
     "bot": {
@@ -32,7 +32,7 @@ class ConfigError(Exception):
     pass
 
 
-def get_default(config: Dict[str, Any], category: str, key: str):
+def get_default(config: dict[str, Any], category: str, key: str):
     try:
         return config[category][key]
     except KeyError:
@@ -50,7 +50,7 @@ class Config:
         command_prefix: str
         description: str
 
-        def __init__(self, config: Dict[str, Any]):
+        def __init__(self, config: dict[str, Any]):
             """Parse bot-specific config"""
 
             self.command_prefix = get_default(config, 'bot', 'command_prefix')
@@ -100,7 +100,7 @@ class Config:
             'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         )
 
-        def __init__(self, config: Dict[str, Any]):
+        def __init__(self, config: dict[str, Any]):
             """Parse logging-specific config"""
 
             self.sandpiper_logging_level = get_default(
@@ -159,13 +159,13 @@ class Config:
             )
             self.handler.setFormatter(self.formatter)
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Parse config"""
         self.bot = self.Bot(config)
         self.logging = self.Logging(config)
 
     @classmethod
-    def load_json(cls, config_path: Union[Path, str]) -> Tuple[str, Config]:
+    def load_json(cls, config_path: Union[Path, str]) -> tuple[str, Config]:
         """
         Load bot config from a json file.
 
@@ -175,7 +175,7 @@ class Config:
         """
 
         with open(config_path) as f:
-            config_json: Dict[str, Any] = json.load(f)
+            config_json: dict[str, Any] = json.load(f)
 
         if 'bot_token' not in config_json:
             raise ConfigError('bot_token missing')

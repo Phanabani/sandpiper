@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import datetime as dt
 import re
-from typing import *
+from typing import Optional, Union, cast
 
 from fuzzywuzzy import fuzz, process as fuzzy_process
 import pytz
@@ -113,7 +113,7 @@ def utc_now() -> dt.datetime:
     return local_tz.localize(dt.datetime.now())
 
 
-def parse_time(time_str: str) -> Tuple[dt.time, Optional[str], bool]:
+def parse_time(time_str: str) -> tuple[dt.time, Optional[str], bool]:
     """
     Parse a string as a time specifier of the general format "12:34 PM".
     Can optionally include a timezone name.
@@ -236,7 +236,7 @@ def localize_time_to_datetime(
 
 @dataclass
 class TimezoneMatches:
-    matches: List[Tuple[str, int]] = None
+    matches: list[tuple[str, int]] = None
     best_match: Optional[TimezoneType] = False
     has_multiple_best_matches: bool = False
 
@@ -260,7 +260,7 @@ def fuzzy_match_timezone(
     # The regular token_sort_ratio just feels weird because it doesn't support
     # substrings. Searching "Amst" would pick "GMT" rather than "Amsterdam".
     # The _set_ratio methods are totally unusable.
-    matches: List[Tuple[str, int]] = fuzzy_process.extractBests(
+    matches: list[tuple[str, int]] = fuzzy_process.extractBests(
         tz_str, pytz.common_timezones, scorer=fuzz.partial_token_sort_ratio,
         score_cutoff=lower_score_cutoff, limit=limit
     )

@@ -1,4 +1,5 @@
-from typing import *
+from collections import Iterable
+from typing import Union
 
 __all__ = ('join', 'prune', 'RuntimeMessages')
 
@@ -15,8 +16,8 @@ class RuntimeMessages:
 
     __slots__ = ('info', 'exceptions')
 
-    info: List[str]
-    exceptions: List[Exception]
+    info: list[str]
+    exceptions: list[Exception]
 
     def __init__(self):
         self.info = []

@@ -1,6 +1,6 @@
 from datetime import date
 import logging
-from typing import *
+from typing import Optional
 
 import discord
 from discord.ext.commands import BadArgument, Command
@@ -73,7 +73,7 @@ def privacy_handler(privacy_str: str) -> PrivacyType:
 def find_user_in_mutual_guilds(
     client: discord.Client, whos_looking: int, for_whom: int,
     *, short_circuit: bool = False
-) -> List[discord.Member]:
+) -> list[discord.Member]:
     """
     Find a user who shares mutual guild's with someone else.
 
@@ -96,7 +96,7 @@ def find_user_in_mutual_guilds(
 
 
 def find_users_by_username(client: discord.Client,
-                           name: str) -> [List[Tuple[int, str]]]:
+                           name: str) -> [list[tuple[int, str]]]:
     """
     Search for users by their Discord username.
 
@@ -116,7 +116,7 @@ def find_users_by_username(client: discord.Client,
 def find_users_by_display_name(
     client: discord.Client, whos_looking: int, name: str,
     *, guild: Optional[discord.Guild] = None,
-) -> [List[Tuple[int, str]]]:
+) -> [list[tuple[int, str]]]:
     """
     Search for users by their display name (nickname in a guild). You may pass
     in a guild to optimize the search by limiting to only that guild.

@@ -1,16 +1,17 @@
 from __future__ import annotations
-from typing import *
+
+from typing import Generic, TypeVar
 
 T = TypeVar('T')
 
 
 class UnitMap(Generic[T]):
 
-    _two_way: Dict[T, T]
-    _one_way: Dict[T, T]
+    _two_way: dict[T, T]
+    _one_way: dict[T, T]
 
     def __init__(
-            self, *, two_way: Dict[T, T], one_way: Dict[T, T] = None
+            self, *, two_way: dict[T, T], one_way: dict[T, T] = None
     ):
         if not isinstance(two_way, dict):
             raise ValueError(f"two_way must be a dict")
@@ -41,7 +42,7 @@ class UnitMap(Generic[T]):
         return key in self._two_way or key in self._one_way
 
     @staticmethod
-    def _create_bidict(dict_: Dict[T, T]) -> Dict[T, T]:
+    def _create_bidict(dict_: dict[T, T]) -> dict[T, T]:
         out = {}
         for a, b in dict_.items():
             out[a] = b

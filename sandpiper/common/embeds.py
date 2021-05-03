@@ -1,4 +1,5 @@
-from typing import Iterable, Tuple, Union
+from collections import Iterable
+from typing import Union
 
 import discord
 
@@ -6,7 +7,7 @@ from .misc import join
 
 __all__ = ['Embeds']
 
-FieldType = Tuple[str, str, bool]
+FieldType = tuple[str, str, bool]
 
 
 class Embeds:

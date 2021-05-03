@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import *
+from typing import Optional
 import unittest
 import unittest.mock as mock
 

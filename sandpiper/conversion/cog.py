@@ -1,7 +1,7 @@
 from decimal import Decimal
 import logging
 import re
-from typing import *
+from typing import NoReturn
 
 import discord
 import discord.ext.commands as commands
@@ -46,8 +46,8 @@ class Conversion(commands.Cog):
         await self.convert_measurements(msg.channel, conversion_strs)
 
     async def convert_time(
-            self, msg: discord.Message, time_strs: List[Tuple[str, str]]
-    ) -> List[Tuple[str, str]]:
+            self, msg: discord.Message, time_strs: list[tuple[str, str]]
+    ) -> list[tuple[str, str]]:
         """
         Convert a list of time strings (like "5:45 PM") to different users'
         timezones and reply with the conversions.
@@ -106,7 +106,7 @@ class Conversion(commands.Cog):
 
     async def convert_measurements(
             self, channel: discord.TextChannel,
-            quantity_strs: List[Tuple[str, str]]
+            quantity_strs: list[tuple[str, str]]
     ) -> NoReturn:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
@@ -118,7 +118,7 @@ class Conversion(commands.Cog):
         """
 
         conversions = []
-        failed: List[Tuple[str, str]] = []
+        failed: list[tuple[str, str]] = []
         runtime_msgs = RuntimeMessages()
         for qstr, unit in quantity_strs:
             q = unit_conversion.convert_measurement(
