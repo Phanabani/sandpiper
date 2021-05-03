@@ -61,15 +61,16 @@ class FromType(ConfigTransformer):
 class Bounded(ConfigTransformer):
 
     def __init__(self, min: Optional[V1], max: Optional[V1]):
-        if type(min) != type(max):
-            raise ConfigSchemaError() from TypeError(
-                f"min and max must be the same type, got {type(min)} and "
-                f"{type(max)}"
-            )
-        if min > max:
-            raise ConfigSchemaError() from ValueError(
-                f"min {min} is greater than max {max}"
-            )
+        if min is not None and max is not None:
+            if type(min) != type(max):
+                raise ConfigSchemaError() from TypeError(
+                    f"min and max must be the same type, got {type(min)} and "
+                    f"{type(max)}"
+                )
+            if min > max:
+                raise ConfigSchemaError() from ValueError(
+                    f"min {min} is greater than max {max}"
+                )
         self.type = type(min)
         self.min = min
         self.max = max
