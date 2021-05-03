@@ -4,7 +4,7 @@ import sys
 import discord
 import discord.ext.commands as commands
 
-from . import Config
+from .config import Config
 from .help import HelpCommand
 
 __all__ = ['Sandpiper']
