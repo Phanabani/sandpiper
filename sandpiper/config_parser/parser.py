@@ -1,4 +1,5 @@
 import json
+import sys
 from typing import Any, Literal, TextIO, Union, get_type_hints
 
 from .annotations import do_transformations
@@ -39,7 +40,9 @@ class ConfigCompound:
         # contain the default values
         cls_dict = self.__class__.__dict__
         annotations = get_type_hints(
-            self, globalns=globals(), localns=vars(self.__class__),
+            self,
+            globalns=vars(sys.modules[self.__class__.__module__]),
+            localns=vars(self.__class__),
             include_extras=True
         )
         encountered = set()
