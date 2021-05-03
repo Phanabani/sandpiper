@@ -289,6 +289,7 @@ python -m pip install -r requirements-dev.txt
 
 ```bash
 python -m pytest --pyargs sandpiper
+# Add --profile and/or --profile-svg to run with profiling
 ```
 
 #### Run tests with code coverage
