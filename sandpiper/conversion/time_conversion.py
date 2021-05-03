@@ -1,7 +1,7 @@
-from collections import defaultdict
+from collections import Iterable, defaultdict
 import datetime as dt
 import logging
-from typing import *
+from typing import Optional, Union, cast
 
 import discord
 
@@ -17,8 +17,8 @@ __all__ = (
 
 logger = logging.getLogger('sandpiper.conversion.time_conversion')
 
-T_ConvertedTimes = List[Tuple[str, List[dt.datetime]]]
-T_ConvertedTimesGroupedUnderInputTimezones = List[Tuple[Optional[str], T_ConvertedTimes]]
+T_ConvertedTimes = list[tuple[str, list[dt.datetime]]]
+T_ConvertedTimesGroupedUnderInputTimezones = list[tuple[Optional[str], T_ConvertedTimes]]
 
 
 class UserTimezoneUnset(Exception):
@@ -48,7 +48,7 @@ def _get_timezone(name: str) -> Optional[TimezoneType]:
     return matches.best_match or None
 
 
-async def _get_guild_timezones(db: Database, guild: discord.Guild) -> Set[TimezoneType]:
+async def _get_guild_timezones(db: Database, guild: discord.Guild) -> set[TimezoneType]:
     """
     Get all user timezones from the given guild.
 
@@ -64,7 +64,7 @@ async def _get_guild_timezones(db: Database, guild: discord.Guild) -> Set[Timezo
 
 
 async def _convert_times(
-        times: List[dt.datetime],
+        times: list[dt.datetime],
         out_timezones: Union[TimezoneType, Iterable[TimezoneType]]
 ) -> T_ConvertedTimes:
     """
@@ -90,11 +90,11 @@ async def _convert_times(
 
 async def convert_time_to_user_timezones(
         db: Database, user_id: int, guild: discord.Guild,
-        time_strs: List[Tuple[str, str]],
+        time_strs: list[tuple[str, str]],
         *, runtime_msgs: RuntimeMessages
-) -> Tuple[
+) -> tuple[
     T_ConvertedTimesGroupedUnderInputTimezones,
-    List[Tuple[str, str]]
+    list[tuple[str, str]]
 ]:
     """
     Convert times.
@@ -124,10 +124,10 @@ async def convert_time_to_user_timezones(
     # Each datetime under a given timezone will be converted to that timezone
     # only. The None key is a special case, where each datetime mapped to it
     # will be converted to all user timezones in the database
-    out_timezone_map: Dict[Optional[TimezoneType], List[dt.datetime]] = (
+    out_timezone_map: dict[Optional[TimezoneType], list[dt.datetime]] = (
         defaultdict(list)
     )
-    failed: List[Tuple[str, str]] = []  # Strings that should pass on to unit conversion
+    failed: list[tuple[str, str]] = []  # Strings that should pass on to unit conversion
     user_tz = None
     for tstr, timezone_out_str in time_strs:
         try:

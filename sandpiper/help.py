@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 import itertools
-from typing import *
 
 from discord.ext.commands import DefaultHelpCommand, Group, Command, Cog
 
