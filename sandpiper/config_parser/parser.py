@@ -1,6 +1,5 @@
 import json
-from typing import *
-from typing import TextIO
+from typing import Any, Literal, TextIO, Union
 
 from .converters import ConfigConverterBase
 from .exceptions import *
@@ -50,7 +49,7 @@ class ConfigCompound:
             self.__read_field(json_parsed, field_name, field_type)
 
     def __read_field(
-            self, json_parsed: Dict[str, Any], field_name: str,
+            self, json_parsed: dict[str, Any], field_name: str,
             field_type: Any, default: Any = NoDefault
     ):
         qualified_name = qualified(self.__path, field_name)

@@ -1,6 +1,4 @@
-from typing import *
-
-from .misc import qualified
+from typing import Any
 
 __all__ = (
     'ConfigSchemaError', 'ConfigParsingError', 'MissingFieldError',
@@ -28,7 +26,7 @@ class MissingFieldError(ConfigParsingError):
 class ParsingError(ConfigParsingError):
 
     def __init__(
-            self, value: Any, target_type: Type, base_exc: Exception,
+            self, value: Any, target_type: type, base_exc: Exception,
             qualified_name: str = ''
     ):
         self.value = value

@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import *
+from typing import Any, Optional, Type, TypeVar
 
 from .misc import typecheck
 
@@ -17,8 +17,8 @@ class ConfigConverterBase(metaclass=ABCMeta):
 
     @classmethod
     def _check_tuple(
-            cls, tuple_: Tuple, *field_names: str
-    ) -> Tuple:
+            cls, tuple_: tuple, *field_names: str
+    ) -> tuple:
         if len(tuple_) != len(field_names):
             raise ValueError(
                 f"Missing type arguments. Expected "
@@ -43,13 +43,14 @@ class Convert(ConfigConverterBase):
         log_file: Convert[str, Path]
     """
 
+    # TODO update to generic type[] once jetbrains fixes a bug in pycharm
     def __init__(self, base_type: Type[V_Base], target_type: Type[V_Target]):
         typecheck(type, base_type=base_type, target_type=target_type)
         self.base_type = base_type
         self.target_type = target_type
 
     def __class_getitem__(
-            cls, base_and_target_types: Tuple[Type[V_Base], Type[V_Target]]
+            cls, base_and_target_types: tuple[Type[V_Base], Type[V_Target]]
     ):
         base_type, target_type = cls._check_tuple(
             base_and_target_types, 'base_type', 'target_type'
@@ -81,7 +82,7 @@ class BoundedInt(int, ConfigConverterBase):
         self._converter_min = min
         self._converter_max = max
 
-    def __class_getitem__(cls, min_max: Tuple[Optional[int], Optional[int]]):
+    def __class_getitem__(cls, min_max: tuple[Optional[int], Optional[int]]):
         cls._check_tuple(min_max, 'min', 'max')
         return cls(min=min_max[0], max=min_max[1])
 

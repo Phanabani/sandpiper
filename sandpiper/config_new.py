@@ -2,7 +2,7 @@ from __future__ import annotations
 from functools import cached_property
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from typing import *
+from typing import Literal
 
 from sandpiper.config_parser import *
 

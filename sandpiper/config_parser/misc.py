@@ -1,4 +1,4 @@
-from typing import *
+from typing import Any, NoReturn, Union
 
 __all__ = ('qualified', 'typecheck')
 
@@ -8,7 +8,7 @@ def qualified(parent: str, name: str) -> str:
 
 
 def typecheck(
-        type_: Union[Type, Tuple[Type, ...]], **names_and_values: Any
+        type_: Union[type, tuple[type, ...]], **names_and_values: Any
 ) -> NoReturn:
     for name, value in names_and_values.items():
         if not isinstance(value, type_):
