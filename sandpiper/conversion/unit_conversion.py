@@ -1,7 +1,7 @@
 from decimal import Decimal
 import logging
 import re
-from typing import *
+from typing import Union
 
 from pint import UndefinedUnitError as PintUndefinedUnitError
 from pint import UnitRegistry, Unit
@@ -130,7 +130,7 @@ class UnmappedUnitError(Exception):
 def convert_measurement(
         quantity_str: str, unit: str = None,
         *, runtime_msgs: RuntimeMessages = None
-) -> Union[Tuple[Quantity, Quantity], Decimal, None]:
+) -> Union[tuple[Quantity, Quantity], Decimal, None]:
     """
     Parse and convert a quantity string between imperial and metric
 

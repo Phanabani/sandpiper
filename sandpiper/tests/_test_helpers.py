@@ -1,4 +1,4 @@
-from typing import *
+from typing import Literal, NoReturn, Optional, Union, overload
 import unittest
 import unittest.mock as mock
 
@@ -74,10 +74,10 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     # noinspection PyPropertyAccess
     def init_mock_userdata(self):
-        self.guilds: List[mock.Mock] = []
-        self.users: List[mock.Mock] = []
-        self.guilds_map: Dict[int, mock.Mock] = {}
-        self.users_map: Dict[int, mock.Mock] = {}
+        self.guilds: list[mock.Mock] = []
+        self.users: list[mock.Mock] = []
+        self.guilds_map: dict[int, mock.Mock] = {}
+        self.users_map: dict[int, mock.Mock] = {}
 
         patcher = mock.patch.object(self.bot, 'get_user')
         get_user = patcher.start()
@@ -183,7 +183,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
     # region Message dispatching and command invocation
 
     @staticmethod
-    def get_embeds(mock_: MagicMock_) -> List[discord.Embed]:
+    def get_embeds(mock_: MagicMock_) -> list[discord.Embed]:
         """
         :param mock_: a mock ``send`` method
         :return: a list of embeds sent in each message
@@ -194,7 +194,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
         ]
 
     @staticmethod
-    def get_contents(mock_: MagicMock_) -> List[str]:
+    def get_contents(mock_: MagicMock_) -> list[str]:
         """
         :param mock_: a mock ``send`` method
         :return: a list of each message's contents
@@ -224,7 +224,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def invoke_cmd_get_embeds(
             self, message_content: str
-    ) -> List[discord.Embed]:
+    ) -> list[discord.Embed]:
         """
         Invoke a command with ``invoke_cmd`` and return the embeds sent back.
 
@@ -255,13 +255,13 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
     @overload
     async def dispatch_msg_get_contents(
             self, message_content: str
-    ) -> List[str]:
+    ) -> list[str]:
         pass
 
     @overload
     async def dispatch_msg_get_contents(
             self, message_content: str, only_one: Literal[False]
-    ) -> List[str]:
+    ) -> list[str]:
         pass
 
     @overload
@@ -272,7 +272,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def dispatch_msg_get_contents(
             self, message_content: str, only_one = False
-    ) -> Union[List[str], str]:
+    ) -> Union[list[str], str]:
         """
         Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
         return the message contents that were sent back.
@@ -293,13 +293,13 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
     @overload
     async def dispatch_msg_get_embeds(
             self, message_content: str
-    ) -> List[discord.Embed]:
+    ) -> list[discord.Embed]:
         pass
 
     @overload
     async def dispatch_msg_get_embeds(
             self, message_content: str, only_one: Literal[False] = False
-    ) -> List[discord.Embed]:
+    ) -> list[discord.Embed]:
         pass
 
     @overload
@@ -310,7 +310,7 @@ class DiscordMockingTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def dispatch_msg_get_embeds(
             self, message_content: str, only_one = False
-    ) -> Union[List[discord.Embed], discord.Embed]:
+    ) -> Union[list[discord.Embed], discord.Embed]:
         """
         Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
         return a list of embeds that were sent back.

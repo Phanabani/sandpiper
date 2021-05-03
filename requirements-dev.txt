@@ -2,3 +2,4 @@
 
 coverage>=5.3
 pytest
+pytest-profiling
