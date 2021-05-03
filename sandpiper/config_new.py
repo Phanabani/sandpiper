@@ -5,7 +5,7 @@ from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from typing import Annotated as A, Literal
 
-from sandpiper.common.paths import DEFAULT_LOGS_PATH
+from sandpiper.common.paths import MODULE_PATH
 from sandpiper.config_parser import *
 
 __all__ = ('SandpiperConfig',)
@@ -42,7 +42,7 @@ class SandpiperConfig(ConfigCompound):
 
         sandpiper_logging_level: _logging_levels = 'INFO'
         discord_logging_level: _logging_levels = 'WARNING'
-        output_file: A[Path, MaybeRelativePath(DEFAULT_LOGS_PATH)] = (
+        output_file: A[Path, MaybeRelativePath(MODULE_PATH)] = (
             './logs/sandpiper.log'
         )
         when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
