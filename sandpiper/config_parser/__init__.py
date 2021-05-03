@@ -1,2 +1,2 @@
-from .converters import *
+from .annotations import *
 from .parser import *

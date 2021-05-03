@@ -1,7 +1,7 @@
 import json
-from typing import Any, Literal, TextIO, Union
+from typing import Any, Literal, TextIO, Union, get_type_hints
 
-from .converters import ConfigConverterBase
+from .annotations import do_transformations
 from .exceptions import *
 from .misc import *
 
@@ -24,29 +24,41 @@ class ConfigCompound:
 
     def __parse(self, config: Union[dict, str, TextIO]):
         if isinstance(config, str):
-            json_parsed = json.loads(config)
+            config = json.loads(config)
         elif isinstance(config, TextIO):
-            json_parsed = json.load(config)
+            config = json.load(config)
+        elif isinstance(config, dict):
+            config = config
         else:
             raise TypeError(
-                f"config must be one of (TextIO, str), got {type(config)}"
+                f"config must be one of type (dict, str, TextIO), got "
+                f"{type(config)}"
             )
 
-        # Iterate through __dict__ to get fields with default values
+        # We need to get the class dict because the instance dict does not
+        # contain the default values
+        cls_dict = self.__class__.__dict__
+        annotations = get_type_hints(
+            self, globalns=globals(), localns=vars(self.__class__),
+            include_extras=True
+        )
         encountered = set()
-        for field_name, default in self.__dict__.items():
+
+        # Iterate through annotations to get fields with type annotations
+        for field_name, field_type in annotations.items():
             encountered.add(field_name)
             if field_name.startswith('_'):
                 continue
-            field_type = type(default)
-            self.__read_field(json_parsed, field_name, field_type)
+            default = cls_dict.get(field_name, NoDefault)
+            self.__read_field(config, field_name, field_type, default)
 
-        # Iterate through __annotations__ to get the remaining fields with
-        # type annotations
-        for field_name, field_type in self.__annotations__.items():
+        # Iterate through __dict__ to get the remaining fields with default
+        # values
+        for field_name, default in cls_dict.items():
             if field_name in encountered or field_name.startswith('_'):
                 continue
-            self.__read_field(json_parsed, field_name, field_type)
+            field_type = type(default)
+            self.__read_field(config, field_name, field_type, default)
 
     def __read_field(
             self, json_parsed: dict[str, Any], field_name: str,
@@ -63,7 +75,7 @@ class ConfigCompound:
             # the compound type for further parsing
             final_value = field_type(
                 json_parsed.get(field_name, {}),
-                _compound_path=f"{self.__path}.{field_name}"
+                _compound_path=qualified_name
             )
             setattr(self, field_name, final_value)
             return
@@ -91,9 +103,9 @@ def _convert(
         # Any type is accepted
         return value
 
-    if isinstance(type_, ConfigConverterBase):
-        # Use a converter
-        return type_.convert(value)
+    if hasattr(type_, '__metadata__'):
+        # Annotated with transformers
+        return do_transformations(value, type_)
 
     if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
         # Use special rules for typing module types
