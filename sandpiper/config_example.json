@@ -4,11 +4,12 @@
   "bot": {
     "command_prefix": "!piper ",
     "description": "A bot that makes it easier to communicate with friends around the world.\nVisit my GitHub page for more info about commands and features: https://github.com/Hawkpath/sandpiper#commands-and-features"
+
+    "commands": {
+      "allow_public_bio_setting": false
+    }
   },
 
-  "commands": {
-    "allow_public_bio_setting": false
-  },
 
   "logging": {
     "sandpiper_logging_level": "INFO",

@@ -11,10 +11,10 @@ DEFAULTS = {
         "description":
             "A bot that makes it easier to communicate with friends around the "
             "world.\nVisit my GitHub page for more info about commands and "
-            "features: https://github.com/Hawkpath/sandpiper#commands-and-features"
-    },
-    "commands": {
-        "allow_public_bio_setting": False,
+            "features: https://github.com/Hawkpath/sandpiper#commands-and-features",
+        "commands": {
+            "allow_public_bio_setting": False
+        }
     },
     "logging": {
         "sandpiper_logging_level": "INFO",
@@ -61,22 +61,22 @@ class Config:
             if not isinstance(self.description, str):
                 raise ConfigError('bot.description must be a string')
 
-    class Commands:
+        class Commands:
 
-        __slots__ = ['allow_public_bio_setting']
+            __slots__ = ['allow_public_bio_setting']
 
-        allow_public_bio_setting: bool
+            allow_public_bio_setting: bool
 
-        def __init__(self, config: Dict[str, Any]):
-            """Parse commands-specific config"""
+            def __init__(self, config: Dict[str, Any]):
+                """Parse commands-specific config"""
 
-            self.allow_public_bio_setting = get_default(
-                config, 'commands', 'allow_public_bio_setting'
-            )
-            if not isinstance(self.allow_public_bio_setting, str):
-                raise ConfigError(
-                    'commands.allow_public_bio_setting must be a bool'
+                self.allow_public_bio_setting = get_default(
+                    config, 'commands', 'allow_public_bio_setting'
                 )
+                if not isinstance(self.allow_public_bio_setting, str):
+                    raise ConfigError(
+                        'commands.allow_public_bio_setting must be a bool'
+                    )
 
     class Logging:
 
