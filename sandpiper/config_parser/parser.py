@@ -1,5 +1,7 @@
+from functools import cached_property
 import json
 import sys
+from types import MethodType
 from typing import Any, Literal, TextIO, Union, get_type_hints
 
 from .annotations import do_transformations
@@ -12,7 +14,17 @@ NoDefault = object()
 
 
 def is_json_type(value: Any) -> bool:
-    return value in (list, str, int, float, True, False, None)
+    return value in (list, str, int, float, bool, type(None))
+
+
+def should_skip(name: str, value: Any = None) -> bool:
+    return (
+        name.startswith('_')
+        or (
+            value is not None
+            and isinstance(value, (MethodType, cached_property))
+        )
+    )
 
 
 class ConfigCompound:
@@ -50,7 +62,7 @@ class ConfigCompound:
         # Iterate through annotations to get fields with type annotations
         for field_name, field_type in annotations.items():
             encountered.add(field_name)
-            if field_name.startswith('_'):
+            if should_skip(field_name):
                 continue
             default = cls_dict.get(field_name, NoDefault)
             self.__read_field(config, field_name, field_type, default)
@@ -58,7 +70,7 @@ class ConfigCompound:
         # Iterate through __dict__ to get the remaining fields with default
         # values
         for field_name, default in cls_dict.items():
-            if field_name in encountered or field_name.startswith('_'):
+            if field_name in encountered or should_skip(field_name, default):
                 continue
             field_type = type(default)
             self.__read_field(config, field_name, field_type, default)
@@ -88,13 +100,13 @@ class ConfigCompound:
         except KeyError:
             if default is NoDefault:
                 raise MissingFieldError(qualified_name)
-            final_value = default
-        else:
-            # No default was used
-            try:
-                final_value = _convert(value, field_type, qualified_name)
-            except ParsingError as e:
-                raise e
+            value = default
+        try:
+            # We want to convert default values too, so it's just as if they
+            # were written by the user
+            final_value = _convert(value, field_type, qualified_name)
+        except ParsingError as e:
+            raise e
 
         setattr(self, field_name, final_value)
 
