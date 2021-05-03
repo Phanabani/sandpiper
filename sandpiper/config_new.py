@@ -1,13 +1,10 @@
 from __future__ import annotations
-
+from functools import cached_property
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from pathlib import Path
 from typing import *
 
-from sandpiper.config_parser import (
-    ConfigCompound, BoundedInt, OneOf, MaybeRelativePath, lazy_field
-)
+from sandpiper.config_parser import *
 
 
 class SandpiperConfig(ConfigCompound):
@@ -37,21 +34,21 @@ class SandpiperConfig(ConfigCompound):
 
     class _Logging(ConfigCompound):
 
-        _logging_levels = OneOf['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        _logging_levels = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
         sandpiper_logging_level: _logging_levels
         discord_logging_level: _logging_levels
-        output_file: Path = './logs/sandpiper.log'
-        when: OneOf['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
+        output_file: MaybeRelativePath = './logs/sandpiper.log'
+        when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
         interval: BoundedInt[1, None] = 1
         backup_count: BoundedInt[0, None] = 7
         format = "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
 
-        @lazy_field
+        @cached_property
         def formatter(self):
             return logging.Formatter(self.format)
 
-        @lazy_field
+        @cached_property
         def handler(self):
             handler = TimedRotatingFileHandler(
                 filename=self.output_file,
