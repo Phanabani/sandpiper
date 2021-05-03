@@ -8,6 +8,8 @@ from typing import Annotated as A, Literal
 from sandpiper.common.paths import DEFAULT_LOGS_PATH
 from sandpiper.config_parser import *
 
+__all__ = ('SandpiperConfig',)
+
 
 class SandpiperConfig(ConfigCompound):
 
@@ -38,8 +40,8 @@ class SandpiperConfig(ConfigCompound):
 
         _logging_levels = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
-        sandpiper_logging_level: _logging_levels
-        discord_logging_level: _logging_levels
+        sandpiper_logging_level: _logging_levels = 'INFO'
+        discord_logging_level: _logging_levels = 'WARNING'
         output_file: A[Path, MaybeRelativePath(DEFAULT_LOGS_PATH)] = (
             './logs/sandpiper.log'
         )
