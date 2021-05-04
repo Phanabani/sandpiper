@@ -28,7 +28,7 @@ def _parse_db_file(
         for line in f:
             if line.startswith('#'):
                 continue
-            per_line(out, line.split('\t'))
+            per_line(out, line.strip('\n').split('\t'))
 
     return out
 
