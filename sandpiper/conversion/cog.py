@@ -98,7 +98,7 @@ class Conversion(commands.Cog):
                         f'`{time.strftime(time_format)}`' for time in times
                     )
                     flag = get_country_flag_emoji_from_timezone(timezone_out)
-                    output.append(f'{flag} **{timezone_out}**  -  {times}')
+                    output.append(f'{flag}  **{timezone_out}**  -  {times}')
 
                 output.append('')
 
