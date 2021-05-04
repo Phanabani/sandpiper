@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aiosqlite = "*"
+certifi = "*"
+"discord.py" = "*"
+fuzzywuzzy = {version = "*", extras = ["speedup"]}
+pytz = "*"
+tzlocal = "*"
+Pint = "*"
+
+[dev-packages]
+coverage = "*"
+pytest = "*"
+pytest-profiling = "*"
+
+[requires]
+python_version = "3.9"
