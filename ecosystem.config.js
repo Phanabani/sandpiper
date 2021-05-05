@@ -1,29 +1,16 @@
-let interpreter;
-
-switch (process.platform) {
-  case 'win32':
-    interpreter = 'venv/Scripts/pythonw.exe';
-    break
-  case 'linux':
-  case 'darwin':
-    interpreter = 'venv/bin/python';
-    break;
-  default:
-    console.warn(`WARNING: Unexpected platform ${process.platform}`);
-    interpreter = 'venv/bin/python';
-}
-
 module.exports = {
   'apps': [
     {
       'name': 'sandpiper',
-      'script': interpreter,
-      'args': ['-m', 'sandpiper'],
+      'interpreter': 'pipenv',
+      'interpreter_args': ['run', 'python', '-m'],
+      'script': 'sandpiper',
+      // script is a required field, so this is a hacky way to make it work
 
       'watch': false,
 
       'min_uptime': '5s',
-      'max_restarts': 3,
+      'max_restarts': 1,
       'restart_delay': 0,
       'autorestart': true
     }
