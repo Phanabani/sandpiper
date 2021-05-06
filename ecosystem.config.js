@@ -10,12 +10,35 @@
 // just kill conhost. and I'm sorry for any pain this caused. :(
 // I'm not spending any more time on this
 
+let shell;
+let args;
+const command = 'pipenv run python -m sandpiper';
+
+switch (process.platform) {
+    case 'win32':
+        shell = 'cmd';
+        args = ['/C', command];
+        break
+    case 'linux':
+    case 'darwin':
+        shell = '/bin/bash';
+        args = ['-c', command];
+        break;
+    default:
+        console.warn(
+            `WARNING: Unexpected platform ${process.platform}, assuming a `
+            + `Unix-like system.`
+        );
+        shell = '/bin/bash';
+        args = ['-c', command];
+}
+
 module.exports = {
     apps: [
         {
             name: 'sandpiper',
-            script: 'pipenv',
-            args: ['run', 'python', '-m', 'sandpiper'],
+            script: shell,
+            args: args,
 
             watch: false,
 
