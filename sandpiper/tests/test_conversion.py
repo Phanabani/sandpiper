@@ -617,3 +617,14 @@ class TestTimeConversion(DiscordMockingTestCase):
         )
 
     # endregion
+
+    # region Other
+
+    async def test_flags(self):
+        self.msg.author.id = self.american_user
+        await self.assert_in_reply(
+            "you can see the country flags too! {12am}",
+            '🇺🇸', '🇬🇧', '🇳🇱'
+        )
+
+    # endregion

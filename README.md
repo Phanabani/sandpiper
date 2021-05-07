@@ -39,18 +39,25 @@ git clone https://github.com/hawkpath/sandpiper.git
 cd sandpiper
 ```
 
-With Python 3.9+, create a virtual environment and install dependencies.
+[Install Pipenv](https://pipenv.pypa.io/en/latest/install/#installing-pipenv).
+After installing for the first time, you may have to do some extra steps to
+be able to use the `pipenv` command in your shell. Read the note in the
+Pipenv installation page for more info.
 
-```shell script
-python -m venv venv
+```shell
+python -m pip install --user pipenv
+```
 
-# Linux / OSX:
-source venv/bin/activate
+Install the dependencies with Pipenv. Sandpiper requires Python 3.9+.
 
-# Windows:
-call venv\Scripts\activate.bat
+```shell
+# If Python 3.9 is your default version:
+pipenv sync
 
-python -m pip install -r requirements.txt
+# If Python 3.9 is NOT your default version, you should specify the path to
+# your Python 3.9 executable
+pipenv sync --python "/usr/bin/python3.9"
+pipenv sync --python "C:\Miniconda3\envs\python39\python.exe"
 ```
 
 ## Usage
@@ -72,10 +79,10 @@ See [config](#config) for more configuration options.
 
 #### Basic
 
-In the top level directory, simply run Sandpiper as a Python module.
+In the top level directory, simply run Sandpiper as a Python module with Pipenv.
 
 ```shell script
-python -m sandpiper
+pipenv run python -m sandpiper
 ```
 
 #### With PM2
@@ -276,11 +283,11 @@ Command | Description | Example
 
 ### Installation
 
-Follow the installation steps in [install](#install) and install the
-development dependencies:
+Follow the installation steps in [install](#install) and use Pipenv to 
+install the development dependencies:
 
 ```bash
-python -m pip install -r requirements-dev.txt
+pipenv sync --dev
 ```
 
 ### Testing
@@ -288,15 +295,16 @@ python -m pip install -r requirements-dev.txt
 #### Run unit tests
 
 ```bash
-python -m pytest --pyargs sandpiper
-# Add --profile and/or --profile-svg to run with profiling
+pipenv run python -m pytest --pyargs sandpiper
+# or run tests with profiling (--profile-svg to generate svg image):
+pipenv run python -m pytest --pyargs --profile sandpiper
 ```
 
 #### Run tests with code coverage
 
 ```bash
-coverage run -m pytest --pyargs sandpiper
-coverage html
+pipenv run coverage run -m pytest --pyargs sandpiper
+pipenv run coverage html
 ```
 
 Open `htmlcov/index.html` to view the coverage report.

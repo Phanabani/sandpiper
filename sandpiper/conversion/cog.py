@@ -7,6 +7,7 @@ import discord
 import discord.ext.commands as commands
 
 from sandpiper.common.embeds import Embeds
+from sandpiper.common.IANA import get_country_flag_emoji_from_timezone
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
 from sandpiper.conversion.time_conversion import *
@@ -96,7 +97,8 @@ class Conversion(commands.Cog):
                     times = '  |  '.join(
                         f'`{time.strftime(time_format)}`' for time in times
                     )
-                    output.append(f'**{timezone_out}**  -  {times}')
+                    flag = get_country_flag_emoji_from_timezone(timezone_out)
+                    output.append(f'{flag}  **{timezone_out}**  -  {times}')
 
                 output.append('')
 
