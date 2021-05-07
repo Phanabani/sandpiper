@@ -2,7 +2,7 @@ from functools import cached_property
 import json
 import sys
 from types import MethodType
-from typing import Any, Literal, TextIO, Union, get_type_hints
+from typing import Any, Annotated as A, Literal, TextIO, Union, get_type_hints
 
 from .annotations import do_transformations
 from .exceptions import *
@@ -30,10 +30,46 @@ def should_skip(name: str, value: Any = None) -> bool:
 class ConfigCompound:
 
     __path: str
+    __fields: dict[str, tuple[A[Any, 'Type'], A[Any, 'Default']]]
 
     def __init__(self, config: Union[dict, str, TextIO], *, _compound_path=''):
         self.__path = _compound_path
         self.__parse(config)
+
+    def __init_subclass__(cls, /, **kwargs):
+        """
+        Compute annotations and defaults at subclass definition time. We don't
+        need to recompute them every single parse. This also allows for schema
+        errors to be risen early, rather than when the user's input is being
+        parsed.
+        """
+        super().__init_subclass__(**kwargs)
+        annotations = get_type_hints(
+            cls,
+            globalns=vars(sys.modules[cls.__module__]),
+            localns=vars(cls),
+            include_extras=True
+        )
+        cls_dict = cls.__dict__
+
+        cls.__fields = {}
+        encountered = set()
+
+        # Iterate through annotations to get fields with type annotations
+        for field_name, field_type in annotations.items():
+            encountered.add(field_name)
+            if should_skip(field_name):
+                continue
+            default = cls_dict.get(field_name, NoDefault)
+            cls.__fields[field_name] = field_type, default
+
+        # Iterate through __dict__ to get the remaining fields with default
+        # values
+        for field_name, default in cls_dict.items():
+            if field_name in encountered or should_skip(field_name, default):
+                continue
+            field_type = type(default)
+            cls.__fields[field_name] = (field_type, default)
 
     def __parse(self, config: Union[dict, str, TextIO]):
         if isinstance(config, str):
@@ -48,31 +84,9 @@ class ConfigCompound:
                 f"{type(config)}"
             )
 
-        # We need to get the class dict because the instance dict does not
-        # contain the default values
-        cls_dict = self.__class__.__dict__
-        annotations = get_type_hints(
-            self,
-            globalns=vars(sys.modules[self.__class__.__module__]),
-            localns=vars(self.__class__),
-            include_extras=True
-        )
-        encountered = set()
-
         # Iterate through annotations to get fields with type annotations
-        for field_name, field_type in annotations.items():
-            encountered.add(field_name)
-            if should_skip(field_name):
-                continue
-            default = cls_dict.get(field_name, NoDefault)
-            self.__read_field(config, field_name, field_type, default)
-
-        # Iterate through __dict__ to get the remaining fields with default
-        # values
-        for field_name, default in cls_dict.items():
-            if field_name in encountered or should_skip(field_name, default):
-                continue
-            field_type = type(default)
+        for field_name, field_info in self.__class__.__fields.items():
+            field_type, default = field_info
             self.__read_field(config, field_name, field_type, default)
 
     def __read_field(
