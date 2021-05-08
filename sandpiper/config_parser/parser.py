@@ -2,7 +2,9 @@ from functools import cached_property
 import json
 import sys
 from types import MethodType
-from typing import Any, Annotated as A, Literal, TextIO, Union, get_type_hints
+from typing import (
+    Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints
+)
 
 from .annotations import do_transformations
 from .exceptions import *
@@ -13,8 +15,8 @@ __all__ = ('ConfigCompound',)
 NoDefault = object()
 
 
-def is_json_type(value: Any) -> bool:
-    return value in (list, str, int, float, bool, type(None))
+def is_json_type(type_: Any) -> bool:
+    return type_ in (type(None), bool, int, float, str, list)
 
 
 def should_skip(name: str, value: Any = None) -> bool:
@@ -44,6 +46,7 @@ class ConfigCompound:
         parsed.
         """
         super().__init_subclass__(**kwargs)
+
         annotations = get_type_hints(
             cls,
             globalns=vars(sys.modules[cls.__module__]),
@@ -70,6 +73,11 @@ class ConfigCompound:
                 continue
             field_type = type(default)
             cls.__fields[field_name] = (field_type, default)
+
+        # Validate the annotations/defaults for each field
+        for field_name, field_info in cls.__fields.items():
+            field_type, default = field_info
+            _validate_annotation(cls, field_name, field_type)
 
     def __parse(self, config: Union[dict, str, TextIO]):
         if isinstance(config, str):
@@ -123,6 +131,67 @@ class ConfigCompound:
             raise e
 
         setattr(self, field_name, final_value)
+
+
+def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
+    if type_ is Any:
+        # Any type is accepted
+        return
+
+    if isinstance(type_, type) and issubclass(type_, ConfigCompound):
+        return
+
+    if hasattr(type_, '__metadata__'):
+        # Annotated with transformers
+        return
+
+    if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
+        # Use special rules for typing module types
+        type_origin = type_.__origin__
+        type_args = type_.__args__
+
+        if type_origin is Union:
+            # The subtypes in a union might be other special typing types.
+            # Recursively call this function with each subtype
+            for subtype in type_args:
+                _validate_annotation(cls, field_name, subtype)
+            return
+
+        if type_origin is tuple:
+            for i, subtype in enumerate(type_args):
+                _validate_annotation(cls, field_name, subtype)
+            return
+
+        if type_origin is list:
+            list_type = type_args[0]
+            _validate_annotation(cls, field_name, list_type)
+            return
+
+        if type_origin is Literal:
+            for literal in type_args:
+                if isinstance(literal, list) or not is_json_type(type(literal)):
+                    raise ConfigSchemaError(
+                        cls, field_name,
+                        f"Literal values may only be instances of NoneType, "
+                        f"bool, int, float, or str"
+                    )
+            return
+
+        raise ConfigSchemaError(
+            cls, field_name,
+            f"Special type annotation {type_origin} is not accepted."
+        )
+
+    if is_json_type(type_):
+        # Simple type
+        return
+
+    # Some other annotation we can't handle
+    raise ConfigSchemaError(
+        cls, field_name,
+        f"Type annotation {type_} is not accepted. Maybe you want to "
+        f"use the converters.Convert annotation?"
+    )
 
 
 def _convert(
