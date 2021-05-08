@@ -216,9 +216,8 @@ def _convert(
             for subtype in type_args:
                 try:
                     return _convert(value, subtype, qualified_name)
-                except ConfigSchemaError as e:
-                    # If we get this error, something is wrong with the schema,
-                    # not the config value
+                except RuntimeError as e:
+                    # Something really bad happened, don't ignore
                     raise e
                 except Exception:
                     # This is normal, ideally this will happen for all but
@@ -264,18 +263,13 @@ def _convert(
                 )
             return value
 
-        raise ConfigSchemaError(
-            f"Special type annotation {type_origin} is not accepted."
-        )
-
     if is_json_type(type_):
         # Simple typecheck
         typecheck(type_, value=value)
         return value
 
-    # Some other annotation we can't handle
-    raise ConfigSchemaError(
-        f"Type annotation {type(type_)} for {qualified_name} is not "
-        f"accepted. Maybe you want to use the converters.Convert "
-        f"annotation?"
+    # Ideally should never happen
+    raise RuntimeError(
+        f"Got unexpected type {type_}. This should've been caught in "
+        f"the subclass validation step!"
     )
