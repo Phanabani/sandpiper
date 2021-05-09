@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any, Optional, Type, TypeVar, Union
 
-from .exceptions import ConfigSchemaError
 from .misc import typecheck
 
 __all__ = (
@@ -24,7 +23,7 @@ def do_transformations(value, annotation):
     metadata: tuple = annotation.__metadata__
     for transformer in metadata:
         if not isinstance(transformer, ConfigTransformer):
-            raise ConfigSchemaError() from TypeError(
+            raise TypeError(
                 f"Annotation metadata {transformer} must be an instance of "
                 f"{ConfigTransformer.__name__}"
             )
@@ -63,31 +62,33 @@ class Bounded(ConfigTransformer):
     def __init__(self, min: Optional[V1], max: Optional[V1]):
         if min is not None and max is not None:
             if type(min) != type(max):
-                raise ConfigSchemaError() from TypeError(
+                raise TypeError(
                     f"min and max must be the same type, got {type(min)} and "
                     f"{type(max)}"
                 )
             if min > max:
-                raise ConfigSchemaError() from ValueError(
+                raise ValueError(
                     f"min {min} is greater than max {max}"
                 )
-        self.type = type(min)
+            self.type = type(min)
+        elif min is not None:
+            self.type = type(min)
+        else:
+            self.type = type(max)
+
         self.min = min
         self.max = max
 
     def transform(self, value: V1, target_type: type) -> V1:
         typecheck(self.type, value, 'value')
-        try:
-            if self.min is not None and value < self.min:
-                raise ValueError(
-                    f"Value {value} must be greater than or equal to {self.min}"
-                )
-            if self.max is not None and value > self.max:
-                raise ValueError(
-                    f"Value {value} must be less than or equal to {self.max}"
-                )
-        except TypeError:
-            raise ConfigSchemaError()
+        if self.min is not None and value < self.min:
+            raise ValueError(
+                f"Value {value} must be greater than or equal to {self.min}"
+            )
+        if self.max is not None and value > self.max:
+            raise ValueError(
+                f"Value {value} must be less than or equal to {self.max}"
+            )
         return value
 
 
@@ -95,7 +96,7 @@ class MaybeRelativePath(ConfigTransformer):
 
     def __init__(self, root_path: Path):
         if not isinstance(root_path, Path):
-            raise ConfigSchemaError() from TypeError(
+            raise TypeError(
                 f"root_path must be of type Path, got {type(root_path)}"
             )
         self.root_path = root_path
