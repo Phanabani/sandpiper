@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Type, TypeVar, Union
+from typing import Any, Optional, Type, TypeVar, Union, overload
 
 from .misc import typecheck
 
@@ -59,7 +59,19 @@ class FromType(ConfigTransformer):
 # noinspection PyShadowingBuiltins
 class Bounded(ConfigTransformer):
 
-    def __init__(self, min: Optional[V1], max: Optional[V1]):
+    @overload
+    def __init__(self, min: V1, max: V1):
+        pass
+
+    @overload
+    def __init__(self, min: None, max: V1):
+        pass
+
+    @overload
+    def __init__(self, min: V1, max: None):
+        pass
+
+    def __init__(self, min: Any, max: Any):
         if min is not None and max is not None:
             if type(min) != type(max):
                 raise TypeError(
