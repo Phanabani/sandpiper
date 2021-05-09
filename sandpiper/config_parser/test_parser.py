@@ -6,6 +6,12 @@ from .exceptions import *
 from .parser import ConfigCompound
 
 
+def assert_type_value(value, assert_type: type, assert_value):
+    __tracebackhide__ = True
+    assert isinstance(value, assert_type)
+    assert value == assert_value
+
+
 class TestSimple:
 
     def test_none(self):
@@ -28,26 +34,24 @@ class TestSimple:
         class C(ConfigCompound):
             field: int
         parsed = C('{"field": 1}')
-        assert isinstance(parsed.field, int)
-        assert parsed.field == 1
+
+        assert_type_value(parsed.field, int, 1)
         with pytest.raises(TypeError):
-            parsed = C('{"field": "str"}')
+            parsed = C('{"field": "hi"}')
 
     def test_float(self):
         class C(ConfigCompound):
             field: float
         parsed = C('{"field": 1.0}')
-        assert isinstance(parsed.field, float)
-        assert parsed.field == 1.0
+        assert_type_value(parsed.field, float, 1.0)
         with pytest.raises(TypeError):
-            parsed = C('{"field": "str"}')
+            parsed = C('{"field": "hi"}')
 
     def test_str(self):
         class C(ConfigCompound):
             field: str
-        parsed = C('{"field": "str"}')
-        assert isinstance(parsed.field, str)
-        assert parsed.field == 'str'
+        parsed = C('{"field": "hi"}')
+        assert_type_value(parsed.field, str, 'hi')
         with pytest.raises(TypeError):
             parsed = C('{"field": 1}')
 
@@ -98,8 +102,7 @@ class TestSpecialTyping:
             field: Literal[5]
 
         parsed = C('{"field": 5}')
-        assert isinstance(parsed.field, int)
-        assert parsed.field == 5
+        assert_type_value(parsed.field, int, 5)
 
         with pytest.raises(ValueError):
             C('{"field": 4}')
@@ -109,12 +112,10 @@ class TestSpecialTyping:
             field: Literal[5, 4]
 
         parsed = C('{"field": 5}')
-        assert isinstance(parsed.field, int)
-        assert parsed.field == 5
+        assert_type_value(parsed.field, int, 5)
 
         parsed = C('{"field": 4}')
-        assert isinstance(parsed.field, int)
-        assert parsed.field == 4
+        assert_type_value(parsed.field, int, 4)
 
         with pytest.raises(ValueError):
             C('{"field": 3}')
