@@ -8,12 +8,11 @@ def qualified(parent: str, name: str) -> str:
 
 
 def typecheck(
-        type_: Union[type, tuple[type, ...]], **names_and_values: Any
+        type_: Union[type, tuple[type, ...]], value, name: str
 ) -> NoReturn:
-    for name, value in names_and_values.items():
-        if not isinstance(value, type_):
-            raise TypeError(
-                f"{name}={value} must be "
-                f"{'one ' if isinstance(type_, tuple) else ''}"
-                f"of type {type_}, not {type(value)}"
-            )
+    if not isinstance(value, type_):
+        raise TypeError(
+            f"{name}={value} must be "
+            f"{'one ' if isinstance(type_, tuple) else ''}"
+            f"of type {type_}, not {type(value)}"
+        )

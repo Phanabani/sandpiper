@@ -229,7 +229,7 @@ def _convert(
 
         if type_origin is tuple:
             # Convert every value in the tuple
-            typecheck(list, **{qualified_name: value})
+            typecheck(list, value, qualified_name)
             converted_list = []
             if len(value) != len(type_args):
                 raise ValueError(
@@ -245,7 +245,7 @@ def _convert(
 
         if type_origin is list:
             # Convert every value in the tuple
-            typecheck(list, **{qualified_name: value})
+            typecheck(list, value, qualified_name)
             list_type = type_args[0]
             converted_list = []
             for i, subvalue in enumerate(value):
@@ -265,7 +265,7 @@ def _convert(
 
     if is_json_type(type_):
         # Simple typecheck
-        typecheck(type_, value=value)
+        typecheck(type_, value, qualified_name)
         return value
 
     # Ideally should never happen
