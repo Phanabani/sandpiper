@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any, Literal, Union
+from typing import Annotated as A, Any, Literal, Union
 
 import pytest
 
+from .annotations import *
 from .exceptions import *
 from .parser import ConfigCompound
 
@@ -167,3 +168,62 @@ class TestNestedCompounds:
         assert_type_value(parsed.field, str, "hi")
         assert isinstance(parsed.nested, C._Nested)
         assert_type_value(parsed.nested.field, int, 1)
+
+
+class TestAnnotations:
+
+    def test_fromtype(self):
+        class C(ConfigCompound):
+            field: A[str, FromType(int)]
+
+        parsed = C('{"field": 123}')
+        assert_type_value(parsed.field, str, "123")
+
+        with pytest.raises(TypeError):
+            C('{"field": "123"}')
+
+    def test_bounded_min(self):
+        class C(ConfigCompound):
+            field: A[int, Bounded(5, None)]
+
+        with pytest.raises(ValueError):
+            C('{"field": 4}')
+
+        parsed = C('{"field": 5}')
+        assert_type_value(parsed.field, int, 5)
+
+        parsed = C('{"field": 6}')
+        assert_type_value(parsed.field, int, 6)
+
+    def test_bounded_max(self):
+        class C(ConfigCompound):
+            field: A[int, Bounded(None, 10)]
+
+        parsed = C('{"field": 9}')
+        assert_type_value(parsed.field, int, 9)
+
+        parsed = C('{"field": 10}')
+        assert_type_value(parsed.field, int, 10)
+
+        with pytest.raises(ValueError):
+            C('{"field": 11}')
+
+    def test_bounded_min_max(self):
+        class C(ConfigCompound):
+            field: A[int, Bounded(2, 4)]
+
+        with pytest.raises(ValueError):
+            C('{"field": 1}')
+
+        parsed = C('{"field": 2}')
+        assert_type_value(parsed.field, int, 2)
+
+        parsed = C('{"field": 3}')
+        assert_type_value(parsed.field, int, 3)
+
+        parsed = C('{"field": 4}')
+        assert_type_value(parsed.field, int, 4)
+
+        with pytest.raises(ValueError):
+            C('{"field": 5}')
+
