@@ -1,10 +1,9 @@
-from contextlib import contextmanager
-from typing import Type, Union
+from typing import Literal, Union
 
 import pytest
 
-from .parser import ConfigCompound
 from .exceptions import *
+from .parser import ConfigCompound
 
 
 class TestSimple:
@@ -93,3 +92,29 @@ class TestSpecialTyping:
     def test_list_args(self):
         class C(ConfigCompound):
             field: list[int]
+
+    def test_literal(self):
+        class C(ConfigCompound):
+            field: Literal[5]
+
+        parsed = C('{"field": 5}')
+        assert isinstance(parsed.field, int)
+        assert parsed.field == 5
+
+        with pytest.raises(ValueError):
+            C('{"field": 4}')
+
+    def test_literal_multi(self):
+        class C(ConfigCompound):
+            field: Literal[5, 4]
+
+        parsed = C('{"field": 5}')
+        assert isinstance(parsed.field, int)
+        assert parsed.field == 5
+
+        parsed = C('{"field": 4}')
+        assert isinstance(parsed.field, int)
+        assert parsed.field == 4
+
+        with pytest.raises(ValueError):
+            C('{"field": 3}')
