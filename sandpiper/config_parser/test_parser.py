@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Literal, Union
 
 import pytest
@@ -141,3 +142,28 @@ class TestSpecialTyping:
 
         with pytest.raises(ValueError):
             C('{"field": 3}')
+
+
+class TestNestedCompounds:
+
+    def test_simple(self):
+        class C(ConfigCompound):
+            nested: _Nested
+            class _Nested(ConfigCompound):
+                field: int
+
+        parsed = C('{"nested": {"field": 1}}')
+        assert isinstance(parsed.nested, C._Nested)
+        assert_type_value(parsed.nested.field, int, 1)
+
+    def test_simple_same_field_names(self):
+        class C(ConfigCompound):
+            field: str
+            nested: _Nested
+            class _Nested(ConfigCompound):
+                field: int
+
+        parsed = C('{"field": "hi", "nested": {"field": 1}}')
+        assert_type_value(parsed.field, str, "hi")
+        assert isinstance(parsed.nested, C._Nested)
+        assert_type_value(parsed.nested.field, int, 1)
