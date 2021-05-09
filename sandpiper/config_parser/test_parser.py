@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Any, Literal, Union
 
 import pytest
 
@@ -71,6 +71,19 @@ class TestSimple:
 
 
 class TestSpecialTyping:
+
+    def test_any(self):
+        class C(ConfigCompound):
+            field: Any
+
+        parsed = C('{"field": true}')
+        assert parsed.field is True
+
+        parsed = C('{"field": 1}')
+        assert_type_value(parsed.field, int, 1)
+
+        parsed = C('{"field": "hi"}')
+        assert_type_value(parsed.field, str, 'hi')
 
     def test_union(self):
         class C(ConfigCompound):
