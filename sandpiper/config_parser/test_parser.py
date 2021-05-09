@@ -60,6 +60,15 @@ class TestSimple:
             class C(ConfigCompound):
                 field: bytes
 
+    def test_multi(self):
+        class C(ConfigCompound):
+            fieldA: int
+            fieldB: str
+
+        parsed = C('{"fieldA": 1, "fieldB": "hi"}')
+        assert_type_value(parsed.fieldA, int, 1)
+        assert_type_value(parsed.fieldB, str, 'hi')
+
 
 class TestSpecialTyping:
 
