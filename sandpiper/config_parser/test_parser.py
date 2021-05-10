@@ -98,6 +98,17 @@ class TestCollections:
         class C(ConfigCompound):
             field: list[int]
 
+    def test_dict(self):
+        # Assume dict[str, Any]
+        class C(ConfigCompound):
+            field: dict
+
+        parsed = C('{"field": {"bool": true, "int": 1, "str": "hi"}}')
+        assert isinstance(parsed.field, dict)
+        assert parsed.field['bool'] is True
+        assert_type_value(parsed.field['int'], int, 1)
+        assert_type_value(parsed.field['str'], str, 'hi')
+
     def test_dict_args(self):
         class C(ConfigCompound):
             field: dict[str, int]
