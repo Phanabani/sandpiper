@@ -307,7 +307,7 @@ def _convert(
 
     if type_ is tuple:
         # Special case -- make tuple from the list
-        typecheck(list, value, qualified_name)
+        typecheck((list, tuple), value, qualified_name)
         return tuple(value)
 
     if is_json_type(type_):
