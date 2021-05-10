@@ -227,3 +227,7 @@ class TestAnnotations:
         with pytest.raises(ValueError):
             C('{"field": 5}')
 
+    def test_bounded_min_greater_than_max(self):
+        with pytest.raises(ValueError):
+            class C(ConfigCompound):
+                field: A[int, Bounded(2, 1)]
