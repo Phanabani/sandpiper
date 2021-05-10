@@ -261,6 +261,19 @@ class TestDefaults:
         assert_type_value(parsed.intField, int, 3)
         assert_type_value(parsed.strField, str, 'hi')
 
+    def test_any(self):
+        class C(ConfigCompound):
+            field: Any = 1
+
+        parsed = C('{}')
+        assert_type_value(parsed.field, int, 1)
+
+        parsed = C('{"field": 2}')
+        assert_type_value(parsed.field, int, 2)
+
+        parsed = C('{"field": "hi"}')
+        assert_type_value(parsed.field, str, 'hi')
+
     def test_missing_one(self, simple_compound):
         parsed = simple_compound('{"intField": 2}')
         assert_type_value(parsed.intField, int, 2)
