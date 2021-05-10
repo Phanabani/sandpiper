@@ -3,9 +3,9 @@ from typing import Annotated as A, Any, Literal, Union
 
 import pytest
 
-from .annotations import *
 from .exceptions import *
 from .parser import ConfigCompound
+from .transformers import *
 
 
 def assert_type_value(value, assert_type: type, assert_value):

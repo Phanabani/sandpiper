@@ -6,9 +6,9 @@ from typing import (
     Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints
 )
 
-from .annotations import *
 from .exceptions import *
 from .misc import *
+from .transformers import *
 
 __all__ = ('ConfigCompound',)
 
