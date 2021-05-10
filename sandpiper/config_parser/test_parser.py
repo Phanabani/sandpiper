@@ -71,6 +71,14 @@ class TestSimple:
         assert_type_value(parsed.fieldA, int, 1)
         assert_type_value(parsed.fieldB, str, 'hi')
 
+    def test_missing_field(self):
+        class C(ConfigCompound):
+            fieldA: int
+            fieldB: int
+
+        with pytest.raises(MissingFieldError, match='fieldA'):
+            C('{"fieldB": 1}')
+
 
 class TestSpecialTyping:
 
