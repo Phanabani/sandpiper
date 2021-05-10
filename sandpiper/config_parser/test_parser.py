@@ -189,7 +189,7 @@ class TestNestedCompounds:
         assert isinstance(parsed.nested, C._Nested)
         assert_type_value(parsed.nested.field, int, 1)
 
-    def test_simple_same_field_names(self):
+    def test_same_field_names(self):
         class C(ConfigCompound):
             field: str
             nested: _Nested
@@ -200,6 +200,29 @@ class TestNestedCompounds:
         assert_type_value(parsed.field, str, "hi")
         assert isinstance(parsed.nested, C._Nested)
         assert_type_value(parsed.nested.field, int, 1)
+
+    def test_super_nested(self):
+        class C(ConfigCompound):
+            nested1: _Nested
+            class _Nested(ConfigCompound):
+                nested2: _Nested
+                class _Nested(ConfigCompound):
+                    nested3: _Nested
+                    class _Nested(ConfigCompound):
+                        field: str
+
+        parsed = C('''
+            {
+                "nested1": {
+                    "nested2": {
+                        "nested3": {
+                            "field": "hi"
+                        }
+                    }
+                }
+            }
+        ''')
+        assert_type_value(parsed.nested1.nested2.nested3.field, str, 'hi')
 
 
 class TestDefaults:
