@@ -351,7 +351,7 @@ class TestDefaults:
         parsed = tuple_compound('{}')
         assert parsed.field == (1, 2, 3)
 
-    def test_tuple_member_inference(self, tuple_compound):
+    def test_tuple_type_inference(self, tuple_compound):
         parsed = tuple_compound('{"field": [3, 4, 5]}')
         assert parsed.field == (3, 4, 5)
 
@@ -364,7 +364,7 @@ class TestDefaults:
         parsed1 = list_compound('{}')
         assert parsed1.field == [1, 2, 3]
 
-    def test_list_member_inference(self, list_compound):
+    def test_list_type_inference(self, list_compound):
         parsed = list_compound('{"field": [3, 4, 5]}')
         assert parsed.field == [3, 4, 5]
 
@@ -381,6 +381,18 @@ class TestDefaults:
     def test_dict(self, dict_compound):
         parsed1 = dict_compound('{}')
         assert parsed1.field == {'one': 1, 'two': 2}
+
+    def test_dict_type_inference(self):
+        class C(ConfigCompound):
+            field = {'one': 1, 'two': 'two', 'three': True, 'four': 4}
+
+        field_type = C._ConfigCompound__fields['field'][0]
+        assert field_type == dict[str, Union[int, str, bool]]
+
+    def test_dict_type_inference_key_not_str(self):
+        with pytest.raises(ConfigSchemaError, match=r'key.+str'):
+            class C(ConfigCompound):
+                field = {'one': 1, 2: "two"}
 
 
 class TestAnnotations:
