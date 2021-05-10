@@ -244,3 +244,71 @@ class TestAnnotations:
         with pytest.raises(ValueError):
             class C(ConfigCompound):
                 field: A[int, Bounded(2, 1)]
+
+
+class TestDefaults:
+
+    @staticmethod
+    @pytest.fixture
+    def simple_compound():
+        class C(ConfigCompound):
+            intField = 3
+            strField = 'hi'
+        return C
+
+    def test_empty(self, simple_compound):
+        parsed = simple_compound('{}')
+        assert_type_value(parsed.intField, int, 3)
+        assert_type_value(parsed.strField, str, 'hi')
+
+    def test_missing_one(self, simple_compound):
+        parsed = simple_compound('{"intField": 2}')
+        assert_type_value(parsed.intField, int, 2)
+        assert_type_value(parsed.strField, str, 'hi')
+
+        parsed = simple_compound('{"strField": "hello"}')
+        assert_type_value(parsed.intField, int, 3)
+        assert_type_value(parsed.strField, str, 'hello')
+
+    def test_bad_type_parsing(self, simple_compound):
+        with pytest.raises(TypeError):
+            parsed = simple_compound('{"strField": 5}')
+
+    def test_bad_type_definition(self):
+        with pytest.raises(ConfigSchemaError):
+            class C(ConfigCompound):
+                field: int = 'hi'
+
+    def test_tuple(self):
+        class C(ConfigCompound):
+            field = (1, 2, 3)
+
+        parsed = C('{}')
+        assert parsed.field == (1, 2, 3)
+
+    def test_list(self):
+        class C(ConfigCompound):
+            field = [1, 2, 3]
+
+        parsed1 = C('{}')
+        assert parsed1.field == [1, 2, 3]
+
+    def test_list_member_inference(self):
+        class C(ConfigCompound):
+            field = [1, 2, 3]
+
+        parsed = C('{"field": [3, 4, 5]}')
+        assert parsed.field == [3, 4, 5]
+
+        with pytest.raises(TypeError):
+            parsed = C('{"field": ["hi", "there"]}')
+
+    def test_list_identity(self):
+        class C(ConfigCompound):
+            field = [1, 2, 3]
+
+        parsed1 = C('{}')
+        parsed2 = C('{}')
+        assert parsed1.field == [1, 2, 3]
+        assert parsed2.field == [1, 2, 3]
+        assert parsed2.field is not parsed1.field
