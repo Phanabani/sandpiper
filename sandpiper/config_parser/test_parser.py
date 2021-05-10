@@ -383,7 +383,7 @@ class TestDefaults:
 
 class TestAnnotations:
 
-    def test_fromtype(self):
+    def test_fromtype_implicit_to(self):
         class C(ConfigCompound):
             field: A[str, FromType(int)]
 
@@ -392,6 +392,25 @@ class TestAnnotations:
 
         with pytest.raises(TypeError):
             C('{"field": "123"}')
+
+    def test_fromtype_explicit_to(self):
+        class C(ConfigCompound):
+            field: A[str, FromType(int, str)]
+
+        parsed = C('{"field": 123}')
+        assert_type_value(parsed.field, str, "123")
+
+    def test_fromtype_explicit_to_chained(self):
+        class C(ConfigCompound):
+            field: A[str, FromType(int, float), FromType(float, str)]
+
+        parsed = C('{"field": 123}')
+        assert_type_value(parsed.field, str, "123.0")
+
+    def test_fromtype_explicit_to_type_mismatch(self):
+        with pytest.raises(TypeError):
+            class C(ConfigCompound):
+                field: A[str, FromType(int, float)]
 
     def test_bounded_min(self):
         class C(ConfigCompound):
