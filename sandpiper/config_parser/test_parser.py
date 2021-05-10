@@ -86,17 +86,61 @@ class TestCollections:
         class C(ConfigCompound):
             field: tuple
 
+        parsed = C('{"field": [null, true, "hi"]}')
+        assert isinstance(parsed.field, tuple)
+        assert parsed.field[0] is None
+        assert parsed.field[1] is True
+        assert_type_value(parsed.field[2], str, 'hi')
+
     def test_tuple_args(self):
         class C(ConfigCompound):
             field: tuple[bool, int, str]
+
+        parsed = C('{"field": [true, 1, "hi"]}')
+        assert parsed.field[0] is True
+        assert_type_value(parsed.field[1], int, 1)
+        assert_type_value(parsed.field[2], str, 'hi')
+
+    def test_tuple_args_type_err(self):
+        class C(ConfigCompound):
+            field: tuple[bool, int, str]
+
+        with pytest.raises(TypeError):
+            parsed = C('{"field": [true, true, true]}')
+
+    def test_tuple_args_len_err(self):
+        class C(ConfigCompound):
+            field: tuple[bool, int, str]
+
+        with pytest.raises(ValueError):
+            parsed = C('{"field": [true, 1, "hi", "extra"]}')
 
     def test_list(self):
         class C(ConfigCompound):
             field: list
 
+        parsed = C('{"field": [null, true, "hi"]}')
+        assert isinstance(parsed.field, list)
+        assert parsed.field[0] is None
+        assert parsed.field[1] is True
+        assert_type_value(parsed.field[2], str, 'hi')
+
     def test_list_args(self):
         class C(ConfigCompound):
             field: list[int]
+
+        parsed = C('{"field": [1, 2, 3]}')
+        assert isinstance(parsed.field, list)
+        assert_type_value(parsed.field[0], int, 1)
+        assert_type_value(parsed.field[1], int, 2)
+        assert_type_value(parsed.field[2], int, 3)
+
+    def test_list_args_type_err(self):
+        class C(ConfigCompound):
+            field: list[int]
+
+        with pytest.raises(TypeError):
+            parsed = C('{"field": [1, 2, false]}')
 
     def test_dict(self):
         # Assume dict[str, Any]
@@ -118,17 +162,17 @@ class TestCollections:
         assert_type_value(parsed.field['one'], int, 1)
         assert_type_value(parsed.field['two'], int, 2)
 
-    def test_dict_key_not_str(self):
-        with pytest.raises(TypeError):
-            class C(ConfigCompound):
-                field: dict[int, str]
-
-    def test_dict_type_err(self):
+    def test_dict_args_type_err(self):
         class C(ConfigCompound):
             field: dict[str, int]
 
         with pytest.raises(TypeError):
             parsed = C('{"field": {"one": 1, "two": "two"}}')
+
+    def test_dict_key_not_str(self):
+        with pytest.raises(TypeError):
+            class C(ConfigCompound):
+                field: dict[int, str]
 
 
 class TestSpecialTyping:
