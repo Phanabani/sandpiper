@@ -112,7 +112,7 @@ class TestCollections:
         class C(ConfigCompound):
             field: tuple[bool, int, str]
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r'length.+3'):
             parsed = C('{"field": [true, 1, "hi", "extra"]}')
 
     def test_list(self):
