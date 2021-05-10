@@ -167,6 +167,15 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
             _validate_annotation(cls, field_name, list_type)
             return
 
+        if type_origin is dict:
+            key_type, value_type = type_args
+            if key_type is not str:
+                raise TypeError(
+                    f"Dict keys can only be strings (to conform with JSON), "
+                )
+            _validate_annotation(cls, field_name, value_type)
+            return
+
         if type_origin is Literal:
             for literal in type_args:
                 if isinstance(literal, list) or not is_json_type(type(literal)):
@@ -248,7 +257,7 @@ def _convert(
             return tuple(converted_list)
 
         if type_origin is list:
-            # Convert every value in the tuple
+            # Convert every value in the list
             typecheck(list, value, qualified_name)
             list_type = type_args[0]
             converted_list = []
@@ -258,6 +267,27 @@ def _convert(
                 )
                 converted_list.append(converted)
             return converted_list
+
+        if type_origin is dict:
+            # Convert every value in the dict
+            typecheck(dict, value, qualified_name)
+            key_type, value_type = type_args
+            if key_type is not str:
+                # Ideally should never happen
+                raise RuntimeError(
+                    "The dict keys type annotation should be str"
+                )
+
+            converted_dict = {}
+            for key, val in value.items():
+                dict_qual_name = f"{qualified_name}[{key}]"
+                typecheck(key_type, key, dict_qual_name)
+                converted = _convert(
+                    val, value_type, dict_qual_name
+                )
+                converted_dict[key] = converted
+
+            return converted_dict
 
         if type_origin is Literal:
             # Check equality with one of the literal values
