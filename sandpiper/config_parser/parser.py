@@ -249,7 +249,7 @@ def _convert(
 
         if type_origin is tuple:
             # Convert every value in the tuple
-            typecheck(list, value, qualified_name)
+            typecheck((list, tuple), value, qualified_name)
             if len(value) != len(type_args):
                 raise ValueError(
                     f"Expected a tuple of length {len(type_args)}, got "
