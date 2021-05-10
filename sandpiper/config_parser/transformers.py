@@ -34,6 +34,16 @@ def do_transformations(value, annotation):
 class ConfigTransformer(metaclass=ABCMeta):
 
     @abstractmethod
+    @property
+    def in_type(self) -> type:
+        pass
+
+    @abstractmethod
+    @property
+    def out_type(self) -> type:
+        pass
+
+    @abstractmethod
     def transform(self, value: Any, target_type: type) -> Any:
         pass
 
@@ -49,6 +59,14 @@ class FromType(ConfigTransformer):
 
     def __str__(self):
         return f"<FromType from={self.from_type} to={self.to_type}>"
+
+    @property
+    def in_type(self) -> type:
+        return self.from_type
+
+    @property
+    def out_type(self) -> type:
+        return self.to_type
 
     def transform(
             self, value: V1, target_type: Type[T_Target]
@@ -97,6 +115,14 @@ class Bounded(ConfigTransformer):
     def __str__(self):
         return f"<Bounded type={self.type} min={self.min} max={self.max}>"
 
+    @property
+    def in_type(self) -> type:
+        return self.type
+
+    @property
+    def out_type(self) -> type:
+        return self.type
+
     def transform(self, value: V1, target_type: type) -> V1:
         typecheck(self.type, value, 'value')
         if self.min is not None and value < self.min:
@@ -121,6 +147,14 @@ class MaybeRelativePath(ConfigTransformer):
 
     def __str__(self):
         return f"<MaybeRelativePath root_path={self.root_path}>"
+
+    @property
+    def in_type(self) -> type:
+        return str
+
+    @property
+    def out_type(self) -> type:
+        return Path
 
     def transform(self, value: str, target_type: Type[T_Target]) -> Path:
         typecheck(str, value, 'value')
