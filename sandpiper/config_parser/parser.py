@@ -16,7 +16,7 @@ NoDefault = object()
 
 
 def is_json_type(type_: Any) -> bool:
-    return type_ in (type(None), bool, int, float, str, list)
+    return type_ in (type(None), bool, int, float, str, list, dict)
 
 
 def should_skip(name: str, value: Any = None) -> bool:
@@ -182,6 +182,10 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
             f"Special type annotation {type_origin} is not accepted."
         )
 
+    if type_ is tuple:
+        # Special case
+        return
+
     if is_json_type(type_):
         # Simple type
         return
@@ -262,6 +266,11 @@ def _convert(
                     f"Value must be equal to one of {type_args}"
                 )
             return value
+
+    if type_ is tuple:
+        # Special case -- make tuple from the list
+        typecheck(list, value, qualified_name)
+        return tuple(value)
 
     if is_json_type(type_):
         # Simple typecheck
