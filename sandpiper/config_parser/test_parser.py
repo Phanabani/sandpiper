@@ -98,6 +98,27 @@ class TestCollections:
         class C(ConfigCompound):
             field: list[int]
 
+    def test_dict_args(self):
+        class C(ConfigCompound):
+            field: dict[str, int]
+
+        parsed = C('{"field": {"one": 1, "two": 2}}')
+        assert isinstance(parsed.field, dict)
+        assert_type_value(parsed.field['one'], int, 1)
+        assert_type_value(parsed.field['two'], int, 2)
+
+    def test_dict_key_not_str(self):
+        with pytest.raises(TypeError):
+            class C(ConfigCompound):
+                field: dict[int, str]
+
+    def test_dict_type_err(self):
+        class C(ConfigCompound):
+            field: dict[str, int]
+
+        with pytest.raises(TypeError):
+            parsed = C('{"field": {"one": 1, "two": "two"}}')
+
 
 class TestSpecialTyping:
 
@@ -191,6 +212,27 @@ class TestDefaults:
             strField = 'hi'
         return C
 
+    @staticmethod
+    @pytest.fixture
+    def tuple_compound():
+        class C(ConfigCompound):
+            field = (1, 2, 3)
+        return C
+
+    @staticmethod
+    @pytest.fixture
+    def list_compound():
+        class C(ConfigCompound):
+            field = [1, 2, 3]
+        return C
+
+    @staticmethod
+    @pytest.fixture
+    def dict_compound():
+        class C(ConfigCompound):
+            field = {'one': 1, 'two': 2}
+        return C
+
     def test_empty(self, simple_compound):
         parsed = simple_compound('{}')
         assert_type_value(parsed.intField, int, 3)
@@ -214,39 +256,38 @@ class TestDefaults:
             class C(ConfigCompound):
                 field: int = 'hi'
 
-    def test_tuple(self):
-        class C(ConfigCompound):
-            field = (1, 2, 3)
-
-        parsed = C('{}')
+    def test_tuple(self, tuple_compound):
+        parsed = tuple_compound('{}')
         assert parsed.field == (1, 2, 3)
 
-    def test_list(self):
-        class C(ConfigCompound):
-            field = [1, 2, 3]
+    def test_tuple_member_inference(self, tuple_compound):
+        parsed = tuple_compound('{"field": [3, 4, 5]}')
+        assert parsed.field == (3, 4, 5)
 
-        parsed1 = C('{}')
+        with pytest.raises(TypeError):
+            parsed = tuple_compound('{"field": ["hi", "there"]}')
+
+    def test_list(self, list_compound):
+        parsed1 = list_compound('{}')
         assert parsed1.field == [1, 2, 3]
 
-    def test_list_member_inference(self):
-        class C(ConfigCompound):
-            field = [1, 2, 3]
-
-        parsed = C('{"field": [3, 4, 5]}')
+    def test_list_member_inference(self, list_compound):
+        parsed = list_compound('{"field": [3, 4, 5]}')
         assert parsed.field == [3, 4, 5]
 
         with pytest.raises(TypeError):
-            parsed = C('{"field": ["hi", "there"]}')
+            parsed = list_compound('{"field": ["hi", "there"]}')
 
-    def test_list_identity(self):
-        class C(ConfigCompound):
-            field = [1, 2, 3]
-
-        parsed1 = C('{}')
-        parsed2 = C('{}')
+    def test_list_identity(self, list_compound):
+        parsed1 = list_compound('{}')
+        parsed2 = list_compound('{}')
         assert parsed1.field == [1, 2, 3]
         assert parsed2.field == [1, 2, 3]
         assert parsed2.field is not parsed1.field
+
+    def test_dict(self, dict_compound):
+        parsed1 = dict_compound('{}')
+        assert parsed1.field == {'one': 1, 'two': 2}
 
 
 class TestAnnotations:
