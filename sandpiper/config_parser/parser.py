@@ -15,7 +15,7 @@ __all__ = ('ConfigCompound',)
 NoDefault = object()
 
 
-def is_json_type(type_: Any) -> bool:
+def is_json_type(type_: type) -> bool:
     return type_ in (type(None), bool, int, float, str, list, dict)
 
 
@@ -82,7 +82,14 @@ class ConfigCompound:
         for field_name, default in cls_dict.items():
             if field_name in encountered or should_skip(field_name, default):
                 continue
-            field_type = type(default)
+            try:
+                field_type = _infer_type(default)
+            except TypeError:
+                raise ConfigSchemaError(
+                    cls, field_name,
+                    f"Could not infer type of default value {default}. "
+                    f"It's probably an invalid type."
+                )
             cls.__fields[field_name] = (field_type, default)
 
         # Validate the annotations/defaults for each field
@@ -138,6 +145,24 @@ class ConfigCompound:
         # were written by the user
         final_value = _convert(value, field_type, qualified_name)
         setattr(self, field_name, final_value)
+
+
+def _infer_type(value):
+    if isinstance(value, tuple):
+        return tuple[tuple(_infer_type(i) for i in value)]
+
+    if isinstance(value, list):
+        return list[Union[tuple(_infer_type(i) for i in value)]]
+
+    if isinstance(value, dict):
+        if any(not isinstance(i, str) for i in value.keys()):
+            raise TypeError('Dict keys must be strings to conform with JSON')
+        return dict[str, Union[tuple(_infer_type(i) for i in value.values())]]
+
+    if is_json_type(type(value)):
+        return type(value)
+
+    raise TypeError(f"Could not infer type of {value}")
 
 
 def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
