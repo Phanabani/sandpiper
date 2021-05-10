@@ -47,6 +47,9 @@ class FromType(ConfigTransformer):
         self.from_type = from_type
         self.to_type = to_type
 
+    def __str__(self):
+        return f"<FromType from={self.from_type} to={self.to_type}>"
+
     def transform(
             self, value: V1, target_type: Type[T_Target]
     ) -> Union[T_Target, V2]:
@@ -91,6 +94,9 @@ class Bounded(ConfigTransformer):
         self.min = min
         self.max = max
 
+    def __str__(self):
+        return f"<Bounded type={self.type} min={self.min} max={self.max}>"
+
     def transform(self, value: V1, target_type: type) -> V1:
         typecheck(self.type, value, 'value')
         if self.min is not None and value < self.min:
@@ -112,6 +118,9 @@ class MaybeRelativePath(ConfigTransformer):
                 f"root_path must be of type Path, got {type(root_path)}"
             )
         self.root_path = root_path
+
+    def __str__(self):
+        return f"<MaybeRelativePath root_path={self.root_path}>"
 
     def transform(self, value: str, target_type: Type[T_Target]) -> Path:
         typecheck(str, value, 'value')
