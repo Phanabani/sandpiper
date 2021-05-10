@@ -64,6 +64,17 @@ class ConfigCompound:
             if should_skip(field_name):
                 continue
             default = cls_dict.get(field_name, NoDefault)
+            if default is not NoDefault:
+                # Try to convert this default. If an error is raised, the value
+                # does not match the annotation.
+                try:
+                    _convert(default, field_type, field_name)
+                except Exception:
+                    raise ConfigSchemaError(
+                        cls, field_name,
+                        f"Default value {default} does not match type "
+                        f"annotation {field_type}"
+                    )
             cls.__fields[field_name] = field_type, default
 
         # Iterate through __dict__ to get the remaining fields with default
