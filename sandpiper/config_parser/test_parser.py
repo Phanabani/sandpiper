@@ -356,7 +356,9 @@ class TestDefaults:
         assert parsed.field == (3, 4, 5)
 
         with pytest.raises(TypeError):
-            parsed = tuple_compound('{"field": ["hi", "there"]}')
+            # We have to keep the same number of items, otherwise ValueError
+            # will raise for unequal tuple lengths
+            parsed = tuple_compound('{"field": ["hi", "there", "friend"]}')
 
     def test_list(self, list_compound):
         parsed1 = list_compound('{}')
