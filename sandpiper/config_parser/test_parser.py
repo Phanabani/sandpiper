@@ -386,6 +386,7 @@ class TestDefaults:
         class C(ConfigCompound):
             field = {'one': 1, 'two': 'two', 'three': True, 'four': 4}
 
+        # noinspection PyUnresolvedReferences
         field_type = C._ConfigCompound__fields['field'][0]
         assert field_type == dict[str, Union[int, str, bool]]
 
