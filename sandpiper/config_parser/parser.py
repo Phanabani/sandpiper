@@ -6,7 +6,7 @@ from typing import (
     Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints
 )
 
-from .annotations import do_transformations
+from .annotations import *
 from .exceptions import *
 from .misc import *
 
@@ -173,8 +173,9 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
     if isinstance(type_, type) and issubclass(type_, ConfigCompound):
         return
 
-    if hasattr(type_, '__metadata__'):
-        # Annotated with transformers
+    if hasattr(type_, '__metadata__') and hasattr(type_, '__origin__'):
+        _validate_transformers(cls, field_name, type_)
+        _validate_annotation(cls, field_name, type_.__origin__)
         return
 
     if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
@@ -237,6 +238,50 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
         f"Type annotation {type_} is not accepted. Maybe you want to "
         f"use the annotations.FromType annotation?"
     )
+
+
+def _validate_transformers(cls: type, field_name: str, type_):
+    if not hasattr(type_, '__metadata__') or not hasattr(type_, '__origin__'):
+        return
+
+    prev_type = None
+    implicit_to_type_encountered = False
+    for trans in type_.__metadata__:
+        if not isinstance(trans, ConfigTransformer):
+            # Skip unknown annotations (rather than raising)
+            continue
+
+        if isinstance(trans, FromType):
+            if prev_type is not None and trans.from_type != prev_type:
+                # The from_type of this FromType transformer doesn't match the
+                # to_type of the previous FromType
+                raise ConfigSchemaError(
+                    cls, field_name,
+                    f"FromType transformer {trans} from_type does not match "
+                    f"to_type {prev_type} of the previous FromType transformer"
+                )
+            if trans.to_type is None:
+                # Implicit to_type; this may only happen once!
+                if implicit_to_type_encountered:
+                    # Hey! What did I just say? Only once!!!
+                    raise ConfigSchemaError(
+                        cls, field_name,
+                        f"Encountered multiple FromType transformers with "
+                        f"no to_type specified. This may only be done once "
+                        f"to implicitly set the to_type to the annotated "
+                        f"origin type."
+                    )
+                implicit_to_type_encountered = True
+            else:
+                # Explicit to_type
+                prev_type = trans.to_type
+
+    if prev_type is not None and type_.__origin__ is not prev_type:
+        raise ConfigSchemaError(
+            cls, field_name,
+            f"to_type {prev_type} of the final FromType transformer does not "
+            f"match the annotated type {type_.__origin__} of this field"
+        )
 
 
 def _convert(
