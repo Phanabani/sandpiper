@@ -227,6 +227,19 @@ class TestAnnotations:
         with pytest.raises(ValueError):
             C('{"field": 5}')
 
+    def test_bounded_min_equal_to_max(self):
+        class C(ConfigCompound):
+            field: A[int, Bounded(2, 2)]
+
+        with pytest.raises(ValueError):
+            C('{"field": 1}')
+
+        parsed = C('{"field": 2}')
+        assert_type_value(parsed.field, int, 2)
+
+        with pytest.raises(ValueError):
+            C('{"field": 3}')
+
     def test_bounded_min_greater_than_max(self):
         with pytest.raises(ValueError):
             class C(ConfigCompound):
