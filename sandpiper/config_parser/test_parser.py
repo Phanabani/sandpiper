@@ -423,9 +423,14 @@ class TestAnnotations:
         assert_type_value(parsed.field, str, "123.0")
 
     def test_fromtype_explicit_to_type_mismatch(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ConfigSchemaError):
             class C(ConfigCompound):
                 field: A[str, FromType(int, float)]
+
+    def test_fromtype_multiple_implicit_to_type_err(self):
+        with pytest.raises(ConfigSchemaError, match='implicit'):
+            class C(ConfigCompound):
+                field: A[str, FromType(int), FromType(str)]
 
     def test_bounded_min(self):
         class C(ConfigCompound):
