@@ -123,13 +123,9 @@ class ConfigCompound:
             if default is NoDefault:
                 raise MissingFieldError(qualified_name)
             value = default
-        try:
-            # We want to convert default values too, so it's just as if they
-            # were written by the user
-            final_value = _convert(value, field_type, qualified_name)
-        except ParsingError as e:
-            raise e
-
+        # We want to convert default values too, so it's just as if they
+        # were written by the user
+        final_value = _convert(value, field_type, qualified_name)
         setattr(self, field_name, final_value)
 
 
@@ -243,12 +239,13 @@ def _convert(
         if type_origin is tuple:
             # Convert every value in the tuple
             typecheck(list, value, qualified_name)
-            converted_list = []
             if len(value) != len(type_args):
                 raise ValueError(
                     f"Expected a tuple of length {len(type_args)}, got "
                     f"{len(value)}"
                 )
+
+            converted_list = []
             for i, subtype in enumerate(type_args):
                 converted = _convert(
                     value[i], subtype, f"{qualified_name}[{i}]"
