@@ -5,7 +5,8 @@ from typing import Any, Optional, Type, TypeVar, Union, overload
 from .misc import typecheck
 
 __all__ = (
-    'do_transformations', 'ConfigTransformer', 'FromType',
+    'do_transformations', 'do_transformations_back',
+    'ConfigTransformer', 'FromType',
     'Bounded', 'MaybeRelativePath'
 )
 
