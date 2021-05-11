@@ -245,42 +245,45 @@ def _validate_transformers(cls: type, field_name: str, type_):
         return
 
     prev_type = None
-    implicit_to_type_encountered = False
+    implicit_fromtype_encountered = False
+    target_type = type_.__origin__
     for trans in type_.__metadata__:
         if not isinstance(trans, ConfigTransformer):
             # Skip unknown annotations (rather than raising)
             continue
 
+        if implicit_fromtype_encountered:
+            # Implicit to_type for FromType is only allowed as the last
+            # transformer
+            raise ConfigSchemaError(
+                cls, field_name,
+                "A FromType transformer with an implicit to_type may only be "
+                "the last transformer in the sequence."
+            )
+
+        if prev_type is not None and trans.in_type != prev_type:
+            # The input type of this transformer doesn't match the output type
+            # of the previous transformer
+            raise ConfigSchemaError(
+                cls, field_name,
+                f"Input type {trans.in_type} of Transformer {trans} does not "
+                f"match the output type {prev_type} of the previous transformer"
+            )
+
         if isinstance(trans, FromType):
-            if prev_type is not None and trans.from_type != prev_type:
-                # The from_type of this FromType transformer doesn't match the
-                # to_type of the previous FromType
-                raise ConfigSchemaError(
-                    cls, field_name,
-                    f"FromType transformer {trans} from_type does not match "
-                    f"to_type {prev_type} of the previous FromType transformer"
-                )
             if trans.to_type is None:
                 # Implicit to_type; this may only happen once!
-                if implicit_to_type_encountered:
-                    # Hey! What did I just say? Only once!!!
-                    raise ConfigSchemaError(
-                        cls, field_name,
-                        f"Encountered multiple FromType transformers with "
-                        f"no to_type specified. This may only be done once "
-                        f"to implicitly set the to_type to the annotated "
-                        f"origin type."
-                    )
-                implicit_to_type_encountered = True
+                implicit_fromtype_encountered = True
+                prev_type = target_type
             else:
                 # Explicit to_type
                 prev_type = trans.to_type
 
-    if prev_type is not None and type_.__origin__ is not prev_type:
+    if prev_type is not None and target_type is not prev_type:
         raise ConfigSchemaError(
             cls, field_name,
             f"to_type {prev_type} of the final FromType transformer does not "
-            f"match the annotated type {type_.__origin__} of this field"
+            f"match the annotated type {target_type} of this field"
         )
 
 
