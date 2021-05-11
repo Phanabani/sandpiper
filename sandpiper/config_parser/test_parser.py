@@ -408,6 +408,11 @@ class TestAnnotations:
         with pytest.raises(TypeError):
             C('{"field": "123"}')
 
+    def test_fromtype_multiple_implicit_to_type_err(self):
+        with pytest.raises(ConfigSchemaError, match='implicit'):
+            class C(ConfigCompound):
+                field: A[str, FromType(int), FromType(str)]
+
     def test_fromtype_explicit_to(self):
         class C(ConfigCompound):
             field: A[str, FromType(int, str)]
@@ -427,10 +432,17 @@ class TestAnnotations:
             class C(ConfigCompound):
                 field: A[str, FromType(int, float)]
 
-    def test_fromtype_multiple_implicit_to_type_err(self):
-        with pytest.raises(ConfigSchemaError, match='implicit'):
+    def test_fromtype_implicit_with_bounded_after(self):
+        # I want the shorthand implicit notation available if it's used at
+        # the last FromType, however I think it's difficult to understand
+        # what's going on if more transformers come after it
+        with pytest.raises(ConfigSchemaError):
             class C(ConfigCompound):
-                field: A[str, FromType(int), FromType(str)]
+                field: A[int, FromType(float), Bounded(2, 4)]
+
+    def test_fromtype_explicit_with_bounded_after(self):
+        class C(ConfigCompound):
+            field: A[int, FromType(float, int), Bounded(2, 4)]
 
     def test_bounded_min(self):
         class C(ConfigCompound):
