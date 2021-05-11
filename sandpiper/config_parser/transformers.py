@@ -50,6 +50,41 @@ def do_transformations(value, annotation):
     return value
 
 
+def do_transformations_back(value, annotation):
+    if (not hasattr(annotation, '__origin__')
+            or not hasattr(annotation, '__metadata__')):
+        raise TypeError(f"Value {annotation} is not an Annotated instance")
+
+    target_type: type = annotation.__origin__
+    metadata: tuple = annotation.__metadata__
+    found_transformer = False
+    for trans in metadata[::-1]:
+        if not isinstance(trans, ConfigTransformer):
+            # Other annotations are okay but we'll ignore them
+            continue
+
+        if isinstance(trans, FromType) and trans.to_type is None:
+            if found_transformer:
+                raise ValueError(
+                    "A FromType transformer with an implicit to_type may only be "
+                    "the last transformer in the sequence."
+                )
+
+            # to_type will be implicitly set to the origin type
+            trans.to_type = target_type
+            value = trans.transform_back(value)
+            # We don't want to forget that this transformer is implicit
+            # in any future parses.
+            trans.to_type = None
+        else:
+            value = trans.transform_back(value)
+
+        if not found_transformer:
+            found_transformer = True
+
+    return value
+
+
 class ConfigTransformer(metaclass=ABCMeta):
 
     @property
