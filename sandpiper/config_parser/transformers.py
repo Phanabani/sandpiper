@@ -54,16 +54,20 @@ class ConfigTransformer(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def in_type(self) -> type:
+    def in_type(self) -> Type[V1]:
         pass
 
     @property
     @abstractmethod
-    def out_type(self) -> type:
+    def out_type(self) -> Type[V2]:
         pass
 
     @abstractmethod
-    def transform(self, value: Any) -> Any:
+    def transform(self, value: V1) -> V2:
+        pass
+
+    @abstractmethod
+    def transform_back(self, value: V2) -> V1:
         pass
 
 
@@ -100,6 +104,18 @@ class FromType(ConfigTransformer):
             "do_transformations. Use that function to evaluate implicit "
             "to_type."
         )
+
+    def transform_back(self, value: V2) -> V1:
+        if self.to_type is not None:
+            typecheck(self.to_type, value, 'value')
+        else:
+            raise RuntimeError(
+                "to_type is None. This may be done to implicitly set it to the "
+                "final annotated type, however this is only handled in "
+                "do_transformations. Use that function to evaluate implicit "
+                "to_type."
+            )
+        return self.from_type(value)
 
 
 # noinspection PyShadowingBuiltins
