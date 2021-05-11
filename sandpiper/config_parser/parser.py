@@ -283,6 +283,8 @@ def _validate_transformers(cls: type, field_name: str, type_) -> bool:
                 f"match the output type {prev_type} of the previous transformer"
             )
 
+        prev_type = trans.out_type
+
         if isinstance(trans, FromType):
             if not first_fromtype_encountered:
                 # Check that the from_type of the first FromType is a valid
@@ -299,13 +301,9 @@ def _validate_transformers(cls: type, field_name: str, type_) -> bool:
                 # Implicit to_type; this may only happen once!
                 implicit_fromtype_encountered = True
                 prev_type = target_type
-            else:
-                # Explicit to_type
-                prev_type = trans.to_type
-        else:
-            prev_type = trans.out_type
 
     if prev_type is None:
+        # The caller should type check the origin type
         return True
     elif target_type is not prev_type:
         raise ConfigSchemaError(
