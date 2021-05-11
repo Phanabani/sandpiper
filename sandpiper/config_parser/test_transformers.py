@@ -35,6 +35,18 @@ class TestMisc:
             class C(ConfigSchema):
                 field: A[int, Bounded(5, 6), FromType(str, int)]
 
+    def test_transform_back_chain(self):
+        class C(ConfigSchema):
+            # noinspection PyTypeHints
+            field: A[
+                Path,
+                FromType(str, float), FromType(float, int), FromType(int, str),
+                MaybeRelativePath(Path('/root/dir'))
+            ]
+
+        parsed = C('{"field": "5.3"}')
+        assert parsed.field == Path('/root/dir/5')
+
 
 class TestFromType:
 
