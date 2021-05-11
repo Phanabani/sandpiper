@@ -21,13 +21,32 @@ def do_transformations(value, annotation):
 
     target_type: type = annotation.__origin__
     metadata: tuple = annotation.__metadata__
-    for transformer in metadata:
-        if not isinstance(transformer, ConfigTransformer):
-            raise TypeError(
-                f"Annotation metadata {transformer} must be an instance of "
-                f"{ConfigTransformer.__name__}"
+    used_implicit_fromtype = False
+    for trans in metadata:
+        if not isinstance(trans, ConfigTransformer):
+            # Other annotations are okay but we'll ignore them
+            continue
+
+        if used_implicit_fromtype:
+            # Implicit to_type for FromType is only allowed as the last
+            # transformer
+            raise ValueError(
+                "A FromType transformer with an implicit to_type may only be "
+                "the last transformer in the sequence."
             )
-        value = transformer.transform(value, target_type)
+
+        if type(value) is not trans.in_type:
+            # Mismatched types between transformers
+            raise TypeError(
+                f"Value {value} of type {type(value)} cannot be transformed "
+                f"by transformer {trans} with input type {trans.in_type}"
+            )
+
+        if isinstance(trans, FromType) and trans.to_type is None:
+            # to_type will be implicitly set to the origin type
+            used_implicit_fromtype = True
+
+        value = trans.transform(value, target_type)
     return value
 
 
