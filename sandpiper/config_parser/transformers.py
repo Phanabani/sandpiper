@@ -76,6 +76,9 @@ class FromType(ConfigTransformer):
         self.from_type = from_type
         self.to_type = to_type
 
+    def __repr__(self):
+        return f"FromType({self.from_type}, {self.to_type})"
+
     def __str__(self):
         return f"<FromType from={self.from_type} to={self.to_type}>"
 
@@ -134,6 +137,9 @@ class Bounded(ConfigTransformer):
         self.min = min
         self.max = max
 
+    def __repr__(self):
+        return f"Bounded({self.min}, {self.max})"
+
     def __str__(self):
         return f"<Bounded type={self.type} min={self.min} max={self.max}>"
 
@@ -166,6 +172,9 @@ class MaybeRelativePath(ConfigTransformer):
                 f"root_path must be of type Path, got {type(root_path)}"
             )
         self.root_path = root_path
+
+    def __repr__(self):
+        return f"MaybeRelativePath({self.root_path})"
 
     def __str__(self):
         return f"<MaybeRelativePath root_path={self.root_path}>"
