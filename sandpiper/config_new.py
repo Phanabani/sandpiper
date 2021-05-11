@@ -11,15 +11,13 @@ from sandpiper.config_parser import *
 __all__ = ('SandpiperConfig',)
 
 
-class SandpiperConfig(ConfigCompound):
+class SandpiperConfig(ConfigSchema):
 
     bot_token: str
-
-    # TODO are these auto instantiated? should there be an annotation to
-    #   explicitly mark as optional?
     bot: _Bot
+    logging: _Logging
 
-    class _Bot(ConfigCompound):
+    class _Bot(ConfigSchema):
 
         command_prefix = "!piper "
         description = (
@@ -30,15 +28,15 @@ class SandpiperConfig(ConfigCompound):
         )
         commands: _Commands
 
-        class _Commands(ConfigCompound):
+        class _Commands(ConfigSchema):
 
             allow_public_bio_setting = False
 
-    logging: _Logging
+    class _Logging(ConfigSchema):
 
-    class _Logging(ConfigCompound):
-
-        _logging_levels = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        _logging_levels = Literal[
+            'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        ]
 
         sandpiper_logging_level: _logging_levels = 'INFO'
         discord_logging_level: _logging_levels = 'WARNING'
