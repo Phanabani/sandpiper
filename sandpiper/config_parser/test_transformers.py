@@ -22,6 +22,19 @@ class TestMisc:
             class C(ConfigCompound):
                 field: FromType(int, str)
 
+    def test_bad_origin(self):
+        with pytest.raises(ConfigSchemaError):
+            class C(ConfigCompound):
+                field: A[Path, '']
+
+    @pytest.mark.skip(
+        "I'm not sure how to handle this yet, but it's a bit of an edge case"
+    )
+    def test_bounded_before_fromtype(self):
+        with pytest.raises(ConfigSchemaError):
+            class C(ConfigCompound):
+                field: A[int, Bounded(5, 6), FromType(str, int)]
+
 
 class TestFromType:
 
