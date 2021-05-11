@@ -252,9 +252,11 @@ def _validate_transformers(cls: type, field_name: str, type_):
     if not hasattr(type_, '__metadata__') or not hasattr(type_, '__origin__'):
         return
 
-    prev_type = None
-    implicit_fromtype_encountered = False
     target_type = type_.__origin__
+
+    prev_type = None
+    first_fromtype_encountered = False
+    implicit_fromtype_encountered = False
     for trans in type_.__metadata__:
         if not isinstance(trans, ConfigTransformer):
             # Skip unknown annotations (rather than raising)
@@ -279,6 +281,17 @@ def _validate_transformers(cls: type, field_name: str, type_):
             )
 
         if isinstance(trans, FromType):
+            if not first_fromtype_encountered:
+                # Check that the from_type of the first FromType is a valid
+                # JSON type
+                if not is_json_type(trans.from_type):
+                    raise ConfigSchemaError(
+                        cls, field_name,
+                        f"The input type of the first FromType transformer "
+                        f"must be a valid JSON type, got {trans.from_type}"
+                    )
+                first_fromtype_encountered = True
+
             if trans.to_type is None:
                 # Implicit to_type; this may only happen once!
                 implicit_fromtype_encountered = True
