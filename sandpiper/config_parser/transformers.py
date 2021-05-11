@@ -52,13 +52,13 @@ def do_transformations(value, annotation):
 
 class ConfigTransformer(metaclass=ABCMeta):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def in_type(self) -> type:
         pass
 
-    @abstractmethod
     @property
+    @abstractmethod
     def out_type(self) -> type:
         pass
 
