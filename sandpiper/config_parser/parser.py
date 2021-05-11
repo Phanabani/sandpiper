@@ -36,7 +36,7 @@ class ConfigSchema:
 
     def __init__(self, config: Union[dict, str, TextIO], *, _schema_path=''):
         self.__path = _schema_path
-        self.__parse(config)
+        self.deserialize(config)
 
     def __init_subclass__(cls, /, **kwargs):
         """
@@ -97,7 +97,7 @@ class ConfigSchema:
             field_type, default = field_info
             _validate_annotation(cls, field_name, field_type)
 
-    def __parse(self, config: Union[dict, str, TextIO]):
+    def deserialize(self, config: Union[dict, str, TextIO]):
         if isinstance(config, str):
             config = json.loads(config)
         elif isinstance(config, TextIO):
