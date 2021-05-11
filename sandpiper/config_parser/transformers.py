@@ -213,7 +213,7 @@ class MaybeRelativePath(ConfigTransformer):
         return path
 
     def transform_back(self, value: Path) -> str:
-        typecheck(Path, value, 'value')
+        typecheck(Path, value, 'value', use_isinstance=True)
         if value.is_relative_to(self.root_path):
             return str(value.relative_to(self.root_path))
         return str(value.absolute())
