@@ -95,6 +95,16 @@ class TestFromType:
             class C(ConfigSchema):
                 field: A[int, FromType(Path, int)]
 
+    def test_back(self):
+        trans = FromType(int, str)
+        back = trans.transform_back("5")
+        assert_type_value(back, int, 5)
+
+    def test_back_err(self):
+        trans = FromType(int, str)
+        with pytest.raises(TypeError):
+            back = trans.transform_back(True)
+
 
 class TestBounded:
 
@@ -161,6 +171,16 @@ class TestBounded:
             class C(ConfigSchema):
                 field: A[int, Bounded(2, 1)]
 
+    def test_back(self):
+        trans = Bounded(2, 4)
+        back = trans.transform_back(3)
+        assert_type_value(back, int, 3)
+
+    def test_back_err(self):
+        trans = Bounded(2, 4)
+        with pytest.raises(ValueError):
+            back = trans.transform_back(5)
+
 
 # Let's use Posix paths for our tests
 @mock.patch('pathlib.os.name', 'posix')
@@ -168,6 +188,14 @@ class TestBounded:
 class TestMaybeRelativePath:
 
     def test_relative(self):
+        class C(ConfigSchema):
+            # noinspection PyTypeHints
+            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+
+        parsed = C('{"field": "relative/path"}')
+        assert parsed.field == Path('/root/dir/relative/path')
+
+    def test_relative_with_dot(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
             field: A[Path, MaybeRelativePath(Path('/root/dir'))]
@@ -182,3 +210,15 @@ class TestMaybeRelativePath:
 
         parsed = C('{"field": "/absolute/path"}')
         assert parsed.field == Path('/absolute/path')
+
+    def test_back_relative(self):
+        trans = MaybeRelativePath(Path('/root/dir'))
+        path = Path('/root/dir/relative/path')
+        back = trans.transform_back(path)
+        assert_type_value(back, str, 'relative/path')
+
+    def test_back_absolute(self):
+        trans = MaybeRelativePath(Path('/root/dir'))
+        path = Path('/absolute/path')
+        back = trans.transform_back(path)
+        assert_type_value(back, str, '/absolute/path')
