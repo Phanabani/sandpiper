@@ -243,8 +243,8 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
     # Some other annotation we can't handle
     raise ConfigSchemaError(
         cls, field_name,
-        f"Type annotation {type_} is not accepted. Maybe you want to "
-        f"use the annotations.FromType annotation?"
+        f"Type annotation {type_} is not accepted. Maybe you want to use the "
+        f"FromType transformer?"
     )
 
 
