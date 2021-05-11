@@ -10,7 +10,7 @@ from .exceptions import *
 from .misc import *
 from .transformers import *
 
-__all__ = ('ConfigCompound',)
+__all__ = ('ConfigSchema',)
 
 NoDefault = object()
 
@@ -29,13 +29,13 @@ def should_skip(name: str, value: Any = None) -> bool:
     )
 
 
-class ConfigCompound:
+class ConfigSchema:
 
     __path: str
     __fields: dict[str, tuple[A[Any, 'Type'], A[Any, 'Default']]]
 
-    def __init__(self, config: Union[dict, str, TextIO], *, _compound_path=''):
-        self.__path = _compound_path
+    def __init__(self, config: Union[dict, str, TextIO], *, _schema_path=''):
+        self.__path = _schema_path
         self.__parse(config)
 
     def __init_subclass__(cls, /, **kwargs):
@@ -121,16 +121,16 @@ class ConfigCompound:
     ):
         qualified_name = qualified(self.__path, field_name)
         if (isinstance(field_type, type)
-                and issubclass(field_type, ConfigCompound)):
+                and issubclass(field_type, ConfigSchema)):
             assert default is NoDefault, (
-                f"Config field {qualified_name} is annotated as a compound "
+                f"Config field {qualified_name} is annotated as a schema "
                 f"and should not have a default value"
             )
-            # The type is a compound tag, so pass the json-parsed dict into
-            # the compound type for further parsing
+            # The type is a schema, so pass the json-parsed dict into the
+            # schema type for further parsing
             final_value = field_type(
                 json_parsed.get(field_name, {}),
-                _compound_path=qualified_name
+                _schema_path=qualified_name
             )
             setattr(self, field_name, final_value)
             return
@@ -178,7 +178,7 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
             f"Annotated[out_type, {type_!r}]"
         )
 
-    if isinstance(type_, type) and issubclass(type_, ConfigCompound):
+    if isinstance(type_, type) and issubclass(type_, ConfigSchema):
         return
 
     if hasattr(type_, '__metadata__') and hasattr(type_, '__origin__'):

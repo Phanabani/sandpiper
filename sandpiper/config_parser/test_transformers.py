@@ -19,12 +19,12 @@ class TestMisc:
 
     def test_no_annotated(self):
         with pytest.raises(ConfigSchemaError, match=r'Annotated'):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: FromType(int, str)
 
     def test_bad_origin(self):
         with pytest.raises(ConfigSchemaError):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[Path, '']
 
     @pytest.mark.skip(
@@ -32,14 +32,14 @@ class TestMisc:
     )
     def test_bounded_before_fromtype(self):
         with pytest.raises(ConfigSchemaError):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[int, Bounded(5, 6), FromType(str, int)]
 
 
 class TestFromType:
 
     def test_implicit_to(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[str, FromType(int)]
 
         parsed = C('{"field": 123}')
@@ -50,18 +50,18 @@ class TestFromType:
 
     def test_multiple_implicit_to_type_err(self):
         with pytest.raises(ConfigSchemaError, match='implicit'):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[str, FromType(int), FromType(str)]
 
     def test_explicit_to(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[str, FromType(int, str)]
 
         parsed = C('{"field": 123}')
         assert_type_value(parsed.field, str, "123")
 
     def test_explicit_to_chained(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[str, FromType(int, float), FromType(float, str)]
 
         parsed = C('{"field": 123}')
@@ -69,7 +69,7 @@ class TestFromType:
 
     def test_explicit_to_type_mismatch(self):
         with pytest.raises(ConfigSchemaError):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[str, FromType(int, float)]
 
     def test_implicit_with_bounded_after(self):
@@ -77,11 +77,11 @@ class TestFromType:
         # the last FromType, however I think it's difficult to understand
         # what's going on if more transformers come after it
         with pytest.raises(ConfigSchemaError):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[int, FromType(str), Bounded(2, 4)]
 
     def test_explicit_with_bounded_after(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[int, FromType(str, int), Bounded(2, 4)]
 
         parsed = C('{"field": "3"}')
@@ -92,14 +92,14 @@ class TestFromType:
 
     def test_invalid_from_type(self):
         with pytest.raises(ConfigSchemaError):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[int, FromType(Path, int)]
 
 
 class TestBounded:
 
     def test_min(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[int, Bounded(5, None)]
 
         with pytest.raises(ValueError):
@@ -112,7 +112,7 @@ class TestBounded:
         assert_type_value(parsed.field, int, 6)
 
     def test_max(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[int, Bounded(None, 10)]
 
         parsed = C('{"field": 9}')
@@ -125,7 +125,7 @@ class TestBounded:
             C('{"field": 11}')
 
     def test_min_max(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[int, Bounded(2, 4)]
 
         with pytest.raises(ValueError):
@@ -144,7 +144,7 @@ class TestBounded:
             C('{"field": 5}')
 
     def test_min_equal_to_max(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             field: A[int, Bounded(2, 2)]
 
         with pytest.raises(ValueError):
@@ -158,7 +158,7 @@ class TestBounded:
 
     def test_min_greater_than_max(self):
         with pytest.raises(ValueError):
-            class C(ConfigCompound):
+            class C(ConfigSchema):
                 field: A[int, Bounded(2, 1)]
 
 
@@ -168,7 +168,7 @@ class TestBounded:
 class TestMaybeRelativePath:
 
     def test_relative(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             # noinspection PyTypeHints
             field: A[Path, MaybeRelativePath(Path('/root/dir'))]
 
@@ -176,7 +176,7 @@ class TestMaybeRelativePath:
         assert parsed.field == Path('/root/dir/relative/path')
 
     def test_absolute(self):
-        class C(ConfigCompound):
+        class C(ConfigSchema):
             # noinspection PyTypeHints
             field: A[Path, MaybeRelativePath(Path('/root/dir'))]
 
