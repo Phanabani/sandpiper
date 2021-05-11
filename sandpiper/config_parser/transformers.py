@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Type, TypeVar, Union, overload
+from typing import Any, Optional, Type, TypeVar, overload
 
 from .misc import typecheck
 
@@ -77,7 +77,9 @@ class FromType(ConfigTransformer):
         self.to_type = to_type
 
     def __repr__(self):
-        return f"FromType({self.from_type}, {self.to_type})"
+        return (
+            f"FromType({self.from_type.__name__!r}, {self.to_type.__name__!r})"
+        )
 
     def __str__(self):
         return f"<FromType from={self.from_type} to={self.to_type}>"
@@ -174,7 +176,7 @@ class MaybeRelativePath(ConfigTransformer):
         self.root_path = root_path
 
     def __repr__(self):
-        return f"MaybeRelativePath({self.root_path})"
+        return f"MaybeRelativePath({self.root_path!r})"
 
     def __str__(self):
         return f"<MaybeRelativePath root_path={self.root_path}>"
