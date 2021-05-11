@@ -438,11 +438,17 @@ class TestAnnotations:
         # what's going on if more transformers come after it
         with pytest.raises(ConfigSchemaError):
             class C(ConfigCompound):
-                field: A[int, FromType(float), Bounded(2, 4)]
+                field: A[int, FromType(str), Bounded(2, 4)]
 
     def test_fromtype_explicit_with_bounded_after(self):
         class C(ConfigCompound):
-            field: A[int, FromType(float, int), Bounded(2, 4)]
+            field: A[int, FromType(str, int), Bounded(2, 4)]
+
+        parsed = C('{"field": "3"}')
+        assert_type_value(parsed.field, int, 3)
+
+        with pytest.raises(ValueError):
+            parsed = C('{"field": "5"}')
 
     def test_bounded_min(self):
         class C(ConfigCompound):
