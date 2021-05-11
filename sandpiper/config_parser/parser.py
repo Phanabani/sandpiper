@@ -308,8 +308,8 @@ def _validate_transformers(cls: type, field_name: str, type_) -> bool:
     elif target_type is not prev_type:
         raise ConfigSchemaError(
             cls, field_name,
-            f"to_type {prev_type} of the final FromType transformer does not "
-            f"match the annotated type {target_type} of this field"
+            f"out_type {prev_type} of the final transformer does not match the "
+            f"annotated type {target_type} of this field"
         )
     return False
 
