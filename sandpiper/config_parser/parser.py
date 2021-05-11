@@ -170,6 +170,14 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
         # Any type is accepted
         return
 
+    if isinstance(type_, ConfigTransformer):
+        raise ConfigSchemaError(
+            cls, field_name,
+            f"You may only use ConfigTransformers as metadata in "
+            f"typing.Annotated. Try something like "
+            f"Annotated[out_type, {type_!r}]"
+        )
+
     if isinstance(type_, type) and issubclass(type_, ConfigCompound):
         return
 
