@@ -11,7 +11,6 @@ __all__ = (
 
 V1 = TypeVar('V1')
 V2 = TypeVar('V2')
-T_Target = TypeVar('T_Target')
 
 
 def do_transformations(value, annotation):
@@ -28,8 +27,9 @@ def do_transformations(value, annotation):
             continue
 
         if used_implicit_fromtype:
-            # Implicit to_type for FromType is only allowed as the last
-            # transformer
+            # We found a FromType with an implicit output type already, but
+            # encountered another transformer. Functionally, this is possible,
+            # but for readability's sake I am not allowing this.
             raise ValueError(
                 "A FromType transformer with an implicit to_type may only be "
                 "the last transformer in the sequence."
@@ -38,8 +38,15 @@ def do_transformations(value, annotation):
         if isinstance(trans, FromType) and trans.to_type is None:
             # to_type will be implicitly set to the origin type
             used_implicit_fromtype = True
+            trans.to_type = target_type
+            value = trans.transform(value)
+            # If we have another transformer after this and raise an error for
+            # that, we don't want to forget that this transformer is implicit
+            # in any future parses.
+            trans.to_type = None
+        else:
+            value = trans.transform(value)
 
-        value = trans.transform(value, target_type)
     return value
 
 
@@ -56,7 +63,7 @@ class ConfigTransformer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def transform(self, value: Any, target_type: type) -> Any:
+    def transform(self, value: Any) -> Any:
         pass
 
 
@@ -80,13 +87,16 @@ class FromType(ConfigTransformer):
     def out_type(self) -> type:
         return self.to_type
 
-    def transform(
-            self, value: V1, target_type: Type[T_Target]
-    ) -> Union[T_Target, V2]:
+    def transform(self, value: V1) -> V2:
         typecheck(self.from_type, value, 'value')
         if self.to_type is not None:
             return self.to_type(value)
-        return target_type(value)
+        raise RuntimeError(
+            "to_type is None. This may be done to implicitly set it to the "
+            "final annotated type, however this is only handled in "
+            "do_transformations. Use that function to evaluate implicit "
+            "to_type."
+        )
 
 
 # noinspection PyShadowingBuiltins
@@ -135,7 +145,7 @@ class Bounded(ConfigTransformer):
     def out_type(self) -> type:
         return self.type
 
-    def transform(self, value: V1, target_type: type) -> V1:
+    def transform(self, value: V1) -> V1:
         typecheck(self.type, value, 'value')
         if self.min is not None and value < self.min:
             raise ValueError(
@@ -168,7 +178,7 @@ class MaybeRelativePath(ConfigTransformer):
     def out_type(self) -> type:
         return Path
 
-    def transform(self, value: str, target_type: Type[T_Target]) -> Path:
+    def transform(self, value: str) -> Path:
         typecheck(str, value, 'value')
         path = Path(value)
         if not path.is_absolute():
