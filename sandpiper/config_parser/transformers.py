@@ -73,6 +73,12 @@ class ConfigTransformer(metaclass=ABCMeta):
 
 class FromType(ConfigTransformer):
 
+    __implicit_err_msg = (
+        "to_type is None. This may be done to implicitly set it to the final "
+        "annotated type, however this is only handled in do_transformations. "
+        "Use that function to evaluate implicit to_type."
+    )
+
     # TODO update to generic type[] once jetbrains fixes a bug in pycharm
     def __init__(
             self, from_type: Type[V1], to_type: Optional[Type[V2]] = None
@@ -98,23 +104,13 @@ class FromType(ConfigTransformer):
         typecheck(self.from_type, value, 'value')
         if self.to_type is not None:
             return self.to_type(value)
-        raise RuntimeError(
-            "to_type is None. This may be done to implicitly set it to the "
-            "final annotated type, however this is only handled in "
-            "do_transformations. Use that function to evaluate implicit "
-            "to_type."
-        )
+        raise RuntimeError(self.__implicit_err_msg)
 
     def transform_back(self, value: V2) -> V1:
         if self.to_type is not None:
             typecheck(self.to_type, value, 'value')
         else:
-            raise RuntimeError(
-                "to_type is None. This may be done to implicitly set it to the "
-                "final annotated type, however this is only handled in "
-                "do_transformations. Use that function to evaluate implicit "
-                "to_type."
-            )
+            raise RuntimeError(self.__implicit_err_msg)
         return self.from_type(value)
 
 
@@ -167,8 +163,7 @@ class Bounded(ConfigTransformer):
     def out_type(self) -> type:
         return self.type
 
-    def transform(self, value: V1) -> V1:
-        typecheck(self.type, value, 'value')
+    def check(self, value: V1):
         if self.min is not None and value < self.min:
             raise ValueError(
                 f"Value {value} must be greater than or equal to {self.min}"
@@ -177,7 +172,14 @@ class Bounded(ConfigTransformer):
             raise ValueError(
                 f"Value {value} must be less than or equal to {self.max}"
             )
+
+    def transform(self, value: V1) -> V1:
+        typecheck(self.type, value, 'value')
+        self.check(value)
         return value
+
+    def transform_back(self, value: V1) -> V1:
+        return self.transform(value)
 
 
 class MaybeRelativePath(ConfigTransformer):
@@ -209,3 +211,9 @@ class MaybeRelativePath(ConfigTransformer):
         if not path.is_absolute():
             return self.root_path / path
         return path
+
+    def transform_back(self, value: Path) -> str:
+        typecheck(Path, value, 'value')
+        if value.is_relative_to(self.root_path):
+            return str(value.relative_to(self.root_path))
+        return str(value.absolute())
