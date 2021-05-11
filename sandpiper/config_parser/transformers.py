@@ -35,13 +35,6 @@ def do_transformations(value, annotation):
                 "the last transformer in the sequence."
             )
 
-        if type(value) is not trans.in_type:
-            # Mismatched types between transformers
-            raise TypeError(
-                f"Value {value} of type {type(value)} cannot be transformed "
-                f"by transformer {trans} with input type {trans.in_type}"
-            )
-
         if isinstance(trans, FromType) and trans.to_type is None:
             # to_type will be implicitly set to the origin type
             used_implicit_fromtype = True
