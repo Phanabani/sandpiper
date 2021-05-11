@@ -1,3 +1,5 @@
+import unittest.mock as mock
+from pathlib import Path
 from typing import Annotated as A
 
 import pytest
@@ -11,6 +13,14 @@ def assert_type_value(value, assert_type: type, assert_value):
     __tracebackhide__ = True
     assert isinstance(value, assert_type)
     assert value == assert_value
+
+
+class TestMisc:
+
+    def test_no_annotated(self):
+        with pytest.raises(ConfigSchemaError, match=r'Annotated'):
+            class C(ConfigCompound):
+                field: FromType(int, str)
 
 
 class TestFromType:
@@ -66,6 +76,11 @@ class TestFromType:
 
         with pytest.raises(ValueError):
             parsed = C('{"field": "5"}')
+
+    def test_invalid_from_type(self):
+        with pytest.raises(ConfigSchemaError):
+            class C(ConfigCompound):
+                field: A[int, FromType(Path, int)]
 
 
 class TestBounded:
@@ -132,3 +147,25 @@ class TestBounded:
         with pytest.raises(ValueError):
             class C(ConfigCompound):
                 field: A[int, Bounded(2, 1)]
+
+
+# Let's use Posix paths for our tests
+@mock.patch('pathlib.os.name', 'posix')
+@mock.patch('pathlib._PosixFlavour.is_supported', True)
+class TestMaybeRelativePath:
+
+    def test_relative(self):
+        class C(ConfigCompound):
+            # noinspection PyTypeHints
+            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+
+        parsed = C('{"field": "./relative/path"}')
+        assert parsed.field == Path('/root/dir/relative/path')
+
+    def test_absolute(self):
+        class C(ConfigCompound):
+            # noinspection PyTypeHints
+            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+
+        parsed = C('{"field": "/absolute/path"}')
+        assert parsed.field == Path('/absolute/path')
