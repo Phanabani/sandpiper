@@ -182,8 +182,11 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
         return
 
     if hasattr(type_, '__metadata__') and hasattr(type_, '__origin__'):
-        _validate_transformers(cls, field_name, type_)
-        _validate_annotation(cls, field_name, type_.__origin__)
+        # We don't need to validate the __origin__ after this because
+        # _validate_transformers will check that our types match.
+        needs_origin_check = _validate_transformers(cls, field_name, type_)
+        if needs_origin_check:
+            _validate_annotation(cls, field_name, type_.__origin__)
         return
 
     if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
@@ -248,10 +251,10 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
     )
 
 
-def _validate_transformers(cls: type, field_name: str, type_):
-    if not hasattr(type_, '__metadata__') or not hasattr(type_, '__origin__'):
-        return
-
+def _validate_transformers(cls: type, field_name: str, type_) -> bool:
+    """
+    :return: whether the origin type needs additional type checking
+    """
     target_type = type_.__origin__
 
     prev_type = None
@@ -299,13 +302,18 @@ def _validate_transformers(cls: type, field_name: str, type_):
             else:
                 # Explicit to_type
                 prev_type = trans.to_type
+        else:
+            prev_type = trans.out_type
 
-    if prev_type is not None and target_type is not prev_type:
+    if prev_type is None:
+        return True
+    elif target_type is not prev_type:
         raise ConfigSchemaError(
             cls, field_name,
             f"to_type {prev_type} of the final FromType transformer does not "
             f"match the annotated type {target_type} of this field"
         )
+    return False
 
 
 def _convert(
