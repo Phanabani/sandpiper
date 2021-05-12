@@ -1,3 +1,4 @@
+from textwrap import dedent
 import unittest.mock as mock
 from pathlib import Path
 from typing import Annotated as A
@@ -13,6 +14,10 @@ def assert_type_value(value, assert_type: type, assert_value):
     __tracebackhide__ = True
     assert isinstance(value, assert_type)
     assert value == assert_value
+
+
+def dedent_strip(str_: str) -> str:
+    return dedent(str_).strip()
 
 
 class TestMisc:
@@ -46,6 +51,15 @@ class TestMisc:
 
         parsed = C('{"field": "5.3"}')
         assert parsed.field == Path('/root/dir/5')
+        serialized = parsed.serialize()
+        assert_type_value(
+            serialized, str,
+            dedent_strip('''
+            {
+                "field": "5.0"
+            }
+            ''')
+        )
 
 
 class TestFromType:
