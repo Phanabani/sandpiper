@@ -2,6 +2,7 @@ from functools import cached_property
 import json
 import sys
 from types import MethodType
+# noinspection PyPep8Naming
 from typing import (
     Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints, overload
 )
@@ -168,24 +169,21 @@ class ConfigSchema:
         for field_name, field_info in self.__class__.__fields.items():
             field_type, default = field_info
             value = getattr(self, field_name)
-            dict_[field_name] = self.__serialize_field(
-                field_name, field_type, value
-            )
+            dict_[field_name] = self.__serialize_field(field_type, value)
         if json_:
             return json.dumps(dict_, indent=4)
         return dict_
 
-    def __serialize_field(self, field_name, field_type, value) -> Any:
-        if isinstance(field_type, type):
-            if issubclass(field_type, ConfigSchema):
-                return value.serialize(json_=False)
-            typecheck(field_type, value, field_name)
-            return value
-        elif is_annotated(field_type):
+    @staticmethod
+    def __serialize_field(field_type, value) -> Any:
+        if (isinstance(field_type, type)
+                and issubclass(field_type, ConfigSchema)):
+            return value.serialize(json_=False)
+
+        if is_annotated(field_type):
             return do_transformations_back(value, field_type)
-        raise TypeError(
-            f"Could not serialize {field_name} using annotation {field_type}"
-        )
+
+        return value
 
 
 def _infer_type(value):
@@ -224,6 +222,7 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
 
     if hasattr(type_, '__origin__') and hasattr(type_, '__metadata__'):
         # This annotation is Annotated with metadata
+        # noinspection PyTypeChecker
         needs_origin_check = _validate_transformers(cls, field_name, type_)
         if needs_origin_check:
             _validate_annotation(cls, field_name, type_.__origin__)
