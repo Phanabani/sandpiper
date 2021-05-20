@@ -88,8 +88,9 @@ class TestImperialShorthandRegex(unittest.TestCase):
 
 class TestConversionStringRegex(unittest.TestCase):
 
+    @staticmethod
     def assert_match(
-            self, in_: str, quantity: Optional[str], out_unit: Optional[str]
+            in_: str, quantity: Optional[str], out_unit: Optional[str]
     ):
         __tracebackhide__ = True
         match = conversion_pattern.match(in_)
@@ -109,6 +110,11 @@ class TestConversionStringRegex(unittest.TestCase):
             f"{out_unit}"
         )
 
+    @staticmethod
+    def assert_findall_len(in_: str, len_: int):
+        __tracebackhide__ = True
+        assert len(conversion_pattern.findall(in_)) == len_
+
     def test_simple(self):
         self.assert_match('{5pm}', '5pm', None)
         self.assert_match('{ 5 ft }', '5 ft', None)
@@ -127,6 +133,39 @@ class TestConversionStringRegex(unittest.TestCase):
         self.assert_match('{5pm> }', None, None)
         self.assert_match('{5pm > }', None, None)
         self.assert_match('{8:00 > }', None, None)
+
+    def test_code_block_simple(self):
+        self.assert_findall_len("hey there `{i don't want this}`", 0)
+        self.assert_findall_len(
+            "and ` blah blah hhhh {I also don't want this}  kljabfl`", 0
+        )
+
+    def test_code_block_simple_multi(self):
+        self.assert_findall_len(
+            "hey there `{i don't want this}` "
+            "but {i do want this} "
+            "and ` blah blah hhhh {I also don't want this}  kljabfl`",
+            1
+        )
+
+    def test_code_block_triple(self):
+        self.assert_findall_len("```this is {ignored too}```", 0)
+        self.assert_findall_len("```this is {ignored too}``` hi {good > hi}", 1)
+
+    def test_code_block_escaped(self):
+        self.assert_findall_len(r"\`{this is escaped}", 1)
+        self.assert_findall_len(r"`{this is also escaped}\`", 1)
+
+    def test_code_block_escaped_multi(self):
+        self.assert_findall_len(
+            r"\`{this is escaped}  `{but not this}` `{this is also escaped}\`",
+            2
+        )
+
+    def test_code_block_weird(self):
+        self.assert_findall_len("``{what is this behavior}``", 0)
+        self.assert_findall_len("`{and this?}``", 0)
+        self.assert_findall_len("``{or this?}`", 0)
 
 
 class TestUnitConversion(DiscordMockingTestCase):

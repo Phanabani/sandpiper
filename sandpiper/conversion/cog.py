@@ -1,6 +1,6 @@
 from decimal import Decimal
 import logging
-import re
+import regex
 from typing import NoReturn
 
 import discord
@@ -16,7 +16,10 @@ from sandpiper.user_data import DatabaseUnavailable, UserData
 
 logger = logging.getLogger('sandpiper.unit_conversion')
 
-conversion_pattern = re.compile(
+conversion_pattern = regex.compile(
+    # Skip anything inside a code block
+    r'(?<!\\)`+.*?(?<!\\)`+(*SKIP)(*FAIL)|'
+    # Match a {conversion block}
     r'{ *'
     r'(?P<quantity>[^>]+?) *'
     r'(?:> *(?P<out_unit>\S.*?) *)?'
