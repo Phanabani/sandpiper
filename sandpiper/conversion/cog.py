@@ -18,7 +18,7 @@ logger = logging.getLogger('sandpiper.unit_conversion')
 
 conversion_pattern = regex.compile(
     # Skip anything inside a code block
-    r'(?<!\\)`+.*?(?<!\\)`+(*SKIP)(*FAIL)|'
+    r'(?<!\\)`+(?s:.*?)`+(*SKIP)(*FAIL)|'
     # Match a {conversion block}
     r'{ *'
     r'(?P<quantity>[^>]+?) *'

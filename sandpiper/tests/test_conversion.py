@@ -152,20 +152,45 @@ class TestConversionStringRegex(unittest.TestCase):
         self.assert_findall_len("```this is {ignored too}```", 0)
         self.assert_findall_len("```this is {ignored too}``` hi {good > hi}", 1)
 
+    def test_code_block_triple_newline(self):
+        self.assert_findall_len(
+            "first line ```\nis this {ignored too?}\n```", 0)
+
     def test_code_block_escaped(self):
         self.assert_findall_len(r"\`{this is escaped}", 1)
-        self.assert_findall_len(r"`{this is also escaped}\`", 1)
+        self.assert_findall_len(r"`{this is not escaped}\`", 0)
 
     def test_code_block_escaped_multi(self):
         self.assert_findall_len(
-            r"\`{this is escaped}  `{but not this}` `{this is also escaped}\`",
-            2
+            r"\`{this is escaped}  `{but not this}` `{this is not escaped}\`",
+            1
         )
 
     def test_code_block_weird(self):
         self.assert_findall_len("``{what is this behavior}``", 0)
         self.assert_findall_len("`{and this?}``", 0)
         self.assert_findall_len("``{or this?}`", 0)
+
+    def test_code_block_complex(self):
+        self.assert_findall_len(
+            "hey `{BAD}` and {GOOD} and "
+            "` blah blah hhhh {BAD}  kljabfl`  "
+            "\`{GOOD}  `{BAD}` `{BAD}\`\n"
+            
+            "hello sometimes this doesn't match {GOOD}\n"
+            "another `{block}`\n"
+            
+            "```this is {BAD}``` hi {GOOD > hi}\n"
+            
+            "```\n"
+            "newline {BAD}\n"
+            "```\n"
+            
+            "``{BAD}``\n"
+            "`{BAD}``\n"
+            "``{BAD}`",
+            4
+        )
 
 
 class TestUnitConversion(DiscordMockingTestCase):
