@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated as A, Literal
 
 from sandpiper.common.paths import MODULE_PATH
-from sandpiper.config_parser import *
+from sandpiper.piperfig import *
 
 __all__ = ('SandpiperConfig',)
 
