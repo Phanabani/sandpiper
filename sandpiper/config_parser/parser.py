@@ -2,8 +2,9 @@ from functools import cached_property
 import json
 import sys
 from types import MethodType
+# noinspection PyPep8Naming
 from typing import (
-    Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints
+    Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints, overload
 )
 
 from .exceptions import *
@@ -17,6 +18,10 @@ NoDefault = object()
 
 def is_json_type(type_: type) -> bool:
     return type_ in (type(None), bool, int, float, str, list, dict)
+
+
+def is_annotated(type_):
+    return hasattr(type_, '__metadata__') and hasattr(type_, '__origin__')
 
 
 def should_skip(name: str, value: Any = None) -> bool:
@@ -36,7 +41,7 @@ class ConfigSchema:
 
     def __init__(self, config: Union[dict, str, TextIO], *, _schema_path=''):
         self.__path = _schema_path
-        self.__parse(config)
+        self.deserialize(config)
 
     def __init_subclass__(cls, /, **kwargs):
         """
@@ -97,7 +102,7 @@ class ConfigSchema:
             field_type, default = field_info
             _validate_annotation(cls, field_name, field_type)
 
-    def __parse(self, config: Union[dict, str, TextIO]):
+    def deserialize(self, config: Union[dict, str, TextIO]):
         if isinstance(config, str):
             config = json.loads(config)
         elif isinstance(config, TextIO):
@@ -146,6 +151,40 @@ class ConfigSchema:
         final_value = _convert(value, field_type, qualified_name)
         setattr(self, field_name, final_value)
 
+    @overload
+    def serialize(self) -> str:
+        pass
+
+    @overload
+    def serialize(self, json_: Literal[False]) -> dict:
+        pass
+
+    @overload
+    def serialize(self, json_: Literal[True]) -> str:
+        pass
+
+    def serialize(self, json_=True) -> Union[dict, str]:
+        # Iterate through annotations to get fields with type annotations
+        dict_ = {}
+        for field_name, field_info in self.__class__.__fields.items():
+            field_type, default = field_info
+            value = getattr(self, field_name)
+            dict_[field_name] = self.__serialize_field(field_type, value)
+        if json_:
+            return json.dumps(dict_, indent=4)
+        return dict_
+
+    @staticmethod
+    def __serialize_field(field_type, value) -> Any:
+        if (isinstance(field_type, type)
+                and issubclass(field_type, ConfigSchema)):
+            return value.serialize(json_=False)
+
+        if is_annotated(field_type):
+            return do_transformations_back(value, field_type)
+
+        return value
+
 
 def _infer_type(value):
     if isinstance(value, tuple):
@@ -181,9 +220,9 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
     if isinstance(type_, type) and issubclass(type_, ConfigSchema):
         return
 
-    if hasattr(type_, '__metadata__') and hasattr(type_, '__origin__'):
-        # We don't need to validate the __origin__ after this because
-        # _validate_transformers will check that our types match.
+    if hasattr(type_, '__origin__') and hasattr(type_, '__metadata__'):
+        # This annotation is Annotated with metadata
+        # noinspection PyTypeChecker
         needs_origin_check = _validate_transformers(cls, field_name, type_)
         if needs_origin_check:
             _validate_annotation(cls, field_name, type_.__origin__)

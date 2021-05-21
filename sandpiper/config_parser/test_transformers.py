@@ -1,3 +1,4 @@
+from textwrap import dedent
 import unittest.mock as mock
 from pathlib import Path
 from typing import Annotated as A
@@ -13,6 +14,10 @@ def assert_type_value(value, assert_type: type, assert_value):
     __tracebackhide__ = True
     assert isinstance(value, assert_type)
     assert value == assert_value
+
+
+def dedent_strip(str_: str) -> str:
+    return dedent(str_).strip()
 
 
 class TestMisc:
@@ -34,6 +39,27 @@ class TestMisc:
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
                 field: A[int, Bounded(5, 6), FromType(str, int)]
+
+    def test_transform_back_chain(self):
+        class C(ConfigSchema):
+            # noinspection PyTypeHints
+            field: A[
+                Path,
+                FromType(str, float), FromType(float, int), FromType(int, str),
+                MaybeRelativePath(Path('/root/dir'))
+            ]
+
+        parsed = C('{"field": "5.3"}')
+        assert parsed.field == Path('/root/dir/5')
+        serialized = parsed.serialize()
+        assert_type_value(
+            serialized, str,
+            dedent_strip('''
+            {
+                "field": "5.0"
+            }
+            ''')
+        )
 
 
 class TestFromType:
@@ -94,6 +120,16 @@ class TestFromType:
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
                 field: A[int, FromType(Path, int)]
+
+    def test_back(self):
+        trans = FromType(int, str)
+        back = trans.transform_back("5")
+        assert_type_value(back, int, 5)
+
+    def test_back_err(self):
+        trans = FromType(int, str)
+        with pytest.raises(TypeError):
+            back = trans.transform_back(True)
 
 
 class TestBounded:
@@ -161,6 +197,16 @@ class TestBounded:
             class C(ConfigSchema):
                 field: A[int, Bounded(2, 1)]
 
+    def test_back(self):
+        trans = Bounded(2, 4)
+        back = trans.transform_back(3)
+        assert_type_value(back, int, 3)
+
+    def test_back_err(self):
+        trans = Bounded(2, 4)
+        with pytest.raises(ValueError):
+            back = trans.transform_back(5)
+
 
 # Let's use Posix paths for our tests
 @mock.patch('pathlib.os.name', 'posix')
@@ -168,6 +214,14 @@ class TestBounded:
 class TestMaybeRelativePath:
 
     def test_relative(self):
+        class C(ConfigSchema):
+            # noinspection PyTypeHints
+            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+
+        parsed = C('{"field": "relative/path"}')
+        assert parsed.field == Path('/root/dir/relative/path')
+
+    def test_relative_with_dot(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
             field: A[Path, MaybeRelativePath(Path('/root/dir'))]
@@ -182,3 +236,15 @@ class TestMaybeRelativePath:
 
         parsed = C('{"field": "/absolute/path"}')
         assert parsed.field == Path('/absolute/path')
+
+    def test_back_relative(self):
+        trans = MaybeRelativePath(Path('/root/dir'))
+        path = Path('/root/dir/relative/path')
+        back = trans.transform_back(path)
+        assert_type_value(back, str, 'relative/path')
+
+    def test_back_absolute(self):
+        trans = MaybeRelativePath(Path('/root/dir'))
+        path = Path('/absolute/path')
+        back = trans.transform_back(path)
+        assert_type_value(back, str, '/absolute/path')
