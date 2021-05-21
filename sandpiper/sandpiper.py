@@ -5,7 +5,7 @@ import sys
 import discord
 import discord.ext.commands as commands
 
-from .config import Config
+from .config import SandpiperConfig
 from .help import HelpCommand
 
 __all__ = ('Sandpiper', 'run_bot')
@@ -13,9 +13,10 @@ __all__ = ('Sandpiper', 'run_bot')
 logger = logging.getLogger('sandpiper')
 
 
+# noinspection PyMethodMayBeStatic
 class Sandpiper(commands.Bot):
 
-    def __init__(self, config: Config.Bot):
+    def __init__(self, config: SandpiperConfig._Bot):
 
         # noinspection PyUnusedLocal
         def get_prefix(bot: commands.Bot, msg: discord.Message) -> str:
@@ -93,7 +94,8 @@ class Sandpiper(commands.Bot):
 def run_bot():
     # Load config
     config_path = Path(__file__).parent / 'config.json'
-    bot_token, config = Config.load_json(config_path)
+    with config_path.open() as f:
+        bot_token, config = SandpiperConfig(f)
 
     # Sandpiper logging
     logger = logging.getLogger('sandpiper')
