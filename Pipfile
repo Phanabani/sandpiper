@@ -15,6 +15,7 @@ Pint = "*"
 [dev-packages]
 coverage = "*"
 pytest = "*"
+pytest-asyncio = "*"
 pytest-profiling = "*"
 
 [requires]
