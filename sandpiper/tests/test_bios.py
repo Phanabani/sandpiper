@@ -97,7 +97,7 @@ class TestPrivacy:
         )
 
     async def test_name_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds('privacy name public')
+        embeds = await invoke_cmd_get_embeds('privacy name private')
         await self._assert(
             embeds, message, database.get_privacy_preferred_name,
             PrivacyType.PRIVATE
@@ -110,7 +110,7 @@ class TestPrivacy:
         )
 
     async def test_pronouns_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds('privacy pronouns public')
+        embeds = await invoke_cmd_get_embeds('privacy pronouns private')
         await self._assert(
             embeds, message, database.get_privacy_pronouns, PrivacyType.PRIVATE
         )
@@ -122,7 +122,7 @@ class TestPrivacy:
         )
 
     async def test_birthday_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds('privacy birthday public')
+        embeds = await invoke_cmd_get_embeds('privacy birthday private')
         await self._assert(
             embeds, message, database.get_privacy_birthday, PrivacyType.PRIVATE
         )
@@ -134,7 +134,7 @@ class TestPrivacy:
         )
 
     async def test_age_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds('privacy age public')
+        embeds = await invoke_cmd_get_embeds('privacy age private')
         await self._assert(
             embeds, message, database.get_privacy_age, PrivacyType.PRIVATE
         )
@@ -146,7 +146,7 @@ class TestPrivacy:
         )
 
     async def test_timezone_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds('privacy timezone public')
+        embeds = await invoke_cmd_get_embeds('privacy timezone private')
         await self._assert(
             embeds, message, database.get_privacy_timezone, PrivacyType.PRIVATE
         )
