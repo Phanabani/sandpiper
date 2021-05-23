@@ -1,24 +1,9 @@
-from typing import Optional
-import unittest.mock as mock
-
-import discord
-import discord.ext.commands as commands
 import pytest
 
+from ._helpers import *
 
-# noinspection PyPep8Naming
-class MagicMock_(mock.MagicMock):
-    """
-    Identical to MagicMock, but the ``name`` kwarg will be parsed as a regular
-    kwarg (assigned to the mock as an attribute).
-    """
 
-    def __init__(self, *args, _name_: Optional[str] = None, **kwargs):
-        if _name_ is None:
-            _name_ = ''
-        name_attr = kwargs.pop('name', None)
-        super().__init__(*args, name=_name_, **kwargs)
-        self.name = name_attr
+# region Arrange fixtures
 
 
 @pytest.fixture()
@@ -203,3 +188,100 @@ async def bot(users, users_map, guilds, guilds_map):
 
     for patcher in patchers:
         patcher.stop()
+
+
+# endregion
+
+# region Act fixtures
+
+
+@pytest.fixture()
+def invoke_cmd(bot, message):
+    async def f(message_content: str) -> mock.AsyncMock:
+        """
+        Invoke a command with ``self.msg``.
+
+        :param message_content: the message content used to invoke the command
+        :return: an AsyncMock representing the `ctx.send` method. You can use
+            the methods defined in Mock to check the calls to this method by
+            the command invocation.
+        """
+
+        message.content = message_content
+        ctx = await bot.get_context(message)
+        ctx.send = mock.AsyncMock()
+        # This is normally done with bot.invoke, but that silently suppresses
+        # errors which is BAD!!! >:(
+        await ctx.command.invoke(ctx)
+        return ctx.send
+
+    return f
+
+
+@pytest.fixture()
+def invoke_cmd_get_embeds(invoke_cmd):
+    async def f(message_content: str) -> list[discord.Embed]:
+        """
+        Invoke a command with ``invoke_cmd`` and return the embeds sent back.
+
+        :param message_content: the message content used to invoke the command
+        :return: a list of Embeds sent back after invocation
+        """
+        send = await invoke_cmd(message_content)
+        return get_embeds(send)
+    return f
+
+
+@pytest.fixture()
+def dispatch_msg(bot, message):
+    async def f(message_content: str) -> mock.AsyncMock:
+        """
+        Dispatch ``self.msg`` to the client.
+
+        :param message_content: the message content to be dispatched
+        :return: an AsyncMock representing the `msg.channel.send` method. You
+            can use the methods defined in Mock to check the calls to this
+            method by the command invocation.
+        """
+
+        message.content = message_content
+        message.channel.send = mock.AsyncMock()
+
+        for listener in bot.extra_events.get('on_message', []):
+            await listener(message)
+        return message.channel.send
+
+    return f
+
+
+@pytest.fixture()
+def dispatch_msg_get_contents(dispatch_msg):
+    async def f(message_content: str) -> list[str]:
+        """
+        Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
+        return the message contents that were sent back.
+
+        :param message_content: the message content to be dispatched
+        :return: a list of message contents sent back
+        """
+        send = await dispatch_msg(message_content)
+        return get_contents(send)
+    return f
+
+
+@pytest.fixture()
+def dispatch_msg_get_embeds(dispatch_msg):
+    async def f(message_content: str) -> list[discord.Embed]:
+        """
+        Use ``dispatch_msg`` to dispatch ``self.msg`` to the client and
+        return a list of embeds that were sent back.
+
+        :param message_content: the message content to be dispatched
+        :return: a list of embeds that were sent back
+        """
+
+        send = await dispatch_msg(message_content)
+        return get_embeds(send)
+    return f
+
+# endregion
