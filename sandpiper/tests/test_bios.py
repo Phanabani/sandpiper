@@ -413,45 +413,57 @@ class TestSet:
 
 class TestDelete:
 
-    async def test_delete(self):
-        uid = 123
-        self.msg.author.id = uid
-        self.msg.guild = None
+    @staticmethod
+    async def _assert(
+            embeds: list[discord.Embed], message: discord.Message,
+            db_meth: T_DatabaseMethod
+    ):
+        assert len(embeds) == 1
+        assert_success(embeds[0])
+        value = await db_meth(message.author.id)
+        assert value is None
 
-        await self.make_greg(uid)
+    async def test_name(
+            self, database, message, invoke_as_greg, invoke_cmd_get_embeds
+    ):
+        embeds = invoke_cmd_get_embeds('name delete')
+        await self._assert(embeds, message, database.get_preferred_name)
 
-        # Individual
+    async def test_pronouns(
+            self, database, message, invoke_as_greg, invoke_cmd_get_embeds
+    ):
+        embeds = invoke_cmd_get_embeds('pronouns delete')
+        await self._assert(embeds, message, database.get_pronouns)
 
-        embeds = await self.invoke_cmd_get_embeds('name delete')
-        self.assert_success(embeds[0])
-        self.assertIsNone(await self.db.get_preferred_name(uid))
+    async def test_birthday(
+            self, database, message, invoke_as_greg, invoke_cmd_get_embeds
+    ):
+        embeds = invoke_cmd_get_embeds('birthday delete')
+        await self._assert(embeds, message, database.get_birthday)
 
-        embeds = await self.invoke_cmd_get_embeds('pronouns delete')
-        self.assert_success(embeds[0])
-        self.assertIsNone(await self.db.get_pronouns(uid))
+    async def test_age(
+            self, database, message, invoke_as_greg, invoke_cmd_get_embeds
+    ):
+        embeds = invoke_cmd_get_embeds('age delete')
+        assert_error(embeds, 'birthday delete')
 
-        embeds = await self.invoke_cmd_get_embeds('age delete')
-        self.assert_error(embeds[0], 'birthday delete')
+    async def test_timezone(
+            self, database, message, invoke_as_greg, invoke_cmd_get_embeds
+    ):
+        embeds = invoke_cmd_get_embeds('timezone delete')
+        await self._assert(embeds, message, database.get_timezone)
 
-        embeds = await self.invoke_cmd_get_embeds('birthday delete')
-        self.assert_success(embeds[0])
-        self.assertIsNone(await self.db.get_birthday(uid))
-        self.assertIsNone(await self.db.get_age(uid))
-
-        embeds = await self.invoke_cmd_get_embeds('timezone delete')
-        self.assert_success(embeds[0])
-        self.assertIsNone(await self.db.get_timezone(uid))
-
-        # Batch delete
-
-        await self.make_greg(uid)
-        embeds = await self.invoke_cmd_get_embeds('bio delete')
-        self.assert_success(embeds[0])
-        self.assertIsNone(await self.db.get_preferred_name(uid))
-        self.assertIsNone(await self.db.get_pronouns(uid))
-        self.assertIsNone(await self.db.get_birthday(uid))
-        self.assertIsNone(await self.db.get_age(uid))
-        self.assertIsNone(await self.db.get_timezone(uid))
+    async def test_all(
+            self, database, message, invoke_as_greg, invoke_cmd_get_embeds
+    ):
+        embeds = invoke_cmd_get_embeds('bio delete')
+        assert_success(embeds)
+        uid = message.author.id
+        assert await database.get_preferred_name(uid) is None
+        assert await database.get_pronouns(uid) is None
+        assert await database.get_birthday(uid) is None
+        assert await database.get_age(uid) is None
+        assert await database.get_timezone(uid) is None
 
 
 class TestWhois:
