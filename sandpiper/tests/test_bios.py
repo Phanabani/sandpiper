@@ -9,7 +9,9 @@ from sandpiper.bios import Bios
 from sandpiper.user_data.database_sqlite import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = ['TestBios']
+__all__ = (
+    'TestPrivacy', 'TestShow', 'TestSet', 'TestDelete', 'TestWhois'
+)
 
 
 @pytest.fixture()
@@ -49,7 +51,7 @@ def greg(database) -> int:
     return user_id
 
 
-class TestBios:
+class TestPrivacy:
 
     async def test_privacy(self):
         uid = 123
@@ -103,6 +105,9 @@ class TestBios:
         self.assert_success(embeds[0])
         await assert_all_privacies(PrivacyType.PRIVATE)
 
+
+class TestShow:
+
     async def test_show(self):
         uid = 123
         self.msg.author.id = uid
@@ -135,6 +140,9 @@ class TestBios:
         self.assert_info(embeds[0], 'He/Him')
         self.assert_info(embeds[0], '2000-02-14')
         self.assert_info(embeds[0], 'America/New_York')
+
+
+class TestSet:
 
     async def test_set(self):
         uid = 123
@@ -178,6 +186,9 @@ class TestBios:
         with self.assertRaisesRegex(commands.BadArgument, r'64 characters'):
             await self.invoke_cmd_get_embeds('pronouns set ' + 'a'*65)
 
+
+class TestDelete:
+
     async def test_delete(self):
         uid = 123
         self.msg.author.id = uid
@@ -217,6 +228,9 @@ class TestBios:
         self.assertIsNone(await self.db.get_birthday(uid))
         self.assertIsNone(await self.db.get_age(uid))
         self.assertIsNone(await self.db.get_timezone(uid))
+
+
+class TestWhois:
 
     # noinspection DuplicatedCode
     async def test_whois(self):
