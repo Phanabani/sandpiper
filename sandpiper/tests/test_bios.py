@@ -41,7 +41,7 @@ def bios_bot(bot) -> Bios:
 
 
 @pytest.fixture()
-def greg(database) -> int:
+async def greg(database) -> int:
     """Make a dummy 'Greg' user in the database and return his user ID"""
     user_id = 1
     await database.set_preferred_name(user_id, 'Greg')
