@@ -2,47 +2,54 @@ import datetime as dt
 import unittest.mock as mock
 
 import discord.ext.commands as commands
+import pytest
 import pytz
 
-from ._test_helpers import *
 from sandpiper.bios import Bios
 from sandpiper.user_data.database_sqlite import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
 
 __all__ = ['TestBios']
 
-CONNECTION = ':memory:'
+
+@pytest.fixture()
+async def database() -> DatabaseSQLite:
+    """Create, connect, and patch in a database adapter."""
+
+    # Connect to a dummy database
+    db = DatabaseSQLite(':memory:')
+    await db.connect()
+
+    # Bypass UserData cog lookup by patching in the database
+    patcher = mock.patch('sandpiper.bios.Bios._get_database', return_value=db)
+    patcher.start()
+
+    yield db
+
+    await db.disconnect()
+    patcher.stop()
 
 
-class TestBios(DiscordMockingTestCase):
+@pytest.fixture()
+def bios_bot(bot) -> Bios:
+    """Add a Bios cog to a bot and return the cog"""
+    bios = Bios(bot)
+    bot.add_cog(bios)
+    return bios
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
 
-        # Connect to a dummy database
-        self.db = DatabaseSQLite(CONNECTION)
-        await self.db.connect()
+@pytest.fixture()
+def greg(database) -> int:
+    """Make a dummy 'Greg' user in the database and return his user ID"""
+    user_id = 1
+    await database.set_preferred_name(user_id, 'Greg')
+    await database.set_pronouns(user_id, 'He/Him')
+    await database.set_birthday(user_id, dt.date(2000, 2, 14))
+    await database.set_timezone(user_id, pytz.timezone('America/New_York'))
+    return user_id
 
-        # Bypass UserData cog lookup by patching in the database
-        patcher = mock.patch(
-            'sandpiper.bios.Bios._get_database',
-            return_value=self.db
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
-    async def asyncTearDown(self):
-        await self.db.disconnect()
-
-    def add_cogs(self, bot: commands.Bot):
-        self.bios = Bios(bot)
-        bot.add_cog(self.bios)
-
-    async def make_greg(self, user_id: int):
-        await self.db.set_preferred_name(user_id, 'Greg')
-        await self.db.set_pronouns(user_id, 'He/Him')
-        await self.db.set_birthday(user_id, dt.date(2000, 2, 14))
-        await self.db.set_timezone(user_id, pytz.timezone('America/New_York'))
+class TestBios:
 
     async def test_privacy(self):
         uid = 123
