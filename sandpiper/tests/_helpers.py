@@ -4,6 +4,13 @@ import unittest.mock as mock
 
 import discord
 
+__all__ = (
+    'MagicMock_',
+    'get_embeds', 'get_contents',
+    'assert_success', 'assert_warning', 'assert_error', 'assert_info',
+    'assert_no_reply', 'assert_in', 'assert_regex'
+)
+
 
 # region Misc helper functions
 
