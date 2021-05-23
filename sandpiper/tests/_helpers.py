@@ -1,5 +1,5 @@
 import re
-from typing import Any, NoReturn, Optional, TypeVar, Union
+from typing import NoReturn, Optional, TypeVar, Union
 import unittest.mock as mock
 
 import discord
