@@ -12,6 +12,16 @@ from ._helpers import *
 
 
 @pytest.fixture()
+def new_id():
+    last_id = 0
+    def f() -> int:
+        nonlocal last_id
+        last_id += 1
+        return last_id
+    return f
+
+
+@pytest.fixture()
 def users() -> list[discord.User]:
     return []
 
@@ -22,9 +32,9 @@ def users_map() -> dict[int, discord.User]:
 
 
 @pytest.fixture()
-def make_user(users, users_map):
+def make_user(new_id, users, users_map):
     def f(
-            id_: int, name: Optional[str] = None,
+            id_: Optional[int] = None, name: Optional[str] = None,
             discriminator: Optional[int] = None, **kwargs
     ) -> discord.User:
         """
@@ -39,12 +49,15 @@ def make_user(users, users_map):
         :return: the new User mock
         """
 
+        if id_ is None:
+            id_ = new_id()
         if id_ in users_map:
             raise ValueError(f"User with id={id_} already exists")
         if name is None:
             name = 'A_User'
         if discriminator is None:
             discriminator = id_ % 10000
+
         user = MagicMock_(
             spec=discord.User, id=id_, name=name, discriminator=discriminator,
             **kwargs
@@ -52,6 +65,7 @@ def make_user(users, users_map):
         users.append(user)
         users_map[id_] = user
         return user
+
     return f
 
 
@@ -66,8 +80,10 @@ def guilds_map() -> dict[int, discord.Guild]:
 
 
 @pytest.fixture()
-def make_guild(guilds, guilds_map):
-    def f(id_: int, name: Optional[str] = None, **kwargs) -> discord.Guild:
+def make_guild(new_id, guilds, guilds_map):
+    def f(
+            id_: Optional[int] = None, name: Optional[str] = None, **kwargs
+    ) -> discord.Guild:
         """
         Add a mock guild to the client. You can access guilds through the list
         `self.bot.guilds` or the id->guild dict `self.bot.guilds_map`.
@@ -78,6 +94,8 @@ def make_guild(guilds, guilds_map):
         :return: the new Guild mock
         """
 
+        if id_ is None:
+            id_ = new_id()
         if id_ in guilds_map:
             raise ValueError(f"Guild with id={id_} already exists")
         if name is None:
@@ -92,6 +110,7 @@ def make_guild(guilds, guilds_map):
         guilds.append(guild)
         guilds_map[id_] = guild
         return guild
+
     return f
 
 
@@ -131,6 +150,7 @@ def add_user_to_guild(users_map, guilds_map):
         # noinspection PyUnresolvedReferences
         guild._members_map[user_id] = member
         return member
+
     return f
 
 
@@ -284,7 +304,6 @@ def dispatch_msg_get_embeds(dispatch_msg):
         :param message_content: the message content to be dispatched
         :return: a list of embeds that were sent back
         """
-
         send = await dispatch_msg(message_content)
         return get_embeds(send)
     return f
