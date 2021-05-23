@@ -44,13 +44,14 @@ def bot(bot) -> commands.Bot:
 
 
 @pytest.fixture()
-async def greg(database, user_id) -> int:
+async def greg(database, new_id) -> int:
     """Make a dummy 'Greg' user in the database and return his user ID"""
-    await database.set_preferred_name(user_id, 'Greg')
-    await database.set_pronouns(user_id, 'He/Him')
-    await database.set_birthday(user_id, dt.date(2000, 2, 14))
-    await database.set_timezone(user_id, pytz.timezone('America/New_York'))
-    return user_id
+    uid = new_id()
+    await database.set_preferred_name(uid, 'Greg')
+    await database.set_pronouns(uid, 'He/Him')
+    await database.set_birthday(uid, dt.date(2000, 2, 14))
+    await database.set_timezone(uid, pytz.timezone('America/New_York'))
+    return uid
 
 
 @pytest.fixture()
