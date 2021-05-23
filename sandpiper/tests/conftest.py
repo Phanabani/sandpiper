@@ -131,7 +131,7 @@ def add_user_to_guild(users_map, guilds_map):
 
 
 @pytest.fixture()
-def message():
+def message() -> discord.Message:
     # This is the meat of the operation; it allows for message properties
     # to be set where normally it is prohibited
     msg = mock.MagicMock(spec=discord.Message)
@@ -141,7 +141,7 @@ def message():
 
 # noinspection PyPropertyAccess
 @pytest.fixture()
-async def bot(users, users_map, guilds, guilds_map):
+async def bot(users, users_map, guilds, guilds_map) -> commands.Bot:
     patchers = []
 
     # Patch in some mocks for bot attributes that tests may need to work
