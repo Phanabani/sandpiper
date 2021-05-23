@@ -339,13 +339,13 @@ class TestSet:
     # region Name
 
     async def test_name_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'name set Greg')
+        embeds = await invoke_cmd_get_embeds(f'name set Greg')
         await self._assert_private(
             embeds, message, database.get_preferred_name, 'Greg', 'name'
         )
 
     async def test_name_public(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'name set Greg')
+        embeds = await invoke_cmd_get_embeds(f'name set Greg')
         await self._assert_public(
             embeds, message, database.get_preferred_name, 'Greg'
         )
@@ -358,13 +358,13 @@ class TestSet:
     # region Pronouns
 
     async def test_pronouns_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'pronouns set He/Him')
+        embeds = await invoke_cmd_get_embeds(f'pronouns set He/Him')
         await self._assert_private(
             embeds, message, database.get_pronouns, 'He/Him', 'pronouns'
         )
 
     async def test_pronouns_public(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'pronouns set He/Him')
+        embeds = await invoke_cmd_get_embeds(f'pronouns set He/Him')
         await self._assert_public(
             embeds, message, database.get_pronouns, 'He/Him'
         )
@@ -377,14 +377,14 @@ class TestSet:
     # region Birthday
 
     async def test_birthday_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'birthday set 2000-02-14')
+        embeds = await invoke_cmd_get_embeds(f'birthday set 2000-02-14')
         await self._assert_private(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14),
             'birthday'
         )
 
     async def test_birthday_public(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'birthday set 2000-02-14')
+        embeds = await invoke_cmd_get_embeds(f'birthday set 2000-02-14')
         await self._assert_public(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14)
         )
@@ -393,21 +393,21 @@ class TestSet:
     # region Age
 
     async def test_age(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'age set 20')
+        embeds = await invoke_cmd_get_embeds(f'age set 20')
         assert_error(embeds)
 
     # endregion
     # region Timezone
 
     async def test_timezone_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'timezone set new york')
+        embeds = await invoke_cmd_get_embeds(f'timezone set new york')
         await self._assert_private(
             embeds, message, database.get_timezone,
             pytz.timezone('America/New_York'), 'timezone'
         )
 
     async def test_timezone_public(self, database, message, invoke_cmd_get_embeds):
-        embeds = invoke_cmd_get_embeds(f'timezone set new york')
+        embeds = await invoke_cmd_get_embeds(f'timezone set new york')
         await self._assert_public(
             embeds, message, database.get_timezone,
             pytz.timezone('America/New_York')
@@ -432,37 +432,37 @@ class TestDelete:
     async def test_name(
             self, database, message, invoke_as_greg, invoke_cmd_get_embeds
     ):
-        embeds = invoke_cmd_get_embeds('name delete')
+        embeds = await invoke_cmd_get_embeds('name delete')
         await self._assert(embeds, message, database.get_preferred_name)
 
     async def test_pronouns(
             self, database, message, invoke_as_greg, invoke_cmd_get_embeds
     ):
-        embeds = invoke_cmd_get_embeds('pronouns delete')
+        embeds = await invoke_cmd_get_embeds('pronouns delete')
         await self._assert(embeds, message, database.get_pronouns)
 
     async def test_birthday(
             self, database, message, invoke_as_greg, invoke_cmd_get_embeds
     ):
-        embeds = invoke_cmd_get_embeds('birthday delete')
+        embeds = await invoke_cmd_get_embeds('birthday delete')
         await self._assert(embeds, message, database.get_birthday)
 
     async def test_age(
             self, database, message, invoke_as_greg, invoke_cmd_get_embeds
     ):
-        embeds = invoke_cmd_get_embeds('age delete')
+        embeds = await invoke_cmd_get_embeds('age delete')
         assert_error(embeds, 'birthday delete')
 
     async def test_timezone(
             self, database, message, invoke_as_greg, invoke_cmd_get_embeds
     ):
-        embeds = invoke_cmd_get_embeds('timezone delete')
+        embeds = await invoke_cmd_get_embeds('timezone delete')
         await self._assert(embeds, message, database.get_timezone)
 
     async def test_all(
             self, database, message, invoke_as_greg, invoke_cmd_get_embeds
     ):
-        embeds = invoke_cmd_get_embeds('bio delete')
+        embeds = await invoke_cmd_get_embeds('bio delete')
         assert_success(embeds)
         uid = message.author.id
         assert await database.get_preferred_name(uid) is None
