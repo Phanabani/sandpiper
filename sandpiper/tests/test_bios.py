@@ -16,6 +16,8 @@ __all__ = (
     'TestPrivacy', 'TestShow', 'TestSet', 'TestDelete', 'TestWhois'
 )
 
+pytestmark = pytest.mark.asyncio
+
 
 @pytest.fixture()
 async def database() -> DatabaseSQLite:
