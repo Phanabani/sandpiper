@@ -19,7 +19,7 @@ T_DatabaseMethod = Callable[[int], Awaitable[PrivacyType]]
 
 @pytest.fixture()
 async def database() -> DatabaseSQLite:
-    """Create, connect, and patch in a database adapter."""
+    """Create, connect, and patch in a database adapter"""
 
     # Connect to a dummy database
     db = DatabaseSQLite(':memory:')
@@ -37,7 +37,7 @@ async def database() -> DatabaseSQLite:
 
 @pytest.fixture()
 def bot(bot) -> commands.Bot:
-    """Add a Bios cog to a bot and return the cog"""
+    """Add a Bios cog to a bot and return the bot"""
     bios = Bios(bot)
     bot.add_cog(bios)
     return bot
@@ -45,7 +45,7 @@ def bot(bot) -> commands.Bot:
 
 @pytest.fixture()
 async def greg(database, new_id) -> int:
-    """Make a dummy 'Greg' user in the database and return his user ID"""
+    """Make a dummy Greg user in the database and return his user ID"""
     uid = new_id()
     await database.set_preferred_name(uid, 'Greg')
     await database.set_pronouns(uid, 'He/Him')
@@ -56,11 +56,13 @@ async def greg(database, new_id) -> int:
 
 @pytest.fixture()
 async def invoke_as_greg(message, greg):
+    """Create the fake Greg user and set him as the message author"""
     message.author.id = greg
 
 
 @pytest.fixture()
 def apply_new_user_id(new_id, message):
+    """Create a new author ID and set it as the message author"""
     id_ = new_id()
     message.author.id = new_id()
     return id_
@@ -68,6 +70,7 @@ def apply_new_user_id(new_id, message):
 
 @pytest.fixture()
 def send_in_dms(message):
+    """Send the message in DMs (message.guild is None)"""
     # noinspection PyDunderSlots,PyUnresolvedReferences
     message.guild = None
 
