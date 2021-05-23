@@ -56,6 +56,11 @@ async def greg(database, user_id) -> int:
 
 
 @pytest.fixture()
+async def invoke_as_greg(message, greg):
+    message.author.id = greg
+
+
+@pytest.fixture()
 def apply_new_user_id(new_id, message):
     id_ = new_id()
     message.author.id = new_id()
@@ -272,38 +277,34 @@ class TestPrivacy:
 
 class TestShow:
 
-    async def test_show(self):
-        uid = 123
-        self.msg.author.id = uid
-        self.msg.guild = None
+    async def test_name(self, invoke_as_greg, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('name show')
+        assert_info(embeds, 'Greg')
 
-        await self.make_greg(uid)
+    async def test_pronouns(self, invoke_as_greg, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('pronouns show')
+        assert_info(embeds, 'He/Him')
 
-        # Individual
+    async def test_birthday(self, invoke_as_greg, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('birthday show')
+        assert_info(embeds, '2000-02-14')
 
-        embeds = await self.invoke_cmd_get_embeds('name show')
-        self.assert_info(embeds[0], 'Greg')
+    @pytest.mark.skip("Need to patch in some datetime stuff")
+    async def test_age(self, invoke_as_greg, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('age show')
+        assert_info(embeds, 'TODO')
 
-        embeds = await self.invoke_cmd_get_embeds('pronouns show')
-        self.assert_info(embeds[0], 'He/Him')
+    async def test_timezone(self, invoke_as_greg, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('timezone show')
+        assert_info(embeds, 'America/New_York')
 
-        embeds = await self.invoke_cmd_get_embeds('birthday show')
-        self.assert_info(embeds[0], '2000-02-14')
-
-        embeds = await self.invoke_cmd_get_embeds('age show')
-        self.assert_info(embeds[0])
-        self.assertRegex(embeds[0].description, r'\d+')
-
-        embeds = await self.invoke_cmd_get_embeds('timezone show')
-        self.assert_info(embeds[0], 'America/New_York')
-
-        # Batch show
-
-        embeds = await self.invoke_cmd_get_embeds('bio show')
-        self.assert_info(embeds[0], 'Greg')
-        self.assert_info(embeds[0], 'He/Him')
-        self.assert_info(embeds[0], '2000-02-14')
-        self.assert_info(embeds[0], 'America/New_York')
+    @pytest.mark.skip("Need to patch in some datetime stuff")
+    async def test_all(self, invoke_as_greg, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('bio show')
+        assert_info(
+            embeds,
+            'Greg', 'He/Him', '2000-02-14', 'AGE TODO', 'America/New_York'
+        )
 
 
 class TestSet:
