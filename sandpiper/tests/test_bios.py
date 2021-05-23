@@ -345,6 +345,7 @@ class TestSet:
         )
 
     async def test_name_public(self, database, message, invoke_cmd_get_embeds):
+        await database.set_privacy_preferred_name(message.author.id, PrivacyType.PUBLIC)
         embeds = await invoke_cmd_get_embeds(f'name set Greg')
         await self._assert_public(
             embeds, message, database.get_preferred_name, 'Greg'
@@ -364,6 +365,7 @@ class TestSet:
         )
 
     async def test_pronouns_public(self, database, message, invoke_cmd_get_embeds):
+        await database.set_privacy_pronouns(message.author.id, PrivacyType.PUBLIC)
         embeds = await invoke_cmd_get_embeds(f'pronouns set He/Him')
         await self._assert_public(
             embeds, message, database.get_pronouns, 'He/Him'
@@ -384,6 +386,7 @@ class TestSet:
         )
 
     async def test_birthday_public(self, database, message, invoke_cmd_get_embeds):
+        await database.set_privacy_birthday(message.author.id, PrivacyType.PUBLIC)
         embeds = await invoke_cmd_get_embeds(f'birthday set 2000-02-14')
         await self._assert_public(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14)
@@ -407,6 +410,7 @@ class TestSet:
         )
 
     async def test_timezone_public(self, database, message, invoke_cmd_get_embeds):
+        await database.set_privacy_timezone(message.author.id, PrivacyType.PUBLIC)
         embeds = await invoke_cmd_get_embeds(f'timezone set new york')
         await self._assert_public(
             embeds, message, database.get_timezone,
