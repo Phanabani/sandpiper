@@ -18,6 +18,8 @@ __all__ = (
 
 pytestmark = pytest.mark.asyncio
 
+T_DatabaseMethod = Callable[[int], Awaitable[PrivacyType]]
+
 
 @pytest.fixture()
 async def database() -> DatabaseSQLite:
@@ -73,8 +75,7 @@ class TestPrivacy:
     @staticmethod
     async def _assert(
             embeds: list[discord.Embed], message: discord.Message,
-            db_meth: Callable[[int], Awaitable[PrivacyType]],
-            privacy: PrivacyType
+            db_meth: T_DatabaseMethod, privacy: PrivacyType
     ):
         __tracebackhide__ = True
         assert_success(embeds)
@@ -309,47 +310,105 @@ class TestShow:
 
 class TestSet:
 
-    async def test_set(self):
-        uid = 123
-        self.msg.author.id = uid
-        self.msg.guild = None
+    @staticmethod
+    async def _assert_private(
+            embeds: list[discord.Embed], message: discord.Message,
+            db_meth: T_DatabaseMethod, expected_value, privacy_field_name: str
+    ):
+        assert len(embeds) == 2
+        assert_success(embeds[0])
+        assert_warning(embeds[1], f'privacy {privacy_field_name} public')
+        value = await db_meth(message.author.id)
+        assert value == expected_value
 
-        # Success
+    @staticmethod
+    async def _assert_public(
+            embeds: list[discord.Embed], message: discord.Message,
+            db_meth: T_DatabaseMethod, expected_value
+    ):
+        assert len(embeds) == 1
+        assert_success(embeds[0])
+        value = await db_meth(message.author.id)
+        assert value == expected_value
 
-        embeds = await self.invoke_cmd_get_embeds('name set Greg')
-        self.assert_success(embeds[0])
-        self.assert_warning(embeds[1], 'privacy name public')
-        value = await self.db.get_preferred_name(uid)
-        self.assertEqual(value, 'Greg')
+    # region Name
 
-        embeds = await self.invoke_cmd_get_embeds('pronouns set He/Him')
-        self.assert_success(embeds[0])
-        self.assert_warning(embeds[1], 'privacy pronouns public')
-        value = await self.db.get_pronouns(uid)
-        self.assertEqual(value, 'He/Him')
+    async def test_name_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'name set Greg')
+        await self._assert_private(
+            embeds, message, database.get_preferred_name, 'Greg', 'name'
+        )
 
-        embeds = await self.invoke_cmd_get_embeds('birthday set 2000-02-14')
-        self.assert_success(embeds[0])
-        self.assert_warning(embeds[1], 'privacy birthday public')
-        value = await self.db.get_birthday(uid)
-        self.assertEqual(value, dt.date(2000, 2, 14))
+    async def test_name_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'name set Greg')
+        await self._assert_public(
+            embeds, message, database.get_preferred_name, 'Greg'
+        )
 
-        embeds = await self.invoke_cmd_get_embeds('age set 20')
-        self.assert_error(embeds[0])
+    async def test_name_too_long_err(self, invoke_cmd_get_embeds):
+        with pytest.raises(commands.BadArgument, match='64 characters'):
+            await invoke_cmd_get_embeds('name set ' + 'a'*65)
 
-        embeds = await self.invoke_cmd_get_embeds('timezone set new york')
-        self.assert_success(embeds[0])
-        self.assert_warning(embeds[1], 'privacy timezone public')
-        value = await self.db.get_timezone(uid)
-        self.assertEqual(value, pytz.timezone('America/New_York'))
+    # endregion
+    # region Pronouns
 
-        # Errors
+    async def test_pronouns_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'pronouns set He/Him')
+        await self._assert_private(
+            embeds, message, database.get_pronouns, 'He/Him', 'pronouns'
+        )
 
-        with self.assertRaisesRegex(commands.BadArgument, r'64 characters'):
-            await self.invoke_cmd_get_embeds('name set ' + 'a'*65)
+    async def test_pronouns_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'pronouns set He/Him')
+        await self._assert_public(
+            embeds, message, database.get_pronouns, 'He/Him'
+        )
 
-        with self.assertRaisesRegex(commands.BadArgument, r'64 characters'):
-            await self.invoke_cmd_get_embeds('pronouns set ' + 'a'*65)
+    async def test_pronouns_too_long_err(self, invoke_cmd_get_embeds):
+        with pytest.raises(commands.BadArgument, match='64 characters'):
+            await invoke_cmd_get_embeds('pronouns set ' + 'a'*65)
+
+    # endregion
+    # region Birthday
+
+    async def test_birthday_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'birthday set 2000-02-14')
+        await self._assert_private(
+            embeds, message, database.get_birthday, dt.date(2000, 2, 14),
+            'birthday'
+        )
+
+    async def test_birthday_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'birthday set 2000-02-14')
+        await self._assert_public(
+            embeds, message, database.get_birthday, dt.date(2000, 2, 14)
+        )
+
+    # endregion
+    # region Age
+
+    async def test_age(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'age set 20')
+        assert_error(embeds)
+
+    # endregion
+    # region Timezone
+
+    async def test_timezone_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'timezone set new york')
+        await self._assert_private(
+            embeds, message, database.get_timezone,
+            pytz.timezone('America/New_York'), 'timezone'
+        )
+
+    async def test_timezone_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = invoke_cmd_get_embeds(f'timezone set new york')
+        await self._assert_public(
+            embeds, message, database.get_timezone,
+            pytz.timezone('America/New_York')
+        )
+
+    # endregion
 
 
 class TestDelete:
