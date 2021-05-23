@@ -58,7 +58,7 @@ def get_contents(mock_: MagicMock_) -> list[str]:
 # region Embed assertions
 
 
-def assert_success(self, embed: discord.Embed, *substrings: str):
+def assert_success(embed: discord.Embed, *substrings: str):
     """
     Assert ``embed`` is a success embed and that its description contains
     each substring in ``substrings``.
@@ -68,7 +68,7 @@ def assert_success(self, embed: discord.Embed, *substrings: str):
     assert_in(embed.description, *substrings)
 
 
-def assert_warning(self, embed: discord.Embed, *substrings: str):
+def assert_warning(embed: discord.Embed, *substrings: str):
     """
     Assert ``embed`` is a warning embed and that its description contains
     each substring in ``substrings``.
@@ -78,7 +78,7 @@ def assert_warning(self, embed: discord.Embed, *substrings: str):
     assert_in(embed.description, *substrings)
 
 
-def assert_error(self, embed: discord.Embed, *substrings: str):
+def assert_error(embed: discord.Embed, *substrings: str):
     """
     Assert ``embed`` is an error embed and that its description contains
     each substring in ``substrings``.
@@ -88,7 +88,7 @@ def assert_error(self, embed: discord.Embed, *substrings: str):
     assert_in(embed.description, *substrings)
 
 
-def assert_info(self, embed: discord.Embed, *substrings: str):
+def assert_info(embed: discord.Embed, *substrings: str):
     """
     Assert ``embed`` is an info embed and that its description contains
     each substring in ``substrings``.
@@ -103,13 +103,13 @@ def assert_info(self, embed: discord.Embed, *substrings: str):
 # region Misc assertions
 
 
-def assert_no_reply(self, send: mock.Mock) -> NoReturn:
+def assert_no_reply(send: mock.Mock) -> NoReturn:
     """Assert that the bot didn't reply with the `send` mock."""
     __tracebackhide__ = True
     assert not send.called, "Bot replied when it shouldn't have"
 
 
-def assert_in(self, str_: str, *substrings: str) -> NoReturn:
+def assert_in(str_: str, *substrings: str) -> NoReturn:
     """
     Dispatch ``msg`` to the bot and assert that it replies with one
     message and contains each substring in ``substrings``.
@@ -119,7 +119,7 @@ def assert_in(self, str_: str, *substrings: str) -> NoReturn:
         assert substr in str_
 
 
-def assert_regex(self, str_: str, *patterns: str) -> NoReturn:
+def assert_regex(str_: str, *patterns: str) -> NoReturn:
     """
     Dispatch ``msg`` to the bot and assert that it replies with one
     message and matches each regex pattern in ``patterns``.
