@@ -1,3 +1,4 @@
+import discord.ext.commands as commands
 import pytest
 
 from ._helpers import *
