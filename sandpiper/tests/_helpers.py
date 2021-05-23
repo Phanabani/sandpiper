@@ -1,5 +1,5 @@
 import re
-from typing import Any, NoReturn, Optional, Union
+from typing import Any, NoReturn, Optional, TypeVar, Union
 import unittest.mock as mock
 
 import discord
@@ -10,6 +10,8 @@ __all__ = (
     'assert_success', 'assert_warning', 'assert_error', 'assert_info',
     'assert_no_reply', 'assert_one_if_list', 'assert_in', 'assert_regex'
 )
+
+V = TypeVar('V')
 
 
 # region Misc helper functions
@@ -66,7 +68,7 @@ def assert_success(
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
-    assert_one_if_list(embed)
+    embed = assert_one_if_list(embed)
     assert 'Success' in embed.title
     assert_in(embed.description, *substrings)
 
@@ -79,7 +81,7 @@ def assert_warning(
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
-    assert_one_if_list(embed)
+    embed = assert_one_if_list(embed)
     assert 'Warning' in embed.title
     assert_in(embed.description, *substrings)
 
@@ -92,7 +94,7 @@ def assert_error(
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
-    assert_one_if_list(embed)
+    embed = assert_one_if_list(embed)
     assert 'Error' in embed.title
     assert_in(embed.description, *substrings)
 
@@ -105,7 +107,7 @@ def assert_info(
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
-    assert_one_if_list(embed)
+    embed = assert_one_if_list(embed)
     assert 'Info' in embed.title
     assert_in(embed.description, *substrings)
 
@@ -121,10 +123,12 @@ def assert_no_reply(send: mock.Mock) -> NoReturn:
     assert not send.called, "Bot replied when it shouldn't have"
 
 
-def assert_one_if_list(x: Union[list, Any]):
+def assert_one_if_list(x: Union[list[V], V]) -> V:
     __tracebackhide__ = True
     if isinstance(x, list):
         assert len(x) == 1, f"Expected only one item in list, got {len(x)}"
+        return x[0]
+    return x
 
 
 def assert_in(str_: str, *substrings: str) -> NoReturn:
