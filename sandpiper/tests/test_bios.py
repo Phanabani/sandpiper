@@ -66,6 +66,12 @@ def apply_new_user_id(new_id, message):
     return id_
 
 
+@pytest.fixture()
+def send_in_dms(message):
+    # noinspection PyDunderSlots,PyUnresolvedReferences
+    message.guild = None
+
+
 @pytest.mark.usefixtures('apply_new_user_id')
 class TestPrivacy:
 
@@ -273,6 +279,7 @@ class TestPrivacy:
     # endregion
 
 
+@pytest.mark.usefixtures('send_in_dms')
 class TestShow:
 
     async def test_name(self, invoke_as_greg, invoke_cmd_get_embeds):
@@ -305,6 +312,7 @@ class TestShow:
         )
 
 
+@pytest.mark.usefixtures('send_in_dms')
 class TestSet:
 
     @staticmethod
@@ -408,6 +416,7 @@ class TestSet:
     # endregion
 
 
+@pytest.mark.usefixtures('send_in_dms')
 class TestDelete:
 
     @staticmethod
