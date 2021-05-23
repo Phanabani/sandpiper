@@ -1,10 +1,13 @@
+from collections.abc import Callable, Coroutine
 import datetime as dt
 import unittest.mock as mock
 
+import discord
 import discord.ext.commands as commands
 import pytest
 import pytz
 
+from ._helpers import *
 from sandpiper.bios import Bios
 from sandpiper.user_data.database_sqlite import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
@@ -41,9 +44,8 @@ def bios_bot(bot) -> Bios:
 
 
 @pytest.fixture()
-async def greg(database) -> int:
+async def greg(database, user_id) -> int:
     """Make a dummy 'Greg' user in the database and return his user ID"""
-    user_id = 1
     await database.set_preferred_name(user_id, 'Greg')
     await database.set_pronouns(user_id, 'He/Him')
     await database.set_birthday(user_id, dt.date(2000, 2, 14))
@@ -51,59 +53,112 @@ async def greg(database) -> int:
     return user_id
 
 
+@pytest.fixture()
+def apply_new_user_id(new_id, message):
+    id_ = new_id()
+    message.author.id = new_id()
+    return id_
+
+
+@pytest.mark.usefixtures('apply_new_user_id')
 class TestPrivacy:
 
-    async def test_privacy(self):
-        uid = 123
-        self.msg.author.id = uid
+    @staticmethod
+    async def _assert(
+            embeds: list[discord.Embed], message: discord.Message,
+            db_meth: Callable[[int], Coroutine], privacy: PrivacyType
+    ):
+        __tracebackhide__ = True
+        assert len(embeds) == 1
+        assert_success(embeds[0])
+        new_privacy = await db_meth(message.author.id)
+        assert new_privacy is privacy
 
-        async def assert_all_privacies(privacy: PrivacyType):
-            name = await self.db.get_privacy_preferred_name(uid)
-            pronouns = await self.db.get_privacy_pronouns(uid)
-            birthday = await self.db.get_privacy_birthday(uid)
-            age = await self.db.get_privacy_age(uid)
-            timezone = await self.db.get_privacy_timezone(uid)
-            self.assertEqual(name, privacy)
-            self.assertEqual(pronouns, privacy)
-            self.assertEqual(birthday, privacy)
-            self.assertEqual(age, privacy)
-            self.assertEqual(timezone, privacy)
+    async def test_name_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy name public')
+        await self._assert(
+            embeds, message, database.get_privacy_preferred_name,
+            PrivacyType.PUBLIC
+        )
 
-        # Individual
+    async def test_name_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy name public')
+        await self._assert(
+            embeds, message, database.get_privacy_preferred_name,
+            PrivacyType.PRIVATE
+        )
 
-        embeds = await self.invoke_cmd_get_embeds('privacy name public')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy pronouns public')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy birthday public')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy age public')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy timezone public')
-        self.assert_success(embeds[0])
-        await assert_all_privacies(PrivacyType.PUBLIC)
+    async def test_pronouns_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy pronouns public')
+        await self._assert(
+            embeds, message, database.get_privacy_pronouns, PrivacyType.PUBLIC
+        )
 
-        embeds = await self.invoke_cmd_get_embeds('privacy name private')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy pronouns private')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy birthday private')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy age private')
-        self.assert_success(embeds[0])
-        embeds = await self.invoke_cmd_get_embeds('privacy timezone private')
-        self.assert_success(embeds[0])
-        await assert_all_privacies(PrivacyType.PRIVATE)
+    async def test_pronouns_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy pronouns public')
+        await self._assert(
+            embeds, message, database.get_privacy_pronouns, PrivacyType.PRIVATE
+        )
 
-        # Batch set
+    async def test_birthday_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy birthday public')
+        await self._assert(
+            embeds, message, database.get_privacy_birthday, PrivacyType.PUBLIC
+        )
 
-        embeds = await self.invoke_cmd_get_embeds('privacy all public')
-        self.assert_success(embeds[0])
-        await assert_all_privacies(PrivacyType.PUBLIC)
+    async def test_birthday_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy birthday public')
+        await self._assert(
+            embeds, message, database.get_privacy_birthday, PrivacyType.PRIVATE
+        )
 
-        embeds = await self.invoke_cmd_get_embeds('privacy all private')
-        self.assert_success(embeds[0])
-        await assert_all_privacies(PrivacyType.PRIVATE)
+    async def test_age_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy age public')
+        await self._assert(
+            embeds, message, database.get_privacy_age, PrivacyType.PUBLIC
+        )
+
+    async def test_age_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy age public')
+        await self._assert(
+            embeds, message, database.get_privacy_age, PrivacyType.PRIVATE
+        )
+
+    async def test_timezone_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy timezone public')
+        await self._assert(
+            embeds, message, database.get_privacy_timezone, PrivacyType.PUBLIC
+        )
+
+    async def test_timezone_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy timezone public')
+        await self._assert(
+            embeds, message, database.get_privacy_timezone, PrivacyType.PRIVATE
+        )
+
+    async def test_all_public(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy all public')
+        assert len(embeds) == 1
+        assert_success(embeds[0])
+
+        uid = message.author.id
+        assert await database.get_privacy_preferred_name(uid) is PrivacyType.PUBLIC
+        assert await database.get_privacy_pronouns(uid) is PrivacyType.PUBLIC
+        assert await database.get_privacy_birthday(uid) is PrivacyType.PUBLIC
+        assert await database.get_privacy_age(uid) is PrivacyType.PUBLIC
+        assert await database.get_privacy_timezone(uid) is PrivacyType.PUBLIC
+
+    async def test_all_private(self, database, message, invoke_cmd_get_embeds):
+        embeds = await invoke_cmd_get_embeds('privacy all private')
+        assert len(embeds) == 1
+        assert_success(embeds[0])
+
+        uid = message.author.id
+        assert await database.get_privacy_preferred_name(uid) is PrivacyType.PRIVATE
+        assert await database.get_privacy_pronouns(uid) is PrivacyType.PRIVATE
+        assert await database.get_privacy_birthday(uid) is PrivacyType.PRIVATE
+        assert await database.get_privacy_age(uid) is PrivacyType.PRIVATE
+        assert await database.get_privacy_timezone(uid) is PrivacyType.PRIVATE
 
 
 class TestShow:
