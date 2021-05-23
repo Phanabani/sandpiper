@@ -312,7 +312,7 @@ class TestShow:
         )
 
 
-@pytest.mark.usefixtures('send_in_dms')
+@pytest.mark.usefixtures('send_in_dms', 'apply_new_user_id')
 class TestSet:
 
     @staticmethod
