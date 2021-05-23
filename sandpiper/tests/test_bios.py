@@ -1,5 +1,6 @@
 from collections.abc import Awaitable, Callable
 import datetime as dt
+from typing import Optional
 import unittest.mock as mock
 
 import discord
@@ -481,163 +482,154 @@ class TestDelete:
 
 class TestWhois:
 
+    @pytest.fixture()
+    def user_factory(self, database, make_user, add_user_to_guild):
+        async def f(
+                guild_id: int, user_id: int, username: str, display_name: str,
+                preferred_name: Optional[str] = None,
+                privacy_preferred_name: Optional[PrivacyType] = None,
+                pronouns: Optional[str] = None,
+                privacy_pronouns: Optional[PrivacyType] = None
+        ) -> discord.User:
+            user = make_user(id_=user_id, name=username)
+            add_user_to_guild(guild_id, user.id, display_name)
+
+            if preferred_name is not None:
+                await database.set_preferred_name(user.id, preferred_name)
+            if privacy_preferred_name is not None:
+                await database.set_privacy_preferred_name(
+                    user.id, privacy_preferred_name
+                )
+
+            if pronouns is not None:
+                await database.set_pronouns(user.id, pronouns)
+            if privacy_pronouns is not None:
+                await database.set_privacy_pronouns(user.id, privacy_pronouns)
+
+            return user
+
+        return f
+
     # noinspection DuplicatedCode
-    async def test_whois(self):
-
-        db = self.db
-
-        # Guild 0
+    async def test_main(
+            self, new_id, make_guild, add_user_to_guild, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
         # Should be visible in guild and DMs
+        guild0 = make_guild(0)
 
-        self.add_guild(0)
+        u_executor = await user_factory(
+            guild0.id, 1000, 'Executor', '_executor_'
+        )
+        u_username = await user_factory(
+            guild0.id, 1001, 'Greg', '_blank_', '*Blank*', PrivacyType.PUBLIC
+        )
+        u_displayname = await user_factory(
+            guild0.id, 1002, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
+        )
+        u_preferred_name = await user_factory(
+            guild0.id, 1003, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC
+        )
+        u_constrained_to_guild = await user_factory(
+            guild0.id, 1004, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
+        )
+        u_pronouns = await user_factory(
+            guild0.id, 1005, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC,
+            'He/Him', PrivacyType.PUBLIC
+        )
+        u_no_preferred_name = await user_factory(
+            guild0.id, 1006, 'Greg', '_blank_', None, PrivacyType.PRIVATE,
+        )
 
-        executor = self.add_user(0, 'Executor')
-        self.add_user_to_guild(0, 0, '_executor_'),
-
-        # Test username
-        self.add_user(1001, 'Greg')
-        self.add_user_to_guild(0, 1001, '_blank_'),
-        await db.set_preferred_name(1001, '*Blank*')
-        await db.set_privacy_preferred_name(1001, PrivacyType.PUBLIC)
-
-        # Test display name
-        self.add_user(1002, 'Blank')
-        self.add_user_to_guild(0, 1002, '_greg_'),
-        await db.set_preferred_name(1002, '*Blank*')
-        await db.set_privacy_preferred_name(1002, PrivacyType.PUBLIC)
-
-        # Test preferred name
-        self.add_user(1003, 'Blank')
-        self.add_user_to_guild(0, 1003, '_blank_'),
-        await db.set_preferred_name(1003, '*Greg*')
-        await db.set_privacy_preferred_name(1003, PrivacyType.PUBLIC)
-
-        # Test display name constriction to guild
-        self.add_user(1004, 'Blank')
-        self.add_user_to_guild(0, 1004, '_greg_'),
-        await db.set_preferred_name(1004, '*Blank*')
-        await db.set_privacy_preferred_name(1004, PrivacyType.PUBLIC)
-
-        # Test pronouns
-        self.add_user(1005, 'Blank')
-        self.add_user_to_guild(0, 1005, '_blank_'),
-        await db.set_preferred_name(1005, '*Greg*')
-        await db.set_privacy_preferred_name(1005, PrivacyType.PUBLIC)
-        await db.set_pronouns(1005, 'He/Him')
-        await db.set_privacy_pronouns(1005, PrivacyType.PUBLIC)
-
-        # Test lack of preferred name
-        self.add_user(1006, 'Greg')
-        self.add_user_to_guild(0, 1006, '_blank_'),
-        await db.set_preferred_name(1006, None)
-        await db.set_privacy_preferred_name(1006, PrivacyType.PRIVATE)
-
-        # Guild 1
         # Should only be visible in DMs
+        guild1 = make_guild(1)
 
-        self.add_guild(1)
-
-        self.add_user_to_guild(1, 0, '_executor_'),
+        add_user_to_guild(guild1.id, u_executor.id, '_executor_'),
         # Test duplicate removal
-        self.add_user_to_guild(1, 1001, '_GregDuplicate_'),
+        add_user_to_guild(guild1.id, u_username.id, '_GregDuplicate_'),
         # Test display names from multiple guilds
-        self.add_user_to_guild(1, 1004, '_extra_nickname_'),
+        add_user_to_guild(guild1.id, u_constrained_to_guild.id, '_extra_nickname_'),
 
-        # Test username
-        self.add_user(2001, 'GuildHiddenGreg')
-        self.add_user_to_guild(1, 2001, '_blank_'),
-        await db.set_preferred_name(2001, '*Blank*')
-        await db.set_privacy_preferred_name(2001, PrivacyType.PUBLIC)
+        u_username1 = await user_factory(
+            guild1.id, 2001, 'GuildHiddenGreg', '_blank_', '*Blank*',
+            PrivacyType.PUBLIC
+        )
+        u_displayname1 = await user_factory(
+            guild1.id, 2002, 'Blank', '_guildhiddengreg_', '*Blank*',
+            PrivacyType.PUBLIC
+        )
+        u_preferred_name1 = await user_factory(
+            guild1.id, 2003, 'Blank', '_blank_', '*GuildHiddenGreg*',
+            PrivacyType.PUBLIC
+        )
 
-        # Test display name
-        self.add_user(2002, 'Blank')
-        self.add_user_to_guild(1, 2002, '_guildhiddengreg_'),
-        await db.set_preferred_name(2002, '*Blank*')
-        await db.set_privacy_preferred_name(2002, PrivacyType.PUBLIC)
-
-        # Test preferred name
-        self.add_user(2003, 'Blank')
-        self.add_user_to_guild(1, 2003, '_blank_'),
-        await db.set_preferred_name(2003, '*GuildHiddenGreg*')
-        await db.set_privacy_preferred_name(2003, PrivacyType.PUBLIC)
-
-        # Guild 2
         # Should be totally hidden
+        guild2 = make_guild(2)
 
-        self.add_guild(2)
+        u_username2 = await user_factory(
+            guild2.id, 3001, 'TotallyHiddenGreg', '_blank_', '*Blank*',
+            PrivacyType.PUBLIC
+        )
+        u_displayname2 = await user_factory(
+            guild2.id, 3002, 'Blank', '_totallyhiddengreg_', '*Blank*',
+            PrivacyType.PUBLIC
+        )
+        u_preferred_name2 = await user_factory(
+            guild2.id, 3003, 'Blank', '_blank_', '*TotallyHiddenGreg*',
+            PrivacyType.PUBLIC
+        )
 
-        # Test username
-        self.add_user(3001, 'TotallyHiddenGreg')
-        self.add_user_to_guild(2, 3001, '_blank_'),
-        await db.set_preferred_name(3001, '*Blank*')
-        await db.set_privacy_preferred_name(3001, PrivacyType.PUBLIC)
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        message.guild = guild0
+        message.author = u_executor
 
-        # Test display name
-        self.add_user(3002, 'Blank')
-        self.add_user_to_guild(2, 3002, '_totallyhiddengreg_'),
-        await db.set_preferred_name(3002, '*Blank*')
-        await db.set_privacy_preferred_name(3002, PrivacyType.PUBLIC)
-
-        # Test preferred name
-        self.add_user(3003, 'Blank')
-        self.add_user_to_guild(2, 3003, '_blank_'),
-        await db.set_preferred_name(3003, '*TotallyHiddenGreg*')
-        await db.set_privacy_preferred_name(3003, PrivacyType.PUBLIC)
-
-        # Finish setup
-
-        self.msg.author = executor
-
-        # Invoke in a guild
-
-        self.msg.guild = self.guilds_map[0]
-
-        embeds = await self.invoke_cmd_get_embeds("whois greg")
-        self.assert_info(embeds[0])
+        embeds = await invoke_cmd_get_embeds("whois greg")
+        assert_info(embeds[0])
         desc: str = embeds[0].description
-        self.assertIn("*Blank* • Greg#1001 • _blank_", desc)
-        self.assertIn("*Blank* • Blank#1002 • _greg_", desc)
-        self.assertIn("*Greg* • Blank#1003 • _blank_", desc)
-        self.assertIn("*Blank* • Blank#1004 • _greg_", desc)
-        self.assertIn("*Greg* (He/Him) • Blank#1005 • _blank_", desc)
-        self.assertIn("`No preferred name` • Greg#1006 • _blank_", desc)
+        assert "*Blank* • Greg#1001 • _blank_" in desc
+        assert "*Blank* • Blank#1002 • _greg_" in desc
+        assert "*Greg* • Blank#1003 • _blank_" in desc
+        assert "*Blank* • Blank#1004 • _greg_" in desc
+        assert "*Greg* (He/Him) • Blank#1005 • _blank_" in desc
+        assert "`No preferred name` • Greg#1006 • _blank_" in desc
 
-        self.assertNotIn("_extra_nickname_", desc)
-        self.assertNotIn("GuildHiddenGreg#2001", desc)
-        self.assertNotIn("Blank#2002", desc)
-        self.assertNotIn("Blank#2003", desc)
+        assert "_extra_nickname_" not in desc
+        assert "GuildHiddenGreg#2001" not in desc
+        assert "Blank#2002" not in desc
+        assert "Blank#2003" not in desc
 
-        self.assertNotIn("TotallyHiddenGreg#3001", desc)
-        self.assertNotIn("Blank#3002", desc)
-        self.assertNotIn("Blank#3003", desc)
+        assert "TotallyHiddenGreg#3001" not in desc
+        assert "Blank#3002" not in desc
+        assert "Blank#3003" not in desc
 
         # Invoke in DMs
 
-        self.msg.guild = None
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        message.guild = None
 
-        embeds = await self.invoke_cmd_get_embeds('whois greg')
-        self.assert_info(embeds[0])
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds[0])
         desc: str = embeds[0].description
-        self.assertIn("*Greg* • Blank#1003 • _blank_", desc)
-        self.assertIn("*Greg* (He/Him) • Blank#1005 • _blank_", desc)
-        self.assertIn("*Blank* • Greg#1001 • _blank_", desc)
-        self.assertEqual(desc.count('Greg#1001'), 1)
-        self.assertIn("*Blank* • Blank#1002 • _greg_", desc)
-        self.assertIn("*Blank* • Blank#1004 • _greg_, _extra_nickname_", desc)
-        self.assertIn("`No preferred name` • Greg#1006 • _blank_", desc)
+        assert "*Greg* • Blank#1003 • _blank_" in desc
+        assert "*Greg* (He/Him) • Blank#1005 • _blank_" in desc
+        assert "*Blank* • Greg#1001 • _blank_" in desc
+        assert desc.count('Greg#1001') == 1
+        assert "*Blank* • Blank#1002 • _greg_" in desc
+        assert "*Blank* • Blank#1004 • _greg_, _extra_nickname_" in desc
+        assert "`No preferred name` • Greg#1006 • _blank_" in desc
 
-        self.assertIn("*Blank* • GuildHiddenGreg#2001 • _blank_", desc)
-        self.assertIn("*Blank* • Blank#2002 • _guildhiddengreg_", desc)
-        self.assertIn("*GuildHiddenGreg* • Blank#2003 • _blank_", desc)
+        assert "*Blank* • GuildHiddenGreg#2001 • _blank_" in desc
+        assert "*Blank* • Blank#2002 • _guildhiddengreg_" in desc
+        assert "*GuildHiddenGreg* • Blank#2003 • _blank_" in desc
 
-        self.assertNotIn("TotallyHiddenGreg#3001", desc)
-        self.assertNotIn("Blank#3002", desc)
-        self.assertNotIn("Blank#3003", desc)
+        assert "TotallyHiddenGreg#3001" not in desc
+        assert "Blank#3002" not in desc
+        assert "Blank#3003" not in desc
 
         # Erroring commands
 
-        embeds = await self.invoke_cmd_get_embeds("whois gregothy")
-        self.assert_error(embeds[0], "No users")
+        embeds = await invoke_cmd_get_embeds("whois gregothy")
+        assert_error(embeds[0], "No users")
 
-        with self.assertRaises(commands.BadArgument):
-            await self.invoke_cmd_get_embeds("whois e")
+        with pytest.raises(commands.BadArgument):
+            await invoke_cmd_get_embeds("whois e")
