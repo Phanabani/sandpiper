@@ -125,7 +125,6 @@ def assert_regex(self, str_: str, *patterns: str) -> NoReturn:
     message and matches each regex pattern in ``patterns``.
     """
     __tracebackhide__ = True
-    str_ = await self.dispatch_msg_get_contents(str_, only_one=True)
     for pattern in patterns:
         assert re.match(pattern, str_), (
             f'Pattern "{pattern}" did not match "{str_}"'
