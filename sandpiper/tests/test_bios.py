@@ -1,4 +1,4 @@
-from collections.abc import Callable, Coroutine
+from collections.abc import Awaitable, Callable
 import datetime as dt
 import unittest.mock as mock
 
@@ -66,13 +66,28 @@ class TestPrivacy:
     @staticmethod
     async def _assert(
             embeds: list[discord.Embed], message: discord.Message,
-            db_meth: Callable[[int], Coroutine], privacy: PrivacyType
+            db_meth: Callable[[int], Awaitable[PrivacyType]],
+            privacy: PrivacyType
     ):
         __tracebackhide__ = True
         assert len(embeds) == 1
         assert_success(embeds[0])
-        new_privacy = await db_meth(message.author.id)
-        assert new_privacy is privacy
+        assert await db_meth(message.author.id) is privacy
+
+    @staticmethod
+    async def _assert_all(
+            embeds: list[discord.Embed], message: discord.Message,
+            db: DatabaseSQLite, privacy: PrivacyType
+    ):
+        __tracebackhide__ = True
+        assert len(embeds) == 1
+        assert_success(embeds[0])
+        uid = message.author.id
+        assert await db.get_privacy_preferred_name(uid) is privacy
+        assert await db.get_privacy_pronouns(uid) is privacy
+        assert await db.get_privacy_birthday(uid) is privacy
+        assert await db.get_privacy_age(uid) is privacy
+        assert await db.get_privacy_timezone(uid) is privacy
 
     async def test_name_public(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy name public')
@@ -138,27 +153,11 @@ class TestPrivacy:
 
     async def test_all_public(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy all public')
-        assert len(embeds) == 1
-        assert_success(embeds[0])
-
-        uid = message.author.id
-        assert await database.get_privacy_preferred_name(uid) is PrivacyType.PUBLIC
-        assert await database.get_privacy_pronouns(uid) is PrivacyType.PUBLIC
-        assert await database.get_privacy_birthday(uid) is PrivacyType.PUBLIC
-        assert await database.get_privacy_age(uid) is PrivacyType.PUBLIC
-        assert await database.get_privacy_timezone(uid) is PrivacyType.PUBLIC
+        await self._assert_all(embeds, message, database, PrivacyType.PUBLIC)
 
     async def test_all_private(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy all private')
-        assert len(embeds) == 1
-        assert_success(embeds[0])
-
-        uid = message.author.id
-        assert await database.get_privacy_preferred_name(uid) is PrivacyType.PRIVATE
-        assert await database.get_privacy_pronouns(uid) is PrivacyType.PRIVATE
-        assert await database.get_privacy_birthday(uid) is PrivacyType.PRIVATE
-        assert await database.get_privacy_age(uid) is PrivacyType.PRIVATE
-        assert await database.get_privacy_timezone(uid) is PrivacyType.PRIVATE
+        await self._assert_all(embeds, message, database, PrivacyType.PRIVATE)
 
 
 class TestShow:
