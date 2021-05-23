@@ -12,10 +12,6 @@ from sandpiper.bios import Bios
 from sandpiper.user_data.database_sqlite import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = (
-    'TestPrivacy', 'TestShow', 'TestSet', 'TestDelete', 'TestWhois'
-)
-
 pytestmark = pytest.mark.asyncio
 
 T_DatabaseMethod = Callable[[int], Awaitable[PrivacyType]]
@@ -40,11 +36,11 @@ async def database() -> DatabaseSQLite:
 
 
 @pytest.fixture()
-def bios_bot(bot) -> Bios:
+def bot(bot) -> commands.Bot:
     """Add a Bios cog to a bot and return the cog"""
     bios = Bios(bot)
     bot.add_cog(bios)
-    return bios
+    return bot
 
 
 @pytest.fixture()
