@@ -350,7 +350,7 @@ class TestSet:
             embeds, message, database.get_preferred_name, 'Greg'
         )
 
-    async def test_name_too_long_err(self, invoke_cmd_get_embeds):
+    async def test_name_too_long_err(self, database, invoke_cmd_get_embeds):
         with pytest.raises(commands.BadArgument, match='64 characters'):
             await invoke_cmd_get_embeds('name set ' + 'a'*65)
 
@@ -369,7 +369,7 @@ class TestSet:
             embeds, message, database.get_pronouns, 'He/Him'
         )
 
-    async def test_pronouns_too_long_err(self, invoke_cmd_get_embeds):
+    async def test_pronouns_too_long_err(self, database, invoke_cmd_get_embeds):
         with pytest.raises(commands.BadArgument, match='64 characters'):
             await invoke_cmd_get_embeds('pronouns set ' + 'a'*65)
 
