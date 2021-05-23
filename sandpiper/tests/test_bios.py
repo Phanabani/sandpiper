@@ -70,8 +70,7 @@ class TestPrivacy:
             privacy: PrivacyType
     ):
         __tracebackhide__ = True
-        assert len(embeds) == 1
-        assert_success(embeds[0])
+        assert_success(embeds)
         assert await db_meth(message.author.id) is privacy
 
     @staticmethod
@@ -80,8 +79,7 @@ class TestPrivacy:
             db: DatabaseSQLite, privacy: PrivacyType
     ):
         __tracebackhide__ = True
-        assert len(embeds) == 1
-        assert_success(embeds[0])
+        assert_success(embeds)
         uid = message.author.id
         assert await db.get_privacy_preferred_name(uid) is privacy
         assert await db.get_privacy_pronouns(uid) is privacy

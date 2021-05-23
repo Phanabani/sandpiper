@@ -1,5 +1,5 @@
 import re
-from typing import NoReturn, Optional
+from typing import Any, NoReturn, Optional, Union
 import unittest.mock as mock
 
 import discord
@@ -8,7 +8,7 @@ __all__ = (
     'MagicMock_',
     'get_embeds', 'get_contents',
     'assert_success', 'assert_warning', 'assert_error', 'assert_info',
-    'assert_no_reply', 'assert_in', 'assert_regex'
+    'assert_no_reply', 'assert_one_if_list', 'assert_in', 'assert_regex'
 )
 
 
@@ -58,42 +58,54 @@ def get_contents(mock_: MagicMock_) -> list[str]:
 # region Embed assertions
 
 
-def assert_success(embed: discord.Embed, *substrings: str):
+def assert_success(
+        embed: Union[discord.Embed, list[discord.Embed]], *substrings: str
+):
     """
     Assert ``embed`` is a success embed and that its description contains
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
+    assert_one_if_list(embed)
     assert 'Success' in embed.title
     assert_in(embed.description, *substrings)
 
 
-def assert_warning(embed: discord.Embed, *substrings: str):
+def assert_warning(
+        embed: Union[discord.Embed, list[discord.Embed]], *substrings: str
+):
     """
     Assert ``embed`` is a warning embed and that its description contains
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
+    assert_one_if_list(embed)
     assert 'Warning' in embed.title
     assert_in(embed.description, *substrings)
 
 
-def assert_error(embed: discord.Embed, *substrings: str):
+def assert_error(
+        embed: Union[discord.Embed, list[discord.Embed]], *substrings: str
+):
     """
     Assert ``embed`` is an error embed and that its description contains
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
+    assert_one_if_list(embed)
     assert 'Error' in embed.title
     assert_in(embed.description, *substrings)
 
 
-def assert_info(embed: discord.Embed, *substrings: str):
+def assert_info(
+        embed: Union[discord.Embed, list[discord.Embed]], *substrings: str
+):
     """
     Assert ``embed`` is an info embed and that its description contains
     each substring in ``substrings``.
     """
     __tracebackhide__ = True
+    assert_one_if_list(embed)
     assert 'Info' in embed.title
     assert_in(embed.description, *substrings)
 
@@ -107,6 +119,12 @@ def assert_no_reply(send: mock.Mock) -> NoReturn:
     """Assert that the bot didn't reply with the `send` mock."""
     __tracebackhide__ = True
     assert not send.called, "Bot replied when it shouldn't have"
+
+
+def assert_one_if_list(x: Union[list, Any]):
+    __tracebackhide__ = True
+    if isinstance(x, list):
+        assert len(x) == 1, f"Expected only one item in list, got {len(x)}"
 
 
 def assert_in(str_: str, *substrings: str) -> NoReturn:
