@@ -483,16 +483,17 @@ class TestDelete:
 class TestWhois:
 
     @pytest.fixture()
-    def user_factory(self, database, make_user, add_user_to_guild):
+    def user_factory(self, database, new_id, make_user, add_user_to_guild):
         async def f(
-                guild_id: int, user_id: int, username: str, display_name: str,
+                guild: discord.Guild,
+                discriminator: int, username: str, display_name: str,
                 preferred_name: Optional[str] = None,
                 privacy_preferred_name: Optional[PrivacyType] = None,
                 pronouns: Optional[str] = None,
                 privacy_pronouns: Optional[PrivacyType] = None
         ) -> discord.User:
-            user = make_user(id_=user_id, name=username)
-            add_user_to_guild(guild_id, user.id, display_name)
+            user = make_user(new_id(), username, discriminator)
+            add_user_to_guild(guild.id, user.id, display_name)
 
             if preferred_name is not None:
                 await database.set_preferred_name(user.id, preferred_name)
@@ -510,6 +511,66 @@ class TestWhois:
 
         return f
 
+    @pytest.fixture()
+    def make_executor(self, user_factory, message):
+        async def f(guild: discord.Guild) -> discord.User:
+            u = await user_factory(guild, 1000, 'Executor', '_executor_')
+            message.author = u
+            # noinspection PyDunderSlots,PyUnresolvedReferences
+            message.guild = guild
+            return u
+        return f
+
+    async def test_username(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        other_user = await user_factory(
+            guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*'
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, 'Greg#1001')
+
+    async def test_displayname(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        other_user = await user_factory(
+            guild, 1001, 'NoUser', '_Greg_', '*NoPreferred*'
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, '_Greg_')
+
+    async def test_preferred_name_private(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        other_user = await user_factory(
+            guild, 1001, 'Greg', '_NoDisplay_', '*Greg*'
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, 'Greg#1001')
+        assert '*Greg*' not in embeds[0].description
+
+    async def test_preferred_name_public(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds, database
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        other_user = await user_factory(
+            guild, 1001, 'NoUser', '_Greg_', '*NoPreferred*'
+        )
+        await database.set_privacy_preferred_name(other_user.id, PrivacyType.PUBLIC)
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, '_Greg_')
+
     # noinspection DuplicatedCode
     async def test_main(
             self, new_id, make_guild, add_user_to_guild, user_factory, message,
@@ -519,26 +580,26 @@ class TestWhois:
         guild0 = make_guild(0)
 
         u_executor = await user_factory(
-            guild0.id, 1000, 'Executor', '_executor_'
+            guild0, 1000, 'Executor', '_executor_'
         )
         u_username = await user_factory(
-            guild0.id, 1001, 'Greg', '_blank_', '*Blank*', PrivacyType.PUBLIC
+            guild0, 1001, 'Greg', '_blank_', '*Blank*', PrivacyType.PUBLIC
         )
         u_displayname = await user_factory(
-            guild0.id, 1002, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
+            guild0, 1002, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
         )
         u_preferred_name = await user_factory(
-            guild0.id, 1003, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC
+            guild0, 1003, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC
         )
         u_constrained_to_guild = await user_factory(
-            guild0.id, 1004, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
+            guild0, 1004, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
         )
         u_pronouns = await user_factory(
-            guild0.id, 1005, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC,
+            guild0, 1005, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC,
             'He/Him', PrivacyType.PUBLIC
         )
         u_no_preferred_name = await user_factory(
-            guild0.id, 1006, 'Greg', '_blank_', None, PrivacyType.PRIVATE,
+            guild0, 1006, 'Greg', '_blank_', None, PrivacyType.PRIVATE,
         )
 
         # Should only be visible in DMs
@@ -551,15 +612,15 @@ class TestWhois:
         add_user_to_guild(guild1.id, u_constrained_to_guild.id, '_extra_nickname_'),
 
         u_username1 = await user_factory(
-            guild1.id, 2001, 'GuildHiddenGreg', '_blank_', '*Blank*',
+            guild1, 2001, 'GuildHiddenGreg', '_blank_', '*Blank*',
             PrivacyType.PUBLIC
         )
         u_displayname1 = await user_factory(
-            guild1.id, 2002, 'Blank', '_guildhiddengreg_', '*Blank*',
+            guild1, 2002, 'Blank', '_guildhiddengreg_', '*Blank*',
             PrivacyType.PUBLIC
         )
         u_preferred_name1 = await user_factory(
-            guild1.id, 2003, 'Blank', '_blank_', '*GuildHiddenGreg*',
+            guild1, 2003, 'Blank', '_blank_', '*GuildHiddenGreg*',
             PrivacyType.PUBLIC
         )
 
@@ -567,15 +628,15 @@ class TestWhois:
         guild2 = make_guild(2)
 
         u_username2 = await user_factory(
-            guild2.id, 3001, 'TotallyHiddenGreg', '_blank_', '*Blank*',
+            guild2, 3001, 'TotallyHiddenGreg', '_blank_', '*Blank*',
             PrivacyType.PUBLIC
         )
         u_displayname2 = await user_factory(
-            guild2.id, 3002, 'Blank', '_totallyhiddengreg_', '*Blank*',
+            guild2, 3002, 'Blank', '_totallyhiddengreg_', '*Blank*',
             PrivacyType.PUBLIC
         )
         u_preferred_name2 = await user_factory(
-            guild2.id, 3003, 'Blank', '_blank_', '*TotallyHiddenGreg*',
+            guild2, 3003, 'Blank', '_blank_', '*TotallyHiddenGreg*',
             PrivacyType.PUBLIC
         )
 
