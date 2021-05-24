@@ -21,10 +21,11 @@ __all__ = (
 CONNECTION = ':memory:'
 
 
-class TestImperialShorthandRegex(unittest.TestCase):
+class TestImperialShorthandRegex:
 
-    def assert_match(
-            self, test_str: str, foot: Optional[Union[int, float]],
+    @staticmethod
+    def _assert(
+            test_str: str, foot: Optional[Union[int, float]],
             inch: Optional[Union[int, float]]
     ):
         __tracebackhide__ = True
@@ -45,50 +46,51 @@ class TestImperialShorthandRegex(unittest.TestCase):
             assert match_inch == inch
 
     def test_int_feet(self):
-        self.assert_match("1'", 1, None)
-        self.assert_match("23'", 23, None)
-        self.assert_match("-4'", None, None)
-        self.assert_match(" 5'", None, None)
+        self._assert("1'", 1, None)
+        self._assert("23'", 23, None)
+        self._assert("-4'", None, None)
+        self._assert(" 5'", None, None)
 
     def test_int_inches(self):
-        self.assert_match("1\"", None, 1)
-        self.assert_match("23\"", None, 23)
-        self.assert_match("-4\"", None, None)
-        self.assert_match(" 5\"", None, None)
+        self._assert("1\"", None, 1)
+        self._assert("23\"", None, 23)
+        self._assert("-4\"", None, None)
+        self._assert(" 5\"", None, None)
 
     def test_int_both(self):
-        self.assert_match("1'2\"", 1, 2)
-        self.assert_match("3' 4\"", 3, 4)
-        self.assert_match("56' 78\"", 56, 78)
-        self.assert_match("0' 1\"", 0, 1)
-        self.assert_match("1' 0\"", 1, 0)
+        self._assert("1'2\"", 1, 2)
+        self._assert("3' 4\"", 3, 4)
+        self._assert("56' 78\"", 56, 78)
+        self._assert("0' 1\"", 0, 1)
+        self._assert("1' 0\"", 1, 0)
 
     def test_decimal_feet(self):
         # Decimal feet are not allowed (yet?)
-        self.assert_match("1.2'", None, None)
-        self.assert_match("0.3'", None, None)
-        self.assert_match(".4'", None, None)
+        self._assert("1.2'", None, None)
+        self._assert("0.3'", None, None)
+        self._assert(".4'", None, None)
 
     def test_decimal_inches(self):
-        self.assert_match("1.2\"", None, 1.2)
-        self.assert_match("0.3\"", None, 0.3)
-        self.assert_match(".4\"", None, 0.4)
+        self._assert("1.2\"", None, 1.2)
+        self._assert("0.3\"", None, 0.3)
+        self._assert(".4\"", None, 0.4)
 
     def test_decimal_both(self):
-        self.assert_match("1' 2.3\"", 1, 2.3)
-        self.assert_match(".4' 5.6\"", None, None)
-        self.assert_match("1' 2.3.4\"", None, None)
+        self._assert("1' 2.3\"", 1, 2.3)
+        self._assert(".4' 5.6\"", None, None)
+        self._assert("1' 2.3.4\"", None, None)
 
     def test_other_garbage(self):
-        self.assert_match("", None, None)
-        self.assert_match("5", None, None)
-        self.assert_match("30.00 °F", None, None)
+        self._assert("", None, None)
+        self._assert("5", None, None)
+        self._assert("30.00 °F", None, None)
 
 
 class TestConversionStringRegex(unittest.TestCase):
 
-    def assert_match(
-            self, in_: str, quantity: Optional[str], out_unit: Optional[str]
+    @staticmethod
+    def _assert(
+            in_: str, quantity: Optional[str], out_unit: Optional[str]
     ):
         __tracebackhide__ = True
         match = conversion_pattern.match(in_)
@@ -109,23 +111,23 @@ class TestConversionStringRegex(unittest.TestCase):
         )
 
     def test_simple(self):
-        self.assert_match('{5pm}', '5pm', None)
-        self.assert_match('{ 5 ft }', '5 ft', None)
+        self._assert('{5pm}', '5pm', None)
+        self._assert('{ 5 ft }', '5 ft', None)
 
     def test_specifier_with_out_unit(self):
-        self.assert_match('{5ft>m}', '5ft', 'm')
-        self.assert_match('{5ft > m}', '5ft', 'm')
-        self.assert_match('{5 ft > m}', '5 ft', 'm')
-        self.assert_match('{5 km  >  mi}', '5 km', 'mi')
-        self.assert_match('{ 5pm  > new york}', '5pm', 'new york')
-        self.assert_match('{ 5pm  > new york   }', '5pm', 'new york')
+        self._assert('{5ft>m}', '5ft', 'm')
+        self._assert('{5ft > m}', '5ft', 'm')
+        self._assert('{5 ft > m}', '5 ft', 'm')
+        self._assert('{5 km  >  mi}', '5 km', 'mi')
+        self._assert('{ 5pm  > new york}', '5pm', 'new york')
+        self._assert('{ 5pm  > new york   }', '5pm', 'new york')
 
     def test_specifier_no_out_unit(self):
-        self.assert_match('{5pm>}', None, None)
-        self.assert_match('{5pm >}', None, None)
-        self.assert_match('{5pm> }', None, None)
-        self.assert_match('{5pm > }', None, None)
-        self.assert_match('{8:00 > }', None, None)
+        self._assert('{5pm>}', None, None)
+        self._assert('{5pm >}', None, None)
+        self._assert('{5pm> }', None, None)
+        self._assert('{5pm > }', None, None)
+        self._assert('{8:00 > }', None, None)
 
 
 class TestUnitConversion:
