@@ -6,6 +6,7 @@ import discord.ext.commands as commands
 import pytest
 
 from ._helpers import *
+from sandpiper.user_data import DatabaseSQLite
 
 
 # region Arrange fixtures
@@ -310,4 +311,23 @@ def dispatch_msg_get_embeds(dispatch_msg):
         return get_embeds(send)
     return f
 
+
 # endregion
+
+
+@pytest.fixture()
+async def database() -> DatabaseSQLite:
+    """Create, connect, and patch in a database adapter"""
+
+    # Connect to a dummy database
+    db = DatabaseSQLite(':memory:')
+    await db.connect()
+
+    # Bypass UserData cog lookup by patching in the database
+    patcher = mock.patch('sandpiper.bios.Bios._get_database', return_value=db)
+    patcher.start()
+
+    yield db
+
+    await db.disconnect()
+    patcher.stop()

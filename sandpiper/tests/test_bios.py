@@ -19,24 +19,6 @@ T_DatabaseMethod = Callable[[int], Awaitable[PrivacyType]]
 
 
 @pytest.fixture()
-async def database() -> DatabaseSQLite:
-    """Create, connect, and patch in a database adapter"""
-
-    # Connect to a dummy database
-    db = DatabaseSQLite(':memory:')
-    await db.connect()
-
-    # Bypass UserData cog lookup by patching in the database
-    patcher = mock.patch('sandpiper.bios.Bios._get_database', return_value=db)
-    patcher.start()
-
-    yield db
-
-    await db.disconnect()
-    patcher.stop()
-
-
-@pytest.fixture()
 def bot(bot) -> commands.Bot:
     """Add a Bios cog to a bot and return the bot"""
     bios = Bios(bot)
