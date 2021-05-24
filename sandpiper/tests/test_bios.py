@@ -487,6 +487,10 @@ class TestWhois:
         return make_guild(new_id())
 
     @pytest.fixture()
+    def secondary_guild(self, new_id, make_guild) -> discord.Guild:
+        return make_guild(new_id())
+
+    @pytest.fixture()
     def user_factory(
             self, database, new_id, make_user, add_user_to_guild, main_guild
     ):
@@ -529,11 +533,26 @@ class TestWhois:
         message.guild = main_guild
         return u
 
-    async def test_no_user_found(
-            self, executor, user_factory, message, invoke_cmd_get_embeds
+    @pytest.fixture()
+    async def multiple_display_names_user(
+            self, executor, user_factory, new_id, make_guild,
+            add_user_to_guild, secondary_guild
+    ) -> discord.User:
+        other_user = await user_factory(
+            None, 1001, 'Greg', '_Greg1_', '*NoPreferred*',
+            PrivacyType.PUBLIC
+        )
+        add_user_to_guild(secondary_guild.id, other_user.id, '_Greg2_')
+        return other_user
+
+    @pytest.fixture()
+    async def executor_in_secondary_guild(
+            self, executor, secondary_guild, add_user_to_guild
     ):
-        embeds = await invoke_cmd_get_embeds('whois greg')
-        assert_error(embeds)
+        # noinspection PyUnresolvedReferences
+        add_user_to_guild(secondary_guild.id, executor.id, '_NoDisplay_')
+
+    # region Same guild
 
     async def test_username(
             self, executor, user_factory, message, invoke_cmd_get_embeds
@@ -544,7 +563,21 @@ class TestWhois:
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_info(embeds, 'Greg#1001')
 
-    async def test_displayname(
+    async def test_username_with_discriminator(
+            self, executor, user_factory, message, invoke_cmd_get_embeds
+    ):
+        other_user = await user_factory(
+            None, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*'
+        )
+        other_user = await user_factory(
+            None, 1002, 'Greg', '_NoDisplay_', '*NoPreferred*'
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg#1002')
+        assert_info(embeds)
+        assert 'Greg#1001' not in embeds[0].description
+        assert 'Greg#1002' in embeds[0].description
+
+    async def test_display_name(
             self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
         other_user = await user_factory(
@@ -595,132 +628,114 @@ class TestWhois:
         assert_info(embeds, 'Greg#1001')
         assert 'He/Him' in embeds[0].description
 
-    # test_constrained_to_guild
-    # test_multiple_displaynames
-    # test_no_mutual_guilds
+    # endregion
+    # region Don't show stuff from different guilds
 
-
-
-    # noinspection DuplicatedCode
-    async def test_main(
-            self, new_id, make_guild, add_user_to_guild, user_factory, message,
-            invoke_cmd_get_embeds
+    async def test_username_different_guild(
+            self, executor, user_factory, message, invoke_cmd_get_embeds,
+            new_id, make_guild, add_user_to_guild
     ):
-        # Should be visible in guild and DMs
-        guild0 = make_guild(0)
+        other_guild = make_guild(new_id())
+        other_user = await user_factory(
+            other_guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*'
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_error(embeds, 'No user')
 
-        u_executor = await user_factory(
-            guild0, 1000, 'Executor', '_executor_'
-        )
-        u_username = await user_factory(
-            guild0, 1001, 'Greg', '_blank_', '*Blank*', PrivacyType.PUBLIC
-        )
-        u_displayname = await user_factory(
-            guild0, 1002, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
-        )
-        u_preferred_name = await user_factory(
-            guild0, 1003, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC
-        )
-        u_constrained_to_guild = await user_factory(
-            guild0, 1004, 'Blank', '_greg_', '*Blank*', PrivacyType.PUBLIC
-        )
-        u_pronouns = await user_factory(
-            guild0, 1005, 'Blank', '_blank_', '*Greg*', PrivacyType.PUBLIC,
-            'He/Him', PrivacyType.PUBLIC
-        )
-        u_no_preferred_name = await user_factory(
-            guild0, 1006, 'Greg', '_blank_', None, PrivacyType.PRIVATE,
-        )
-
-        # Should only be visible in DMs
-        guild1 = make_guild(1)
-
-        add_user_to_guild(guild1.id, u_executor.id, '_executor_'),
-        # Test duplicate removal
-        add_user_to_guild(guild1.id, u_username.id, '_GregDuplicate_'),
-        # Test display names from multiple guilds
-        add_user_to_guild(guild1.id, u_constrained_to_guild.id, '_extra_nickname_'),
-
-        u_username1 = await user_factory(
-            guild1, 2001, 'GuildHiddenGreg', '_blank_', '*Blank*',
-            PrivacyType.PUBLIC
-        )
-        u_displayname1 = await user_factory(
-            guild1, 2002, 'Blank', '_guildhiddengreg_', '*Blank*',
-            PrivacyType.PUBLIC
-        )
-        u_preferred_name1 = await user_factory(
-            guild1, 2003, 'Blank', '_blank_', '*GuildHiddenGreg*',
-            PrivacyType.PUBLIC
-        )
-
-        # Should be totally hidden
-        guild2 = make_guild(2)
-
-        u_username2 = await user_factory(
-            guild2, 3001, 'TotallyHiddenGreg', '_blank_', '*Blank*',
-            PrivacyType.PUBLIC
-        )
-        u_displayname2 = await user_factory(
-            guild2, 3002, 'Blank', '_totallyhiddengreg_', '*Blank*',
-            PrivacyType.PUBLIC
-        )
-        u_preferred_name2 = await user_factory(
-            guild2, 3003, 'Blank', '_blank_', '*TotallyHiddenGreg*',
-            PrivacyType.PUBLIC
-        )
-
+        # Sanity check that this user can actually be found
         # noinspection PyDunderSlots,PyUnresolvedReferences
-        message.guild = guild0
-        message.author = u_executor
+        message.guild = other_guild
+        # noinspection PyUnresolvedReferences
+        add_user_to_guild(other_guild.id, executor.id, '_NoDisplay_')
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, 'Greg')
 
-        embeds = await invoke_cmd_get_embeds("whois greg")
-        assert_info(embeds[0])
-        desc: str = embeds[0].description
-        assert "*Blank* • Greg#1001 • _blank_" in desc
-        assert "*Blank* • Blank#1002 • _greg_" in desc
-        assert "*Greg* • Blank#1003 • _blank_" in desc
-        assert "*Blank* • Blank#1004 • _greg_" in desc
-        assert "*Greg* (He/Him) • Blank#1005 • _blank_" in desc
-        assert "`No preferred name` • Greg#1006 • _blank_" in desc
+    async def test_display_name_different_guild(
+            self, executor, user_factory, message, invoke_cmd_get_embeds,
+            new_id, make_guild, add_user_to_guild
+    ):
+        other_guild = make_guild(new_id())
+        other_user = await user_factory(
+            other_guild, 1001, 'NoUser', '_Greg_', '*NoPreferred*'
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_error(embeds, 'No user')
 
-        assert "_extra_nickname_" not in desc
-        assert "GuildHiddenGreg#2001" not in desc
-        assert "Blank#2002" not in desc
-        assert "Blank#2003" not in desc
+        # Sanity check that this user can actually be found
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        message.guild = other_guild
+        # noinspection PyUnresolvedReferences
+        add_user_to_guild(other_guild.id, executor.id, '_NoDisplay_')
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, '_Greg_')
 
-        assert "TotallyHiddenGreg#3001" not in desc
-        assert "Blank#3002" not in desc
-        assert "Blank#3003" not in desc
+    async def test_preferred_name_different_guild(
+            self, executor, user_factory, message, invoke_cmd_get_embeds,
+            new_id, make_guild, add_user_to_guild
+    ):
+        other_guild = make_guild(new_id())
+        other_user = await user_factory(
+            other_guild, 1001, 'NoUser', '_NoDisplay_', '*Greg*',
+            PrivacyType.PUBLIC
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_error(embeds, 'No user')
 
-        # Invoke in DMs
+        # Sanity check that this user can actually be found
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        message.guild = other_guild
+        # noinspection PyUnresolvedReferences
+        add_user_to_guild(other_guild.id, executor.id, '_NoDisplay_')
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, '*Greg*')
 
+    # endregion
+    # region Multiple display names
+
+    async def test_multiple_display_names_in_main_guild(
+            self, executor, message, invoke_cmd_get_embeds,
+            multiple_display_names_user, executor_in_secondary_guild
+    ):
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds)
+        assert '_Greg1_' in embeds[0].description
+        assert '_Greg2_' not in embeds[0].description
+
+    async def test_multiple_display_names_in_dms(
+            self, executor, message, invoke_cmd_get_embeds,
+            multiple_display_names_user, executor_in_secondary_guild
+    ):
         # noinspection PyDunderSlots,PyUnresolvedReferences
         message.guild = None
-
         embeds = await invoke_cmd_get_embeds('whois greg')
-        assert_info(embeds[0])
-        desc: str = embeds[0].description
-        assert "*Greg* • Blank#1003 • _blank_" in desc
-        assert "*Greg* (He/Him) • Blank#1005 • _blank_" in desc
-        assert "*Blank* • Greg#1001 • _blank_" in desc
-        assert desc.count('Greg#1001') == 1
-        assert "*Blank* • Blank#1002 • _greg_" in desc
-        assert "*Blank* • Blank#1004 • _greg_, _extra_nickname_" in desc
-        assert "`No preferred name` • Greg#1006 • _blank_" in desc
+        assert_info(embeds)
+        assert '_Greg1_' in embeds[0].description
+        assert '_Greg2_' in embeds[0].description
 
-        assert "*Blank* • GuildHiddenGreg#2001 • _blank_" in desc
-        assert "*Blank* • Blank#2002 • _guildhiddengreg_" in desc
-        assert "*GuildHiddenGreg* • Blank#2003 • _blank_" in desc
+    async def test_multiple_display_names_in_dms_only_main_guild(
+            self, executor, message, invoke_cmd_get_embeds,
+            multiple_display_names_user
+    ):
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        message.guild = None
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds)
+        assert '_Greg1_' in embeds[0].description
+        assert '_Greg2_' not in embeds[0].description
 
-        assert "TotallyHiddenGreg#3001" not in desc
-        assert "Blank#3002" not in desc
-        assert "Blank#3003" not in desc
+    # endregion
+    # region Invalid things
 
-        # Erroring commands
+    async def test_no_user_found(
+            self, executor, invoke_cmd_get_embeds
+    ):
+        embeds = await invoke_cmd_get_embeds('whois gregothy')
+        assert_error(embeds)
 
-        embeds = await invoke_cmd_get_embeds("whois gregothy")
-        assert_error(embeds[0], "No users")
-
+    async def test_below_minimum_characters(
+            self, executor, invoke_cmd_get_embeds
+    ):
         with pytest.raises(commands.BadArgument):
             await invoke_cmd_get_embeds("whois e")
+
+    # endregion
