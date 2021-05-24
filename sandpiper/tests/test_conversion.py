@@ -6,7 +6,6 @@ import unittest.mock as mock
 import discord.ext.commands as commands
 import pytz
 
-from ._test_helpers import DiscordMockingTestCase
 from sandpiper.common.time import utc_now
 from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
@@ -129,7 +128,7 @@ class TestConversionStringRegex(unittest.TestCase):
         self.assert_match('{8:00 > }', None, None)
 
 
-class TestUnitConversion(DiscordMockingTestCase):
+class TestUnitConversion:
 
     def add_cogs(self, bot: commands.Bot):
         bot.add_cog(Conversion(bot))
@@ -266,7 +265,7 @@ class TestUnitConversion(DiscordMockingTestCase):
         await self.assert_no_reply("dude! {5 > }",)
 
 
-class TestTimeConversion(DiscordMockingTestCase):
+class TestTimeConversion:
 
     db: DatabaseSQLite
     MOCK_NOW = dt.datetime(2020, 6, 1, 9, 32)
