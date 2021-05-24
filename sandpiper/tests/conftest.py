@@ -1,15 +1,17 @@
+import datetime as dt
 import unittest.mock as mock
 from typing import Optional
 
 import discord
 import discord.ext.commands as commands
 import pytest
+import pytz
 
 from ._helpers import *
 from sandpiper.user_data import DatabaseSQLite
 
 
-# region Arrange fixtures
+# region Discord arrange fixtures
 
 
 @pytest.fixture()
@@ -220,7 +222,7 @@ async def bot(users, users_map, guilds, guilds_map) -> commands.Bot:
 
 # endregion
 
-# region Act fixtures
+# region Discord act fixtures
 
 
 @pytest.fixture()
@@ -314,6 +316,8 @@ def dispatch_msg_get_embeds(dispatch_msg):
 
 # endregion
 
+# region Misc arrange fixtures
+
 
 @pytest.fixture()
 async def database() -> DatabaseSQLite:
@@ -331,3 +335,42 @@ async def database() -> DatabaseSQLite:
 
     await db.disconnect()
     patcher.stop()
+
+
+@pytest.fixture()
+def patch_localzone_utc() -> pytz.UTC:
+    # Patch localzone to use UTC
+    patcher = mock.patch(
+        'sandpiper.common.time.tzlocal.get_localzone', autospec=True
+    )
+    mock_localzone = patcher.start()
+    mock_localzone.return_value = pytz.UTC
+
+    yield pytz.UTC
+
+    patcher.stop()
+
+
+@pytest.fixture()
+def patch_datetime_now():
+    def f(static_datetime: dt.datetime) -> dt.datetime:
+        # Patch datetime to use a static datetime
+        patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
+        mock_datetime = patcher.start()
+        mock_datetime.datetime.now.return_value = static_datetime
+        mock_datetime.datetime.side_effect = (
+            lambda *a, **kw: dt.datetime(*a, **kw)
+        )
+        mock_datetime.date.side_effect = (
+            lambda *a, **kw: dt.date(*a, **kw)
+        )
+        mock_datetime.time.side_effect = (
+            lambda *a, **kw: dt.time(*a, **kw)
+        )
+
+        yield static_datetime
+
+        patcher.stop()
+
+
+# endregion
