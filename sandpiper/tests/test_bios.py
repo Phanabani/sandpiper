@@ -521,6 +521,15 @@ class TestWhois:
             return u
         return f
 
+    async def test_no_user_found(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_error(embeds)
+
     async def test_username(
             self, new_id, make_guild, make_executor, user_factory, message,
             invoke_cmd_get_embeds
@@ -570,6 +579,40 @@ class TestWhois:
         await database.set_privacy_preferred_name(other_user.id, PrivacyType.PUBLIC)
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_info(embeds, '_Greg_')
+
+    async def test_pronouns_private(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        other_user = await user_factory(
+            guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*',
+            None, 'He/Him', privacy_pronouns=PrivacyType.PRIVATE
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, 'Greg#1001')
+        assert 'He/Him' not in embeds[0].description
+
+    async def test_pronouns_public(
+            self, new_id, make_guild, make_executor, user_factory, message,
+            invoke_cmd_get_embeds
+    ):
+        guild = make_guild(new_id())
+        await make_executor(guild)
+        other_user = await user_factory(
+            guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*',
+            None, 'He/Him', privacy_pronouns=PrivacyType.PUBLIC
+        )
+        embeds = await invoke_cmd_get_embeds('whois greg')
+        assert_info(embeds, 'Greg#1001')
+        assert 'He/Him' in embeds[0].description
+
+    # test_constrained_to_guild
+    # test_multiple_displaynames
+    # test_no_mutual_guilds
+
+
 
     # noinspection DuplicatedCode
     async def test_main(
