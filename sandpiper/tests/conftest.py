@@ -102,11 +102,13 @@ def make_guild(new_id, guilds, guilds_map):
             name = 'A_Guild'
 
         guild = MagicMock_(spec=discord.Guild, id=id_, name=name, **kwargs)
+
         members = []
         members_map = {}
         guild.members = members
         guild._members_map = members_map
         guild.get_member.side_effect = lambda id: members_map.get(id, None)
+
         guilds.append(guild)
         guilds_map[id_] = guild
         return guild
