@@ -483,15 +483,25 @@ class TestDelete:
 class TestWhois:
 
     @pytest.fixture()
-    def user_factory(self, database, new_id, make_user, add_user_to_guild):
+    def main_guild(self, new_id, make_guild) -> discord.Guild:
+        return make_guild(new_id())
+
+    @pytest.fixture()
+    def user_factory(
+            self, database, new_id, make_user, add_user_to_guild, main_guild
+    ):
         async def f(
-                guild: discord.Guild,
+                guild: Optional[discord.Guild],
                 discriminator: int, username: str, display_name: str,
                 preferred_name: Optional[str] = None,
                 privacy_preferred_name: Optional[PrivacyType] = None,
                 pronouns: Optional[str] = None,
                 privacy_pronouns: Optional[PrivacyType] = None
         ) -> discord.User:
+
+            if guild is None:
+                guild = main_guild
+
             user = make_user(new_id(), username, discriminator)
             add_user_to_guild(guild.id, user.id, display_name)
 
@@ -512,82 +522,62 @@ class TestWhois:
         return f
 
     @pytest.fixture()
-    def make_executor(self, user_factory, message):
-        async def f(guild: discord.Guild) -> discord.User:
-            u = await user_factory(guild, 1000, 'Executor', '_executor_')
-            message.author = u
-            # noinspection PyDunderSlots,PyUnresolvedReferences
-            message.guild = guild
-            return u
-        return f
+    async def executor(self, main_guild, user_factory, message) -> discord.User:
+        u = await user_factory(None, 1000, 'Executor', '_executor_')
+        message.author = u
+        # noinspection PyDunderSlots,PyUnresolvedReferences
+        message.guild = main_guild
+        return u
 
     async def test_no_user_found(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_error(embeds)
 
     async def test_username(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         other_user = await user_factory(
-            guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*'
+            None, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*'
         )
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_info(embeds, 'Greg#1001')
 
     async def test_displayname(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         other_user = await user_factory(
-            guild, 1001, 'NoUser', '_Greg_', '*NoPreferred*'
+            None, 1001, 'NoUser', '_Greg_', '*NoPreferred*'
         )
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_info(embeds, '_Greg_')
 
     async def test_preferred_name_private(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         other_user = await user_factory(
-            guild, 1001, 'Greg', '_NoDisplay_', '*Greg*'
+            None, 1001, 'Greg', '_NoDisplay_', '*Greg*'
         )
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_info(embeds, 'Greg#1001')
         assert '*Greg*' not in embeds[0].description
 
     async def test_preferred_name_public(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds, database
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         other_user = await user_factory(
-            guild, 1001, 'NoUser', '_Greg_', '*NoPreferred*'
+            None, 1001, 'NoUser', '_Greg_', '*NoPreferred*',
+            PrivacyType.PUBLIC
         )
-        await database.set_privacy_preferred_name(other_user.id, PrivacyType.PUBLIC)
         embeds = await invoke_cmd_get_embeds('whois greg')
         assert_info(embeds, '_Greg_')
 
     async def test_pronouns_private(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         other_user = await user_factory(
-            guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*',
+            None, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*',
             None, 'He/Him', privacy_pronouns=PrivacyType.PRIVATE
         )
         embeds = await invoke_cmd_get_embeds('whois greg')
@@ -595,13 +585,10 @@ class TestWhois:
         assert 'He/Him' not in embeds[0].description
 
     async def test_pronouns_public(
-            self, new_id, make_guild, make_executor, user_factory, message,
-            invoke_cmd_get_embeds
+            self, executor, user_factory, message, invoke_cmd_get_embeds
     ):
-        guild = make_guild(new_id())
-        await make_executor(guild)
         other_user = await user_factory(
-            guild, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*',
+            None, 1001, 'Greg', '_NoDisplay_', '*NoPreferred*',
             None, 'He/Him', privacy_pronouns=PrivacyType.PUBLIC
         )
         embeds = await invoke_cmd_get_embeds('whois greg')
