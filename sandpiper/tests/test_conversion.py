@@ -333,7 +333,7 @@ class TestTimeConversion:
     ) -> discord.User:
         yield await make_user_with_timezone(dutch_tz)
 
-    @pytest.fixture()
+    @pytest.fixture(autouse=True)
     def all_users(self, american_user, british_user, dutch_user):
         pass
 
@@ -347,8 +347,7 @@ class TestTimeConversion:
     # region Get user's timezone
 
     async def test_basic_hour_period(
-            self, message, all_users, dutch_user,
-            dispatch_msg_get_contents
+            self, message, dutch_user, dispatch_msg_get_contents
     ):
         message.author = dutch_user
         contents = await dispatch_msg_get_contents(
@@ -362,8 +361,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_no_colon_period(
-            self, message, all_users, american_user,
-            dispatch_msg_get_contents
+            self, message, american_user, dispatch_msg_get_contents
     ):
         message.author = american_user
         contents = await dispatch_msg_get_contents(
@@ -377,8 +375,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_no_colon(
-            self, message, all_users, american_user,
-            dispatch_msg_get_contents
+            self, message, american_user, dispatch_msg_get_contents
     ):
         message.author = american_user
         contents = await dispatch_msg_get_contents(
@@ -392,8 +389,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_hour_only(
-            self, message, all_users, british_user,
-            dispatch_msg_get_contents
+            self, message, british_user, dispatch_msg_get_contents
     ):
         message.author = british_user
         contents = await dispatch_msg_get_contents(
@@ -408,8 +404,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_multiple(
-            self, message, all_users, american_user,
-            dispatch_msg_get_contents
+            self, message, american_user, dispatch_msg_get_contents
     ):
         message.author = american_user
         contents = await dispatch_msg_get_contents(
@@ -423,8 +418,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_noon(
-            self, message, all_users, dutch_user,
-            dispatch_msg_get_contents
+            self, message, dutch_user, dispatch_msg_get_contents
     ):
         message.author = dutch_user
         contents = await dispatch_msg_get_contents(
@@ -438,8 +432,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_midnight(
-            self, message, all_users, american_user,
-            dispatch_msg_get_contents
+            self, message, american_user, dispatch_msg_get_contents
     ):
         message.author = american_user
         contents = await dispatch_msg_get_contents(
@@ -453,7 +446,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_now_british(
-            self, message, all_users, british_user,
+            self, message, british_user,
             american_now, british_now, dutch_now,
             dispatch_msg_get_contents
     ):
@@ -469,7 +462,7 @@ class TestTimeConversion:
         )
 
     async def test_basic_now_american(
-            self, message, all_users, american_user,
+            self, message, american_user,
             american_now, british_now, dutch_now,
             dispatch_msg_get_contents
     ):
