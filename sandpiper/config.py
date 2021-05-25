@@ -62,3 +62,8 @@ class SandpiperConfig(ConfigSchema):
             )
             handler.setFormatter(self.formatter)
             return handler
+
+
+if __name__ == '__main__':
+    config = SandpiperConfig({'bot_token': '<BOT_TOKEN>'})
+    print(config.serialize())
