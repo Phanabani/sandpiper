@@ -1,24 +1,25 @@
 import datetime as dt
 from typing import Optional, Union
 import unittest
-import unittest.mock as mock
 
+import discord
 import discord.ext.commands as commands
+import pytest
 import pytz
 
+from ._helpers import *
 from sandpiper.common.time import utc_now
 from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
-from sandpiper.user_data import DatabaseSQLite, UserData
+from sandpiper.user_data import UserData
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = (
-    'TestImperialShorthandRegex',
-    'TestUnitConversion',
-    'TestTimeConversion'
-)
 
-CONNECTION = ':memory:'
+@pytest.fixture()
+def bot(bot) -> commands.Bot:
+    bot.add_cog(Conversion(bot))
+    bot.add_cog(UserData(bot))
+    return bot
 
 
 class TestImperialShorthandRegex:
@@ -269,153 +270,178 @@ class TestUnitConversion:
 
 class TestTimeConversion:
 
-    db: DatabaseSQLite
-    MOCK_NOW = dt.datetime(2020, 6, 1, 9, 32)
+    T_TimezoneUser = tuple[discord.User, dt.datetime]
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
+    @pytest.fixture(autouse=True)
+    def june_1st_2020_932_am(
+            self, patch_localzone_utc, patch_datetime_now
+    ) -> dt.datetime:
+        yield patch_datetime_now(dt.datetime(2020, 6, 1, 9, 32))
 
-        # Connect to a dummy database
-        self.db = DatabaseSQLite(CONNECTION)
-        await self.db.connect()
+    @pytest.fixture()
+    def make_user_with_timezone(self, make_user, database):
+        async def f(timezone: str) -> tuple[discord.User, dt.datetime]:
+            user = make_user()
+            tz = pytz.timezone(timezone)
+            now = utc_now().astimezone(tz)
+            await database.set_timezone(user.id, tz)
+            await database.set_privacy_timezone(user.id, PrivacyType.PUBLIC)
+            return user, now
+        yield f
 
-        # Bypass UserData cog lookup by patching in the database
-        patcher = mock.patch(
-            'sandpiper.user_data.UserData.get_database',
-            return_value=self.db
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    @pytest.fixture()
+    async def american_user(self, make_user_with_timezone) -> T_TimezoneUser:
+        yield await make_user_with_timezone('America/New_York')
 
-        self.patch_time()
+    @pytest.fixture()
+    async def british_user(self, make_user_with_timezone) -> T_TimezoneUser:
+        yield await make_user_with_timezone('Europe/London')
 
-        self.dutch_user, self.dutch_now = await self.add_timezone_user('Europe/Amsterdam')
-        self.british_user, self.british_now = await self.add_timezone_user('Europe/London')
-        self.american_user, self.american_now = await self.add_timezone_user('America/New_York')
+    @pytest.fixture()
+    async def dutch_user(self, make_user_with_timezone) -> T_TimezoneUser:
+        yield await make_user_with_timezone('Europe/Amsterdam')
 
-    def patch_time(self):
-        # Patch datetime to use a static datetime
-        patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
-        mock_datetime = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        mock_datetime.datetime.now.return_value = self.MOCK_NOW
-        mock_datetime.datetime.side_effect = (
-            lambda *a, **kw: dt.datetime(*a, **kw)
-        )
-        mock_datetime.date.side_effect = (
-            lambda *a, **kw: dt.date(*a, **kw)
-        )
-        mock_datetime.time.side_effect = (
-            lambda *a, **kw: dt.time(*a, **kw)
-        )
-
-        # Patch localzone to use UTC
-        patcher = mock.patch(
-            'sandpiper.common.time.tzlocal.get_localzone', autospec=True
-        )
-        mock_localzone = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        mock_localzone.return_value = pytz.UTC
-
-    async def asyncTearDown(self):
-        await self.db.disconnect()
-
-    def add_cogs(self, bot: commands.Bot):
-        bot.add_cog(Conversion(bot))
-        bot.add_cog(UserData(bot))
-
-    async def add_timezone_user(self, timezone: str) -> tuple[int, dt.datetime]:
-        uid = self.new_user_id()
-        tz = pytz.timezone(timezone)
-        now = utc_now().astimezone(tz)
-        await self.db.set_timezone(uid, tz)
-        await self.db.set_privacy_timezone(uid, PrivacyType.PUBLIC)
-        return uid, now
-
-    async def assert_error(self, msg: str, *substrings: str):
-        __tracebackhide__ = True
-        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
-        super().assert_error(embed, *substrings)
+    @staticmethod
+    def _assert(contents: list[str], *patterns: str):
+        assert len(contents) == 1
+        assert_regex(contents[0], *patterns)
 
     # region Get user's timezone
 
-    async def test_basic(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            "do you guys wanna play at {9pm}?",
+    async def test_basic_hour_period(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = dutch_user[0]
+        contents = await dispatch_msg_get_contents(
+            "do you guys wanna play at {9pm}?"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:00 PM',
             r'Europe/London.+8:00 PM',
             r'America/New_York.+3:00 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "I get off work at {330pm}",
+    async def test_basic_no_colon_period(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user[0]
+        contents = await dispatch_msg_get_contents(
+            "I get off work at {330pm}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:30 PM',
             r'Europe/London.+8:30 PM',
             r'America/New_York.+3:30 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "In 24-hour time that's {1530}",
+    async def test_basic_no_colon(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user[0]
+        contents = await dispatch_msg_get_contents(
+            "In 24-hour time that's {1530}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:30 PM',
             r'Europe/London.+8:30 PM',
             r'America/New_York.+3:30 PM'
         )
 
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
+    async def test_basic_hour_only(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = british_user[0]
+        contents = await dispatch_msg_get_contents(
             "yeah I've gotta wake up at {5} for work tomorrow, so it's an "
-            "early bedtime for me",
+            "early bedtime for me"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+6:00 AM',
             r'Europe/London.+5:00 AM',
             r'America/New_York.+12:00 AM'
         )
 
-    async def test_multiple(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "I wish I could, but I'm busy from {14} to {17:45}",
+    async def test_basic_multiple(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user[0]
+        contents = await dispatch_msg_get_contents(
+            "I wish I could, but I'm busy from {14} to {17:45}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+8:00 PM.+11:45 PM',
             r'Europe/London.+7:00 PM.+10:45 PM',
             r'America/New_York.+2:00 PM.+5:45 PM'
         )
 
-    async def test_keyword(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            "It's nearly {noon}. Time for lunch!",
+    async def test_basic_noon(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = dutch_user[0]
+        contents = await dispatch_msg_get_contents(
+            "It's nearly {noon}. Time for lunch!"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+12:00 PM',
             r'Europe/London.+11:00 AM',
             r'America/New_York.+6:00 AM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "Dude, it's {midnight} :gobed:!",
+    async def test_basic_midnight(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user[0]
+        contents = await dispatch_msg_get_contents(
+            "Dude, it's {midnight} :gobed:!"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+6:00 AM',
             r'Europe/London.+5:00 AM',
             r'America/New_York.+12:00 AM'
         )
 
-    async def test_now(self):
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
-            "I'm free {now}, anyone want to do something?",
-            r'Europe/Amsterdam.+' + self.dutch_now.strftime("%I:%M %p").lstrip("0"),
-            r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
-            r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
+    async def test_basic_now_british(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = british_user[0]
+        contents = await dispatch_msg_get_contents(
+            "I'm free {now}, anyone want to do something?"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+' + dutch_user[1].strftime('%I:%M %p').lstrip('0'),
+            r'Europe/London.+' + british_user[1].strftime('%I:%M %p').lstrip('0'),
+            r'America/New_York.+' + american_user[1].strftime('%I:%M %p').lstrip('0')
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "I'm free {now}, anyone want to do something?",
-            r'Europe/Amsterdam.+' + self.dutch_now.strftime("%I:%M %p").lstrip("0"),
-            r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
-            r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
+    async def test_basic_now_american(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user[0]
+        contents = await dispatch_msg_get_contents(
+            "I'm free {now}, anyone want to do something?"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+' + dutch_user[1].strftime('%I:%M %p').lstrip('0'),
+            r'Europe/London.+' + british_user[1].strftime('%I:%M %p').lstrip('0'),
+            r'America/New_York.+' + american_user[1].strftime('%I:%M %p').lstrip('0')
         )
 
     # endregion
