@@ -8,7 +8,7 @@ import pytest
 import pytz
 
 from ._helpers import *
-from sandpiper.common.time import utc_now
+from sandpiper.common.time import TimezoneType, utc_now
 from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
 from sandpiper.user_data import UserData
@@ -280,26 +280,58 @@ class TestTimeConversion:
 
     @pytest.fixture()
     def make_user_with_timezone(self, make_user, database):
-        async def f(timezone: str) -> tuple[discord.User, dt.datetime]:
+        async def f(timezone: TimezoneType) -> discord.User:
             user = make_user()
-            tz = pytz.timezone(timezone)
-            now = utc_now().astimezone(tz)
-            await database.set_timezone(user.id, tz)
+            await database.set_timezone(user.id, timezone)
             await database.set_privacy_timezone(user.id, PrivacyType.PUBLIC)
-            return user, now
+            return user
         yield f
 
     @pytest.fixture()
-    async def american_user(self, make_user_with_timezone) -> T_TimezoneUser:
-        yield await make_user_with_timezone('America/New_York')
+    def american_tz(self) -> TimezoneType:
+        yield pytz.timezone('America/New_York')
 
     @pytest.fixture()
-    async def british_user(self, make_user_with_timezone) -> T_TimezoneUser:
-        yield await make_user_with_timezone('Europe/London')
+    def american_now(self, american_tz) -> dt.datetime:
+        yield utc_now().astimezone(american_tz)
 
     @pytest.fixture()
-    async def dutch_user(self, make_user_with_timezone) -> T_TimezoneUser:
-        yield await make_user_with_timezone('Europe/Amsterdam')
+    async def american_user(
+            self, american_tz, make_user_with_timezone
+    ) -> discord.User:
+        yield await make_user_with_timezone(american_tz)
+
+    @pytest.fixture()
+    def british_tz(self) -> TimezoneType:
+        yield pytz.timezone('Europe/London')
+
+    @pytest.fixture()
+    def british_now(self, british_tz) -> dt.datetime:
+        yield utc_now().astimezone(british_tz)
+
+    @pytest.fixture()
+    async def british_user(
+            self, british_tz, make_user_with_timezone
+    ) -> discord.User:
+        yield await make_user_with_timezone(british_tz)
+
+    @pytest.fixture()
+    def dutch_tz(self) -> TimezoneType:
+        yield pytz.timezone('Europe/Amsterdam')
+
+    @pytest.fixture()
+    def dutch_now(self, dutch_tz) -> dt.datetime:
+        yield utc_now().astimezone(dutch_tz)
+
+    @pytest.fixture()
+    async def dutch_user(
+            self, dutch_tz, make_user_with_timezone
+    ) -> discord.User:
+        yield await make_user_with_timezone(dutch_tz)
+
+    @pytest.fixture()
+    def all_users(self, american_user, british_user, dutch_user):
+        pass
 
     @staticmethod
     def _assert(contents: list[str], *patterns: str):
@@ -309,10 +341,10 @@ class TestTimeConversion:
     # region Get user's timezone
 
     async def test_basic_hour_period(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, dutch_user,
             dispatch_msg_get_contents
     ):
-        message.author = dutch_user[0]
+        message.author = dutch_user
         contents = await dispatch_msg_get_contents(
             "do you guys wanna play at {9pm}?"
         )
@@ -324,10 +356,10 @@ class TestTimeConversion:
         )
 
     async def test_basic_no_colon_period(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, american_user,
             dispatch_msg_get_contents
     ):
-        message.author = american_user[0]
+        message.author = american_user
         contents = await dispatch_msg_get_contents(
             "I get off work at {330pm}"
         )
@@ -339,10 +371,10 @@ class TestTimeConversion:
         )
 
     async def test_basic_no_colon(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, american_user,
             dispatch_msg_get_contents
     ):
-        message.author = american_user[0]
+        message.author = american_user
         contents = await dispatch_msg_get_contents(
             "In 24-hour time that's {1530}"
         )
@@ -354,10 +386,10 @@ class TestTimeConversion:
         )
 
     async def test_basic_hour_only(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, british_user,
             dispatch_msg_get_contents
     ):
-        message.author = british_user[0]
+        message.author = british_user
         contents = await dispatch_msg_get_contents(
             "yeah I've gotta wake up at {5} for work tomorrow, so it's an "
             "early bedtime for me"
@@ -370,10 +402,10 @@ class TestTimeConversion:
         )
 
     async def test_basic_multiple(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, american_user,
             dispatch_msg_get_contents
     ):
-        message.author = american_user[0]
+        message.author = american_user
         contents = await dispatch_msg_get_contents(
             "I wish I could, but I'm busy from {14} to {17:45}"
         )
@@ -385,10 +417,10 @@ class TestTimeConversion:
         )
 
     async def test_basic_noon(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, dutch_user,
             dispatch_msg_get_contents
     ):
-        message.author = dutch_user[0]
+        message.author = dutch_user
         contents = await dispatch_msg_get_contents(
             "It's nearly {noon}. Time for lunch!"
         )
@@ -400,10 +432,10 @@ class TestTimeConversion:
         )
 
     async def test_basic_midnight(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, american_user,
             dispatch_msg_get_contents
     ):
-        message.author = american_user[0]
+        message.author = american_user
         contents = await dispatch_msg_get_contents(
             "Dude, it's {midnight} :gobed:!"
         )
@@ -415,33 +447,35 @@ class TestTimeConversion:
         )
 
     async def test_basic_now_british(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, british_user,
+            american_now, british_now, dutch_now,
             dispatch_msg_get_contents
     ):
-        message.author = british_user[0]
+        message.author = british_user
         contents = await dispatch_msg_get_contents(
             "I'm free {now}, anyone want to do something?"
         )
         self._assert(
             contents,
-            r'Europe/Amsterdam.+' + dutch_user[1].strftime('%I:%M %p').lstrip('0'),
-            r'Europe/London.+' + british_user[1].strftime('%I:%M %p').lstrip('0'),
-            r'America/New_York.+' + american_user[1].strftime('%I:%M %p').lstrip('0')
+            r'Europe/Amsterdam.+' + dutch_now.strftime('%I:%M %p').lstrip('0'),
+            r'Europe/London.+' + british_now.strftime('%I:%M %p').lstrip('0'),
+            r'America/New_York.+' + american_now.strftime('%I:%M %p').lstrip('0')
         )
 
     async def test_basic_now_american(
-            self, message, american_user, british_user, dutch_user,
+            self, message, all_users, american_user,
+            american_now, british_now, dutch_now,
             dispatch_msg_get_contents
     ):
-        message.author = american_user[0]
+        message.author = american_user
         contents = await dispatch_msg_get_contents(
             "I'm free {now}, anyone want to do something?"
         )
         self._assert(
             contents,
-            r'Europe/Amsterdam.+' + dutch_user[1].strftime('%I:%M %p').lstrip('0'),
-            r'Europe/London.+' + british_user[1].strftime('%I:%M %p').lstrip('0'),
-            r'America/New_York.+' + american_user[1].strftime('%I:%M %p').lstrip('0')
+            r'Europe/Amsterdam.+' + dutch_now.strftime('%I:%M %p').lstrip('0'),
+            r'Europe/London.+' + british_now.strftime('%I:%M %p').lstrip('0'),
+            r'America/New_York.+' + american_now.strftime('%I:%M %p').lstrip('0')
         )
 
     # endregion
