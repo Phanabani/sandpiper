@@ -100,7 +100,12 @@ def run_bot():
     # Load config
     config_path = Path(__file__).parent / 'config.json'
     with config_path.open() as f:
-        bot_token, config = SandpiperConfig(f)
+        config = SandpiperConfig(f)
+
+    # Some extra steps against accidentally leaking the bot token into the
+    # public client
+    bot_token = config.bot_token
+    config.bot_token = None
 
     # Sandpiper logging
     logger = logging.getLogger('sandpiper')
