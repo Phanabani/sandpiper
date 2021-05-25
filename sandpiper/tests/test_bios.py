@@ -1,7 +1,6 @@
 from collections.abc import Awaitable, Callable
 import datetime as dt
 from typing import Optional
-import unittest.mock as mock
 
 import discord
 import discord.ext.commands as commands
@@ -269,6 +268,12 @@ class TestPrivacy:
 @pytest.mark.usefixtures('send_in_dms')
 class TestShow:
 
+    @pytest.fixture()
+    def june_1st_2020_932_am(
+            self, patch_localzone_utc, patch_datetime_now
+    ) -> dt.datetime:
+        yield patch_datetime_now(dt.datetime(2020, 6, 1, 9, 32))
+
     async def test_name(self, invoke_as_greg, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('name show')
         assert_info(embeds, 'Greg')
@@ -281,21 +286,28 @@ class TestShow:
         embeds = await invoke_cmd_get_embeds('birthday show')
         assert_info(embeds, '2000-02-14')
 
-    @pytest.mark.skip("Need to patch in some datetime stuff")
-    async def test_age(self, invoke_as_greg, invoke_cmd_get_embeds):
+    async def test_age(
+            self, invoke_as_greg, invoke_cmd_get_embeds,
+            june_1st_2020_932_am
+    ):
         embeds = await invoke_cmd_get_embeds('age show')
-        assert_info(embeds, 'TODO')
+        assert_info(embeds)
+        assert_regex(embeds[0].description, 'Age.+21')
 
     async def test_timezone(self, invoke_as_greg, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('timezone show')
         assert_info(embeds, 'America/New_York')
 
-    @pytest.mark.skip("Need to patch in some datetime stuff")
-    async def test_all(self, invoke_as_greg, invoke_cmd_get_embeds):
+    async def test_all(
+            self, invoke_as_greg, invoke_cmd_get_embeds,
+            june_1st_2020_932_am
+    ):
         embeds = await invoke_cmd_get_embeds('bio show')
-        assert_info(
-            embeds,
-            'Greg', 'He/Him', '2000-02-14', 'AGE TODO', 'America/New_York'
+        assert_info(embeds)
+        assert_regex(
+            embeds[0].description,
+            'Name.+Greg', 'Pronouns.+He/Him', 'Birthday.+2000-02-14',
+            'Age.+21', 'Timezone.+America/New_York'
         )
 
 
