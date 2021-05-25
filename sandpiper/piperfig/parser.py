@@ -1,10 +1,12 @@
 from functools import cached_property
+from io import TextIOBase
 import json
 import sys
 from types import MethodType
 # noinspection PyPep8Naming
 from typing import (
-    Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints, overload
+    Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints,
+    overload
 )
 
 from .exceptions import *
@@ -105,7 +107,7 @@ class ConfigSchema:
     def deserialize(self, config: Union[dict, str, TextIO]):
         if isinstance(config, str):
             config = json.loads(config)
-        elif isinstance(config, TextIO):
+        elif isinstance(config, TextIOBase):
             config = json.load(config)
         elif isinstance(config, dict):
             config = config
