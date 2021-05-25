@@ -26,11 +26,15 @@ class SandpiperConfig(ConfigSchema):
             "Visit my GitHub page for more info about commands and features: "
             "https://github.com/Hawkpath/sandpiper#commands-and-features"
         )
-        commands: _Commands
+        modules: _Modules
 
-        class _Commands(ConfigSchema):
+        class _Modules(ConfigSchema):
 
-            allow_public_bio_setting = False
+            bios: _Bios
+
+            class _Bios(ConfigSchema):
+
+                allow_public_setting = False
 
     class _Logging(ConfigSchema):
 
