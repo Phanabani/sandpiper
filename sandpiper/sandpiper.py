@@ -56,6 +56,8 @@ class Sandpiper(commands.Bot):
                     f"Just type `{rest}`."
                 )
 
+        self.modules_config = config.modules
+
         self.load_extension('sandpiper.user_data')
         self.load_extension('sandpiper.bios')
         self.load_extension('sandpiper.conversion')
