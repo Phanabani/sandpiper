@@ -247,7 +247,6 @@ class TestUnitConversion:
         )
         self._assert(contents, '10.02 min', '601.00 s')
 
-
     async def test_dimensionless_math(self, dispatch_msg_get_contents):
         contents = await dispatch_msg_get_contents(
             "what's {2 + 7}?"
@@ -263,7 +262,6 @@ class TestUnitConversion:
             "and {2 * 7}?"
         )
         self._assert(contents, '2 * 7', '14')
-
 
     async def test_unknown_unit(self, dispatch_msg_get_embeds):
         embeds = await dispatch_msg_get_embeds(
@@ -295,7 +293,6 @@ class TestUnitConversion:
 
         send = await dispatch_msg("dude! {5 > }",)
         assert_no_reply(send)
-
 
 
 class TestTimeConversion:
