@@ -148,8 +148,8 @@ def assert_regex(str_: str, *patterns: str) -> NoReturn:
     """
     __tracebackhide__ = True
     for pattern in patterns:
-        assert re.match(pattern, str_), (
-            f'Pattern "{pattern}" did not match "{str_}"'
+        assert re.search(pattern, str_), (
+            f'Pattern "{pattern}" did not match any part of "{str_}"'
         )
 
 
