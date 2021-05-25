@@ -10,6 +10,7 @@ import pytz
 
 from ._helpers import *
 from sandpiper.bios import Bios
+from sandpiper.user_data import UserData
 from sandpiper.user_data.database_sqlite import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
 
@@ -21,8 +22,8 @@ T_DatabaseMethod = Callable[[int], Awaitable[PrivacyType]]
 @pytest.fixture()
 def bot(bot) -> commands.Bot:
     """Add a Bios cog to a bot and return the bot"""
-    bios = Bios(bot)
-    bot.add_cog(bios)
+    bot.add_cog(Bios(bot))
+    bot.add_cog(UserData(bot))
     return bot
 
 

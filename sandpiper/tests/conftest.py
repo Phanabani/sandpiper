@@ -328,7 +328,9 @@ async def database() -> DatabaseSQLite:
     await db.connect()
 
     # Bypass UserData cog lookup by patching in the database
-    patcher = mock.patch('sandpiper.bios.Bios._get_database', return_value=db)
+    patcher = mock.patch(
+        'sandpiper.user_data.UserData.get_database', return_value=db
+    )
     patcher.start()
 
     yield db
