@@ -14,6 +14,8 @@ from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
 from sandpiper.user_data import UserData
 from sandpiper.user_data.enums import PrivacyType
 
+pytestmark = pytest.mark.asyncio
+
 
 @pytest.fixture()
 def bot(bot) -> commands.Bot:
