@@ -135,139 +135,167 @@ class TestConversionStringRegex(unittest.TestCase):
 
 class TestUnitConversion:
 
-    def add_cogs(self, bot: commands.Bot):
-        bot.add_cog(Conversion(bot))
+    @staticmethod
+    def _assert(contents: list[str], *substrings: str):
+        assert len(contents) == 1
+        assert_in(contents[0], *substrings)
 
-    async def assert_error(self, msg: str, *substrings: str):
-        __tracebackhide__ = True
-        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
-        super().assert_error(embed, *substrings)
+    async def test_two_way_temperature(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "guys it's {30f} outside today, I'm so cold..."
+        )
+        self._assert(contents, '30.00 °F', '-1.11 °C')
 
-    async def test_two_way(self):
-        await self.assert_in_reply(
-            "guys it's {30f} outside today, I'm so cold...",
-            '30.00 °F', '-1.11 °C'
+        contents = await dispatch_msg_get_contents(
+            "guys it's {-1.11c} outside today, I'm so cold..."
         )
-        await self.assert_in_reply(
-            "guys it's {-1.11c} outside today, I'm so cold...",
-            '30.00 °F', '-1.11 °C'
+        self._assert(contents, '30.00 °F', '-1.11 °C')
+
+    async def test_two_way_mass(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I've been working out a lot lately and I've already lost {2 kg}!!"
         )
-        await self.assert_in_reply(
-            "I've been working out a lot lately and I've already lost {2 kg}!!",
-            '2.00 kg', '4.41 lb'
+        self._assert(contents, '2.00 kg', '4.41 lb')
+
+        contents = await dispatch_msg_get_contents(
+            "I've been working out a lot lately and I've already lost {4.41 lb}!!"
         )
-        await self.assert_in_reply(
-            "I've been working out a lot lately and I've already lost {4.41 lb}!!",
-            '2.00 kg', '4.41 lb'
+        self._assert(contents, '2.00 kg', '4.41 lb')
+
+    async def test_two_way_distance(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "Is that a {33ft} boat, TJ?"
         )
-        await self.assert_in_reply(
-            "Is that a {33ft} boat, TJ?",
-            '33.00 ft', '10.06 m'
-        )
-        await self.assert_in_reply(
+        self._assert(contents, '33.00 ft', '10.06 m')
+
+    async def test_two_way_distance_multi(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
             "Lou lives about {15km} from me and TJ's staying at a hotel "
             "{2.5km} away, so he and I are gonna meet up and drive over to "
-            "Lou.",
-            '9.32 mi', '15.00 km',
-            '1.55 mi', '2.50 km'
+            "Lou."
         )
+        self._assert(contents, '9.32 mi', '15.00 km', '1.55 mi', '2.50 km')
 
-    async def test_one_way(self):
-        await self.assert_in_reply(
-            "I was only {4 yards} away in geoguessr!!",
-            '4.00 yd', '3.66 m'
+    async def test_one_way_distance(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I was only {4 yards} away in geoguessr!!"
         )
-        await self.assert_in_reply(
-            "I weigh around {9.3 stone}. whatever that means...",
-            '9.30 stone', '59.06 kg'
-        )
-        await self.assert_in_reply(
-            "any scientists in the chat?? {0 K}",
-            '0.00 K', '-273.15 °C'
-        )
+        self._assert(contents, '4.00 yd', '3.66 m')
 
-    async def test_imperial_shorthand(self):
-        await self.assert_in_reply(
-            "I think Jason is like {6' 2\"} tall",
-            '6.17 ft', '1.88 m'
+    async def test_one_way_mass(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I weigh around {9.3 stone}. whatever that means..."
         )
-        await self.assert_in_reply(
-            "I'm only {5'11\"} though!",
-            '5.92 ft', '1.80 m'
-        )
+        self._assert(contents, '9.30 stone', '59.06 kg')
 
-    async def test_explicit(self):
-        await self.assert_in_reply(
-            "{-5 f > kelvin} it's too late for apologies, imperial system",
-            '-5.00 °F', '252.59 K'
+    async def test_one_way_temperature(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "any scientists in the chat?? {0 K}"
         )
-        await self.assert_in_reply(
-            "how much is {9.3 stone > lbs}",
-            '9.30 stone', '130.20 lb'
+        self._assert(contents, '0.00 K', '-273.15 °C')
+
+    async def test_imperial_shorthand(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I think Jason is like {6' 2\"} tall"
         )
-        await self.assert_in_reply(
+        self._assert(contents, '6.17 ft', '1.88 m')
+
+        contents = await dispatch_msg_get_contents(
+            "I'm only {5'11\"} though!"
+        )
+        self._assert(contents, '5.92 ft', '1.80 m')
+
+    async def test_explicit(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "{-5 f > kelvin} it's too late for apologies, imperial system"
+        )
+        self._assert(contents, '-5.00 °F', '252.59 K')
+
+        contents = await dispatch_msg_get_contents(
+            "how much is {9.3 stone > lbs}"
+        )
+        self._assert(contents, '9.30 stone', '130.20 lb')
+
+        contents = await dispatch_msg_get_contents(
             "bc this is totally useful.. {5 mi > ft}"
-            '5 mi', '26400.00 ft'
         )
-        await self.assert_in_reply(
+        self._assert(contents, '5.00 mi', '26400.00 ft')
+
+        contents = await dispatch_msg_get_contents(
             "can't believe {3.000 hogshead > gallon} is even real"
-            '3 hogshead', '189.00 gal'
         )
-        await self.assert_in_reply(
-            "ma'am you forgot your spaces {5ft>yd}",
-            '5.00 ft', '1.67 yd'
-        )
+        self._assert(contents, '3.00 hogshead', '189.00 gal')
 
-    async def test_unit_math(self):
-        await self.assert_in_reply(
-            "I'm measuring wood planks, I need {2.3 ft + 5 in}",
-            '2.72 ft', '0.83 m'
+        contents = await dispatch_msg_get_contents(
+            "ma'am you forgot your spaces {5ft>yd}"
         )
-        await self.assert_in_reply(
-            "oops, I need that in inches {2.3 ft + 5 in > in}",
-            '2.72 ft', '32.60 in'
-        )
-        await self.assert_in_reply(
-            "my two favorite songs are a total of {5min+27s + 4min+34s > s}",
-            '10.02 min', '601.00 s'
-        )
+        self._assert(contents, '5.00 ft', '1.67 yd')
 
-    async def test_dimensionless_math(self):
-        await self.assert_in_reply(
-            "what's {2 + 7}?",
-            '2 + 7', '9'
+    async def test_unit_math(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I'm measuring wood planks, I need {2.3 ft + 5 in}"
         )
-        await self.assert_in_reply(
-            "how about {2.5 + 7.8}?",
-            '2.5 + 7.8', '10.3'
-        )
-        await self.assert_in_reply(
-            "and {2 * 7}?",
-            '2 * 7', '14'
-        )
+        self._assert(contents, '2.72 ft', '0.83 m')
 
-    async def test_unknown_unit(self):
-        await self.assert_error(
-            "that's like {12.5 donuts} wide!",
-            'Unknown unit "donuts"'
+        contents = await dispatch_msg_get_contents(
+            "oops, I need that in inches {2.3 ft + 5 in > in}"
         )
-        await self.assert_error(
-            "how far away is that in blehs? {6 km > bleh}",
-            'Unknown unit "bleh"'
-        )
+        self._assert(contents, '2.72 ft', '32.60 in')
 
-    async def test_unmapped_unit(self):
-        await self.assert_error(
+        contents = await dispatch_msg_get_contents(
+            "my two favorite songs are a total of {5min+27s + 4min+34s > s}"
+        )
+        self._assert(contents, '10.02 min', '601.00 s')
+
+
+    async def test_dimensionless_math(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "what's {2 + 7}?"
+        )
+        self._assert(contents, '2 + 7', '9')
+
+        contents = await dispatch_msg_get_contents(
+            "how about {2.5 + 7.8}?"
+        )
+        self._assert(contents, '2.5 + 7.8', '10.3')
+
+        contents = await dispatch_msg_get_contents(
+            "and {2 * 7}?"
+        )
+        self._assert(contents, '2 * 7', '14')
+
+
+    async def test_unknown_unit(self, dispatch_msg_get_embeds):
+        embeds = await dispatch_msg_get_embeds(
+            "that's like {12.5 donuts} wide!"
+        )
+        assert_error(embeds, 'Unknown unit "donuts"')
+
+        embeds = await dispatch_msg_get_embeds(
+            "how far away is that in blehs? {6 km > bleh}"
+        )
+        assert_error(embeds, 'Unknown unit "bleh"')
+
+    async def test_unmapped_unit(self, dispatch_msg_get_embeds):
+        embeds = await dispatch_msg_get_embeds(
             "{5 hogshead} is a real unit, but not really useful enough to be "
-            "mapped. fun name though",
-            '{5 hogshead > otherunit}'
+            "mapped. fun name though"
         )
+        assert_error(embeds, '{5 hogshead > otherunit}')
 
-    async def test_bad_conversion_string(self):
-        await self.assert_no_reply("oops I dropped my unit {5 ft >}",)
-        await self.assert_no_reply("oh crap not again {5 ft > }",)
-        await self.assert_no_reply("okay this is just disgusting {5 >}",)
-        await self.assert_no_reply("dude! {5 > }",)
+    async def test_bad_conversion_string(self, dispatch_msg):
+        send = await dispatch_msg("oops I dropped my unit {5 ft >}",)
+        assert_no_reply(send)
+
+        send = await dispatch_msg("oh crap not again {5 ft > }",)
+        assert_no_reply(send)
+
+        send = await dispatch_msg("okay this is just disgusting {5 >}",)
+        assert_no_reply(send)
+
+        send = await dispatch_msg("dude! {5 > }",)
+        assert_no_reply(send)
+
 
 
 class TestTimeConversion:
