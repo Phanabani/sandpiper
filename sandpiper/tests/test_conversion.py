@@ -272,6 +272,8 @@ class TestTimeConversion:
 
     T_TimezoneUser = tuple[discord.User, dt.datetime]
 
+    # region Fixtures
+
     @pytest.fixture(autouse=True)
     def june_1st_2020_932_am(
             self, patch_localzone_utc, patch_datetime_now
@@ -332,6 +334,8 @@ class TestTimeConversion:
     @pytest.fixture()
     def all_users(self, american_user, british_user, dutch_user):
         pass
+
+    # endregion
 
     @staticmethod
     def _assert(contents: list[str], *patterns: str):
@@ -482,209 +486,312 @@ class TestTimeConversion:
 
     # region Specified input timezone
 
-    async def test_in_basic(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "Jaakko's getting on at {8 pm helsinki}",
+    async def test_in_basic(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "Jaakko's getting on at {8 pm helsinki}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+7:00 PM',
             r'Europe/London.+6:00 PM',
             r'America/New_York.+1:00 PM'
         )
 
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
-            "aka {8pm helsinki}",
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
+            "aka {8pm helsinki}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+7:00 PM',
             r'Europe/London.+6:00 PM',
             r'America/New_York.+1:00 PM'
         )
 
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            "aka {20:00 helsinki}",
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            "aka {20:00 helsinki}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+7:00 PM',
             r'Europe/London.+6:00 PM',
             r'America/New_York.+1:00 PM'
         )
 
-    async def test_in_multiple(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "my flight took off at {7pm new york} and landed at {8 AM london}",
+    async def test_in_multiple(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "my flight took off at {7pm new york} and landed at {8 AM london}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+1:00 AM.+9:00 AM',
             r'Europe/London.+12:00 AM.+8:00 AM',
             r'America/New_York.+7:00 PM.+3:00 AM'
         )
 
-    async def test_in_keyword(self):
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
-            "he's getting lunch around {noon los angeles}",
+    async def test_in_keyword(
+            self, message, american_user, british_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
+            "he's getting lunch around {noon los angeles}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:00 PM',
             r'Europe/London.+8:00 PM',
             r'America/New_York.+3:00 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "My flight's landing at {midnight brussels}",
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "My flight's landing at {midnight brussels}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+12:00 AM',
             r'Europe/London.+11:00 PM',
             r'America/New_York.+6:00 PM'
         )
 
-    async def test_in_now(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "{now amsterdam} is redundant but it shouldn't fail",
+    async def test_in_now(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "{now amsterdam} is redundant but it shouldn't fail"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+11:32 AM',
             r'Europe/London.+10:32 AM',
             r'America/New_York.+5:32 AM'
         )
 
-    async def test_in_ambiguous_with_unit(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
+    async def test_in_ambiguous_with_unit(
+            self, message, american_user, dispatch_msg_get_embeds
+    ):
+        message.author = american_user
+        embeds = await dispatch_msg_get_embeds(
             "{20 helsinki} (8:00 pm Helsinki time) isn't allowed because it's "
             "ambiguous with a unit 'helsinki' with magnitude 20. You must add "
-            "AM/PM or use a colon.",
-
-            'Unknown unit "helsinki"',
+            "AM/PM or use a colon."
         )
+        assert_error(embeds, 'Unknown unit "helsinki"')
 
-    async def test_in_unknown_timezone(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
-            "this don't exist {8:00 ZBNMBSAEFHJBGEWB}",
-            'Timezone "ZBNMBSAEFHJBGEWB" not found'
+    async def test_in_unknown_timezone(
+            self, message, american_user, dispatch_msg_get_embeds
+    ):
+        message.author = american_user
+        embeds = await dispatch_msg_get_embeds(
+            "this don't exist {8:00 ZBNMBSAEFHJBGEWB}"
         )
+        assert_error(embeds, 'Timezone "ZBNMBSAEFHJBGEWB" not found')
 
     # endregion
 
     # region Specified output timezone
 
-    async def test_out_basic(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "alex, I'm gonna restart the server at {11 > amsterdam}",
-            r'Europe/Amsterdam.+5:00 PM',
+    async def test_out_basic(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "alex, I'm gonna restart the server at {11 > amsterdam}"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+5:00 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "or I can wait until {8pm > amsterdam}",
-            r'Europe/Amsterdam.+2:00 AM',
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "or I can wait until {8pm > amsterdam}"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+2:00 AM'
         )
 
-    async def test_out_multiple(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
+    async def test_out_multiple(
+            self, message, american_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
             "hey bruce I wanna show you something, I'm free between "
-            "{11am > london} and {3 PM > Europe/London}",
-            r'Europe/London.+4:00 PM.+8:00 PM',
+            "{11am > london} and {3 PM > Europe/London}"
+        )
+        self._assert(
+            contents,
+            r'Europe/London.+4:00 PM.+8:00 PM'
         )
 
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
             "the game's releasing for americans at {1 PM > new york} and "
             "{1500 > london} for europeans"
-            r'America/New_York.+7:00 AM',
-            r'Europe/London.+2:00 PM',
+            r'America/New_York.+7:00 AM'
+        )
+        self._assert(
+            contents,
+            r'Europe/London.+2:00 PM'
         )
 
-    async def test_out_keyword(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
+    async def test_out_keyword(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
             "the solar eclipse will be happening here while the hawaiians "
-            "are sleeping! {noon > honolulu}",
+            "are sleeping! {noon > honolulu}"
+        )
+        self._assert(
+            contents,
             r'Pacific/Honolulu.+6:00 AM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
             "and while I'm sleeping, they'll be eating dinner "
-            "{midnight > honolulu}",
+            "{midnight > honolulu}"
+        )
+        self._assert(
+            contents,
             r'Pacific/Honolulu.+6:00 PM'
         )
 
-    async def test_out_now(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "what time is it in dubai? {now > dubai}",
-            r'Asia/Dubai.+1:32 PM',
+    async def test_out_now(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "what time is it in dubai? {now > dubai}"
+        )
+        self._assert(
+            contents,
+            r'Asia/Dubai.+1:32 PM'
         )
 
-    async def test_out_unknown_timezone(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
-            "no timezone {8:00 > ZBNMBSAEFHJBGEWB}",
-            'Timezone "ZBNMBSAEFHJBGEWB" not found',
+    async def test_out_unknown_timezone(
+            self, message, american_user, dispatch_msg_get_embeds
+    ):
+        message.author = american_user
+        embeds = await dispatch_msg_get_embeds(
+            "no timezone {8:00 > ZBNMBSAEFHJBGEWB}"
+        )
+        assert_error(
+            embeds,
+            'Timezone "ZBNMBSAEFHJBGEWB" not found'
         )
 
-    async def test_out_empty(self):
-        self.msg.author.id = self.american_user
-        await self.assert_no_reply("no timezone {8:00 > }")
+    async def test_out_empty(
+            self, message, american_user, dispatch_msg
+    ):
+        message.author = american_user
+        mock_ = await dispatch_msg("no timezone {8:00 > }")
+        assert_no_reply(mock_)
 
     # endregion
 
     # region Specified input and output timezone
 
-    async def test_in_out_basic(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
+    async def test_in_out_basic(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
             "I've run out of interesting message ideas "
-            "{5:00 pm honolulu > los angeles}",
-
-            r'America/Los_Angeles.+8:00 PM',
+            "{5:00 pm honolulu > los angeles}"
+        )
+        self._assert(
+            contents,
+            r'America/Los_Angeles.+8:00 PM'
         )
 
-    async def test_in_out_multiple(self):
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
+    async def test_in_out_multiple(
+            self, message, british_user, dispatch_msg_get_contents
+    ):
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
             "you probably get the idea by now "
             "{5:00 pm honolulu > los angeles} and also "
             "{10:00 amsterdam > london} annnd back to "
-            "{1am new york > los angeles}",
-
+            "{1am new york > los angeles}"
+        )
+        self._assert(
+            contents,
             r'America/Los_Angeles.+8:00 PM.+10:00 PM',
-            r'Europe/London.+9:00 AM',
+            r'Europe/London.+9:00 AM'
         )
 
-    async def test_in_out_keyword(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            ":) {midnight los angeles > honolulu}",
-            r'Pacific/Honolulu.+9:00 PM',
+    async def test_in_out_keyword(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            ":) {midnight los angeles > honolulu}"
+        )
+        self._assert(
+            contents,
+            r'Pacific/Honolulu.+9:00 PM'
         )
 
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            ":D {noon london > new york}",
-            r'America/New_York.+7:00 AM',
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            ":D {noon london > new york}"
+        )
+        self._assert(
+            contents,
+            r'America/New_York.+7:00 AM'
         )
 
-    async def test_in_out_now(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            ":O {now new york > amsterdam}",
-            r'Europe/Amsterdam.+11:32 AM',
+    async def test_in_out_now(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            ":O {now new york > amsterdam}"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+11:32 AM'
         )
 
-    async def test_in_out_unknown_timezone(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_error(
-            ":( {10 amsterdam > london}",
-            'Unknown unit "amsterdam"',
+    async def test_in_out_unknown_timezone(
+            self, message, dutch_user, dispatch_msg_get_embeds
+    ):
+        message.author = dutch_user
+        embeds = await dispatch_msg_get_embeds(
+            ":( {10 amsterdam > london}"
+        )
+        assert_error(
+            embeds,
+            'Unknown unit "amsterdam"'
         )
 
     # endregion
 
     # region Other
 
-    async def test_flags(self):
-        self.msg.author.id = self.american_user
-        await self.assert_in_reply(
-            "you can see the country flags too! {12am}",
+    async def test_flags(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "you can see the country flags too! {12am}"
+        )
+        self._assert(
+            contents,
             '🇺🇸', '🇬🇧', '🇳🇱'
         )
 
