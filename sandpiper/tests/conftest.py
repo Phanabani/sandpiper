@@ -353,9 +353,12 @@ def patch_localzone_utc() -> pytz.UTC:
 
 @pytest.fixture()
 def patch_datetime_now():
+    patchers = []
+
     def f(static_datetime: dt.datetime) -> dt.datetime:
         # Patch datetime to use a static datetime
         patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
+        patchers.append(patcher)
         mock_datetime = patcher.start()
         mock_datetime.datetime.now.return_value = static_datetime
         mock_datetime.datetime.side_effect = (
@@ -367,12 +370,12 @@ def patch_datetime_now():
         mock_datetime.time.side_effect = (
             lambda *a, **kw: dt.time(*a, **kw)
         )
-
-        yield static_datetime
-
-        patcher.stop()
+        return static_datetime
 
     yield f
+
+    for patcher in patchers:
+        patcher.stop()
 
 
 # endregion
