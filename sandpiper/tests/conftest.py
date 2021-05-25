@@ -372,5 +372,7 @@ def patch_datetime_now():
 
         patcher.stop()
 
+    yield f
+
 
 # endregion
