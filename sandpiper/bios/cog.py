@@ -87,7 +87,7 @@ async def user_names_str(
 
 
 def maybe_dm_only():
-    def predicate(ctx: commands.Context):
+    async def predicate(ctx: commands.Context):
         bios: Bios = ctx.cog
         if not bios.allow_public_setting:
             return await commands.dm_only().predicate(ctx)
