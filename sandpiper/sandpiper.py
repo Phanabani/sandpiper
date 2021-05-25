@@ -45,12 +45,15 @@ class Sandpiper(commands.Bot):
             help_command=HelpCommand()
         )
 
+        # Add a dummy command that triggers when the user tries to use the
+        # command prefix in DMs. It's not required in DMs, so it'll tell the
+        # user to just omit it
         @self.command(name=config.command_prefix.strip(), hidden=True)
         async def noprefix_notify(ctx: commands.Context, *, rest: str):
             if ctx.prefix == '':
                 raise commands.BadArgument(
-                    f'You don\'t need to prefix commands here. '
-                    f'Just type "{rest}".'
+                    f"You don't need to prefix commands here. "
+                    f"Just type `{rest}`."
                 )
 
         self.load_extension('sandpiper.user_data')
