@@ -7,7 +7,7 @@ field.
 
 ## Config Fields
 
-### Root
+### (root)
 
 Fields in the root JSON object.
 
@@ -15,9 +15,9 @@ Key | Value
 --- | -----
 `bot_token` *(string)* | Your [Discord bot's](https://discord.com/developers/docs/topics/oauth2#bots) access token
 
-### Bot
+### bot
 
-Fields in `(root).bot` which describe the bot itself. See also
+Fields which describe the bot itself. See also
 the [discord.py bot documentation](https://discordpy.readthedocs.io/en/latest/ext/commands/api.html#bot)
 for more info on how these fields are used.
 
@@ -26,9 +26,17 @@ Key | Value
 `command_prefix` *(string)* | What users type to run a command
 `description` *(string)* | Description of the bot (used in help messages)
 
-### Logging
+### bot.modules.bios
 
-Fields in `(root).logging` which describe how logging is performed. Sandpiper
+Fields which describe how the Bios submodule runs.
+
+Key | Value
+--- | -----
+`allow_public_setting` *(bool)* | Whether commands like `name set` are allowed outside DMs. This is `false` by default to force users to DM Sandpiper for their privacy, but it may be easier to troubleshoot with them if they're allowed to enter commands in servers.
+
+### logging
+
+Fields which describe how logging is performed. Sandpiper
 uses rotating logging to write log files which rotate in specified intervals.
 See also the
 [TimedRotatingFileHandler documentation](https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler)

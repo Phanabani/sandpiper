@@ -73,7 +73,7 @@ The only value you need to set is the `bot_token`.
 }
 ```
 
-See [config](#config) for more configuration options.
+See [config](#config) for more info.
 
 ### Running Sandpiper
 
@@ -210,7 +210,8 @@ you and your friends need to set your timezones with the `timezone set` command
 ### Bios
 
 Store some info about yourself to help your friends get to know you more easily!
-Most of these commands can only be used in DMs with Sandpiper for your privacy.
+Unless [specified otherwise in the config file](sandpiper/config_example.json#botmodulesbios),
+most of these commands can only be used in DMs with Sandpiper for your privacy.
 
 #### General commands
 
