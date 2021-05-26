@@ -113,6 +113,11 @@ class TestConversionStringRegex(unittest.TestCase):
             f"{out_unit}"
         )
 
+    @staticmethod
+    def assert_findall_len(in_: str, len_: int):
+        __tracebackhide__ = True
+        assert len(conversion_pattern.findall(in_)) == len_
+
     def test_simple(self):
         self._assert('{5pm}', '5pm', None)
         self._assert('{ 5 ft }', '5 ft', None)
