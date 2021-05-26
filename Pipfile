@@ -9,6 +9,7 @@ certifi = "*"
 "discord.py" = "*"
 fuzzywuzzy = {version = "*", extras = ["speedup"]}
 pytz = "*"
+regex = "*"
 tzlocal = "*"
 Pint = "*"
 
