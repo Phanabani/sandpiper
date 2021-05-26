@@ -74,6 +74,10 @@ class TestPrivacy:
             embeds: list[discord.Embed], message: discord.Message,
             db_meth: T_DatabaseMethod, privacy: PrivacyType
     ):
+        """
+        Use the database method ``db_meth`` to assert the command successfully
+        changed the privacy field.
+        """
         __tracebackhide__ = True
         assert_success(embeds)
         assert await db_meth(message.author.id) is privacy
@@ -83,6 +87,9 @@ class TestPrivacy:
             embeds: list[discord.Embed], message: discord.Message,
             db: DatabaseSQLite, privacy: PrivacyType
     ):
+        """
+        Assert that every database field is ``privacy``.
+        """
         __tracebackhide__ = True
         assert_success(embeds)
         uid = message.author.id
@@ -327,6 +334,10 @@ class TestSet:
             embeds: list[discord.Embed], message: discord.Message,
             db_meth: T_DatabaseMethod, expected_value, privacy_field_name: str
     ):
+        """
+        Assert the set succeeded and that a warning message is also sent
+        telling the user how they can make this field public if they want.
+        """
         assert len(embeds) == 2
         assert_success(embeds[0])
         assert_warning(embeds[1], f'privacy {privacy_field_name} public')
@@ -338,6 +349,9 @@ class TestSet:
             embeds: list[discord.Embed], message: discord.Message,
             db_meth: T_DatabaseMethod, expected_value
     ):
+        """
+        Assert that the test succeeded.
+        """
         assert len(embeds) == 1
         assert_success(embeds[0])
         value = await db_meth(message.author.id)
@@ -435,6 +449,10 @@ class TestDelete:
             embeds: list[discord.Embed], message: discord.Message,
             db_meth: T_DatabaseMethod
     ):
+        """
+        Use the database method ``db_meth`` to assert the command successfully
+        deleted the data.
+        """
         assert len(embeds) == 1
         assert_success(embeds[0])
         value = await db_meth(message.author.id)
