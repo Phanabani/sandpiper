@@ -5,8 +5,7 @@ import sys
 from types import MethodType
 # noinspection PyPep8Naming
 from typing import (
-    Any, Annotated as A, Literal, NoReturn, TextIO, Union, get_type_hints,
-    overload
+    Any, Annotated, Literal, NoReturn, TextIO, Union, get_type_hints, overload
 )
 
 from .exceptions import *
@@ -39,7 +38,9 @@ def should_skip(name: str, value: Any = None) -> bool:
 class ConfigSchema:
 
     __path: str
-    __fields: dict[str, tuple[A[Any, 'Type'], A[Any, 'Default']]]
+    __fields: dict[
+        str, tuple[Annotated[Any, 'Type'], Annotated[Any, 'Default']]
+    ]
 
     def __init__(self, config: Union[dict, str, TextIO], *, _schema_path=''):
         self.__path = _schema_path

@@ -1,7 +1,7 @@
 from textwrap import dedent
 import unittest.mock as mock
 from pathlib import Path
-from typing import Annotated as A
+from typing import Annotated
 
 import pytest
 
@@ -30,7 +30,7 @@ class TestMisc:
     def test_bad_origin(self):
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
-                field: A[Path, '']
+                field: Annotated[Path, '']
 
     @pytest.mark.skip(
         "I'm not sure how to handle this yet, but it's a bit of an edge case"
@@ -38,12 +38,12 @@ class TestMisc:
     def test_bounded_before_fromtype(self):
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
-                field: A[int, Bounded(5, 6), FromType(str, int)]
+                field: Annotated[int, Bounded(5, 6), FromType(str, int)]
 
     def test_transform_back_chain(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: A[
+            field: Annotated[
                 Path,
                 FromType(str, float), FromType(float, int), FromType(int, str),
                 MaybeRelativePath(Path('/root/dir'))
@@ -66,7 +66,7 @@ class TestFromType:
 
     def test_implicit_to(self):
         class C(ConfigSchema):
-            field: A[str, FromType(int)]
+            field: Annotated[str, FromType(int)]
 
         parsed = C('{"field": 123}')
         assert_type_value(parsed.field, str, "123")
@@ -77,18 +77,18 @@ class TestFromType:
     def test_multiple_implicit_to_type_err(self):
         with pytest.raises(ConfigSchemaError, match='implicit'):
             class C(ConfigSchema):
-                field: A[str, FromType(int), FromType(str)]
+                field: Annotated[str, FromType(int), FromType(str)]
 
     def test_explicit_to(self):
         class C(ConfigSchema):
-            field: A[str, FromType(int, str)]
+            field: Annotated[str, FromType(int, str)]
 
         parsed = C('{"field": 123}')
         assert_type_value(parsed.field, str, "123")
 
     def test_explicit_to_chained(self):
         class C(ConfigSchema):
-            field: A[str, FromType(int, float), FromType(float, str)]
+            field: Annotated[str, FromType(int, float), FromType(float, str)]
 
         parsed = C('{"field": 123}')
         assert_type_value(parsed.field, str, "123.0")
@@ -96,7 +96,7 @@ class TestFromType:
     def test_explicit_to_type_mismatch(self):
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
-                field: A[str, FromType(int, float)]
+                field: Annotated[str, FromType(int, float)]
 
     def test_implicit_with_bounded_after(self):
         # I want the shorthand implicit notation available if it's used at
@@ -104,11 +104,11 @@ class TestFromType:
         # what's going on if more transformers come after it
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
-                field: A[int, FromType(str), Bounded(2, 4)]
+                field: Annotated[int, FromType(str), Bounded(2, 4)]
 
     def test_explicit_with_bounded_after(self):
         class C(ConfigSchema):
-            field: A[int, FromType(str, int), Bounded(2, 4)]
+            field: Annotated[int, FromType(str, int), Bounded(2, 4)]
 
         parsed = C('{"field": "3"}')
         assert_type_value(parsed.field, int, 3)
@@ -119,7 +119,7 @@ class TestFromType:
     def test_invalid_from_type(self):
         with pytest.raises(ConfigSchemaError):
             class C(ConfigSchema):
-                field: A[int, FromType(Path, int)]
+                field: Annotated[int, FromType(Path, int)]
 
     def test_back(self):
         trans = FromType(int, str)
@@ -136,7 +136,7 @@ class TestBounded:
 
     def test_min(self):
         class C(ConfigSchema):
-            field: A[int, Bounded(5, None)]
+            field: Annotated[int, Bounded(5, None)]
 
         with pytest.raises(ValueError):
             C('{"field": 4}')
@@ -149,7 +149,7 @@ class TestBounded:
 
     def test_max(self):
         class C(ConfigSchema):
-            field: A[int, Bounded(None, 10)]
+            field: Annotated[int, Bounded(None, 10)]
 
         parsed = C('{"field": 9}')
         assert_type_value(parsed.field, int, 9)
@@ -162,7 +162,7 @@ class TestBounded:
 
     def test_min_max(self):
         class C(ConfigSchema):
-            field: A[int, Bounded(2, 4)]
+            field: Annotated[int, Bounded(2, 4)]
 
         with pytest.raises(ValueError):
             C('{"field": 1}')
@@ -181,7 +181,7 @@ class TestBounded:
 
     def test_min_equal_to_max(self):
         class C(ConfigSchema):
-            field: A[int, Bounded(2, 2)]
+            field: Annotated[int, Bounded(2, 2)]
 
         with pytest.raises(ValueError):
             C('{"field": 1}')
@@ -195,7 +195,7 @@ class TestBounded:
     def test_min_greater_than_max(self):
         with pytest.raises(ValueError):
             class C(ConfigSchema):
-                field: A[int, Bounded(2, 1)]
+                field: Annotated[int, Bounded(2, 1)]
 
     def test_back(self):
         trans = Bounded(2, 4)
@@ -216,7 +216,7 @@ class TestMaybeRelativePath:
     def test_relative(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+            field: Annotated[Path, MaybeRelativePath(Path('/root/dir'))]
 
         parsed = C('{"field": "relative/path"}')
         assert parsed.field == Path('/root/dir/relative/path')
@@ -224,7 +224,7 @@ class TestMaybeRelativePath:
     def test_relative_with_dot(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+            field: Annotated[Path, MaybeRelativePath(Path('/root/dir'))]
 
         parsed = C('{"field": "./relative/path"}')
         assert parsed.field == Path('/root/dir/relative/path')
@@ -232,7 +232,7 @@ class TestMaybeRelativePath:
     def test_absolute(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: A[Path, MaybeRelativePath(Path('/root/dir'))]
+            field: Annotated[Path, MaybeRelativePath(Path('/root/dir'))]
 
         parsed = C('{"field": "/absolute/path"}')
         assert parsed.field == Path('/absolute/path')

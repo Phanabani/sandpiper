@@ -3,7 +3,7 @@ from functools import cached_property
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from typing import Annotated as An, Literal
+from typing import Annotated, Literal
 
 from sandpiper.common.paths import MODULE_PATH
 from sandpiper.piperfig import *
@@ -44,12 +44,12 @@ class SandpiperConfig(ConfigSchema):
 
         sandpiper_logging_level: _logging_levels = 'INFO'
         discord_logging_level: _logging_levels = 'WARNING'
-        output_file: An[Path, MaybeRelativePath(MODULE_PATH)] = (
+        output_file: Annotated[Path, MaybeRelativePath(MODULE_PATH)] = (
             './logs/sandpiper.log'
         )
         when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
-        interval: An[int, Bounded(1, None)] = 1
-        backup_count: An[int, Bounded(0, None)] = 7
+        interval: Annotated[int, Bounded(1, None)] = 1
+        backup_count: Annotated[int, Bounded(0, None)] = 7
         format = "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
 
         @cached_property
