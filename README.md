@@ -210,7 +210,7 @@ you and your friends need to set your timezones with the `timezone set` command
 ### Bios
 
 Store some info about yourself to help your friends get to know you more easily!
-Unless [specified otherwise in the config file](sandpiper/config_example.json#botmodulesbios),
+Unless [specified otherwise in the config file](docs/config.md#botmodulesbios),
 most of these commands can only be used in DMs with Sandpiper for your privacy.
 
 #### General commands
