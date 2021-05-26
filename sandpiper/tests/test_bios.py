@@ -58,6 +58,14 @@ def send_in_dms(message):
     message.guild = None
 
 
+@pytest.fixture()
+def send_in_guild(new_id, make_guild, message):
+    """Send the message in DMs (message.guild is None)"""
+    guild = make_guild(new_id())
+    # noinspection PyDunderSlots,PyUnresolvedReferences
+    message.guild = guild
+
+
 @pytest.mark.usefixtures('apply_new_user_id')
 class TestPrivacy:
 
@@ -734,3 +742,31 @@ class TestWhois:
             await invoke_cmd_get_embeds("whois e")
 
     # endregion
+
+
+@pytest.mark.usefixtures('apply_new_user_id')
+class TestAllowPublicBioSetting:
+
+    @pytest.fixture(autouse=True)
+    async def set_privacies_public(self, apply_new_user_id, database, message):
+        await database.set_privacy_preferred_name(
+            message.author.id, PrivacyType.PUBLIC
+        )
+
+    @pytest.fixture()
+    def allow_public_bio_setting(self, bot):
+        bios: Bios = bot.get_cog('Bios')
+        bios.allow_public_setting = True
+
+    async def test_disallow_set(
+            self, database, message, invoke_cmd_get_embeds, send_in_guild
+    ):
+        with pytest.raises(commands.PrivateMessageOnly):
+            await invoke_cmd_get_embeds(f'name set Greg')
+
+    async def test_allow_set(
+            self, database, message, invoke_cmd_get_embeds, send_in_guild,
+            allow_public_bio_setting
+    ):
+        embeds = await invoke_cmd_get_embeds(f'name set Greg')
+        assert_success(embeds)
