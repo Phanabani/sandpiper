@@ -1,157 +1,73 @@
 from __future__ import annotations
-import json
+from functools import cached_property
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from typing import Any, Union
+from typing import Annotated, Literal
 
-DEFAULTS = {
-  "bot": {
-    "command_prefix": "!piper ",
-    "description":
-        "A bot that makes it easier to communicate with friends around the "
-        "world.\nVisit my GitHub page for more info about commands and "
-        "features: https://github.com/Hawkpath/sandpiper#commands-and-features"
-  },
+from sandpiper.common.paths import MODULE_PATH
+from sandpiper.piperfig import *
 
-  "logging": {
-    "sandpiper_logging_level": "INFO",
-    "discord_logging_level": "WARNING",
-    "output_file": "./logs/sandpiper.log",
-    "when": "midnight",
-    "interval": 1,
-    "backup_count": 7,
-    "format": "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
-  }
-}
+__all__ = ('SandpiperConfig',)
 
 
-class ConfigError(Exception):
-    pass
+class SandpiperConfig(ConfigSchema):
 
+    bot_token: str
+    bot: _Bot
+    logging: _Logging
 
-def get_default(config: dict[str, Any], category: str, key: str):
-    try:
-        return config[category][key]
-    except KeyError:
-        return DEFAULTS[category][key]
+    class _Bot(ConfigSchema):
 
+        command_prefix = "!piper "
+        description = (
+            "A bot that makes it easier to communicate with friends around the "
+            "world.\n"
+            "Visit my GitHub page for more info about commands and features: "
+            "https://github.com/Hawkpath/sandpiper#commands-and-features"
+        )
+        modules: _Modules
 
-class Config:
+        class _Modules(ConfigSchema):
 
-    __slots__ = ['bot', 'logging']
+            bios: _Bios
 
-    class Bot:
+            class _Bios(ConfigSchema):
 
-        __slots__ = ['command_prefix', 'description']
+                allow_public_setting = False
 
-        command_prefix: str
-        description: str
+    class _Logging(ConfigSchema):
 
-        def __init__(self, config: dict[str, Any]):
-            """Parse bot-specific config"""
+        _logging_levels = Literal[
+            'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        ]
 
-            self.command_prefix = get_default(config, 'bot', 'command_prefix')
-            if not isinstance(self.command_prefix, str):
-                raise ConfigError('bot.command_prefix must be a string')
+        sandpiper_logging_level: _logging_levels = 'INFO'
+        discord_logging_level: _logging_levels = 'WARNING'
+        output_file: Annotated[Path, MaybeRelativePath(MODULE_PATH)] = (
+            './logs/sandpiper.log'
+        )
+        when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
+        interval: Annotated[int, Bounded(1, None)] = 1
+        backup_count: Annotated[int, Bounded(0, None)] = 7
+        format = "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
 
-            self.description = get_default(config, 'bot', 'description')
-            if not isinstance(self.description, str):
-                raise ConfigError('bot.description must be a string')
+        @cached_property
+        def formatter(self):
+            return logging.Formatter(self.format)
 
-    class Logging:
-
-        __slots__ = ['sandpiper_logging_level', 'discord_logging_level',
-                     'output_path', 'when', 'interval', 'backup_count',
-                     'format', 'formatter', 'handler']
-
-        sandpiper_logging_level: str
-        discord_logging_level: str
-        output_path: Path
-        when: str
-        interval: int
-        backup_count: int
-        format: str
-        formatter: logging.Formatter
-        handler: TimedRotatingFileHandler
-
-        _allowed_whens = ('S', 'M', 'H', 'D', 'midnight')
-        _allowed_logging_levels = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
-
-        def __init__(self, config: dict[str, Any]):
-            """Parse logging-specific config"""
-
-            self.sandpiper_logging_level = get_default(
-                config, 'logging', 'sandpiper_logging_level')
-            if self.sandpiper_logging_level not in self._allowed_logging_levels:
-                raise ConfigError(f"logging.sandpiper_logging_level must be "
-                                  f"one of {self._allowed_logging_levels!r}")
-
-            self.discord_logging_level = get_default(
-                config, 'logging', 'discord_logging_level')
-            if self.discord_logging_level not in self._allowed_logging_levels:
-                raise ConfigError(f"logging.discord_logging_level must be "
-                                  f"one of {self._allowed_logging_levels!r}")
-
-            output_file = get_default(config, 'logging', 'output_file')
-            if not isinstance(output_file, str):
-                raise ConfigError('logging.output_file must be a string')
-            output_file = Path(output_file)
-            if not output_file.is_absolute():
-                output_file = Path(__file__).parent / output_file
-            self.output_path = output_file
-
-            self.when = get_default(config, 'logging', 'when')
-            if self.when not in self._allowed_whens:
-                raise ConfigError(f"logging.when must be one of "
-                                  f"{self._allowed_whens!r}")
-
-            self.interval = get_default(config, 'logging', 'interval')
-            if not isinstance(self.interval, int) or self.interval < 1:
-                raise ConfigError('logging.interval must be an integer greater '
-                                  'than 0')
-
-            self.backup_count = get_default(config, 'logging', 'backup_count')
-            if not isinstance(self.backup_count, int) or self.backup_count < 0:
-                raise ConfigError('logging.backup_count must be an integer '
-                                  'greater than or equal to 0')
-
-            self.format = get_default(config, 'logging', 'format')
-            if not isinstance(self.format, str):
-                raise ConfigError('logging.format must be a string')
-
-            self.formatter = logging.Formatter(self.format)
-            self.handler = TimedRotatingFileHandler(
-                filename=self.output_path,
+        @cached_property
+        def handler(self):
+            handler = TimedRotatingFileHandler(
+                filename=self.output_file,
                 when=self.when,
                 interval=self.interval,
                 backupCount=self.backup_count,
             )
-            self.handler.setFormatter(self.formatter)
+            handler.setFormatter(self.formatter)
+            return handler
 
-    def __init__(self, config: dict[str, Any]):
-        """Parse config"""
-        self.bot = self.Bot(config)
-        self.logging = self.Logging(config)
 
-    @classmethod
-    def load_json(cls, config_path: Union[Path, str]) -> tuple[str, Config]:
-        """
-        Load bot config from a json file.
-
-        :param config_path: Path to the json file
-        :returns: A tuple of (bot_token, config). For security reasons, the
-            bot token isn't loaded into the config object.
-        """
-
-        with open(config_path) as f:
-            config_json: dict[str, Any] = json.load(f)
-
-        if 'bot_token' not in config_json:
-            raise ConfigError('bot_token missing')
-        bot_token = config_json['bot_token']
-        # Delete bot_token from dict just in case
-        del config_json['bot_token']
-
-        config = Config(config_json)
-        return bot_token, config
+if __name__ == '__main__':
+    config = SandpiperConfig({'bot_token': '<BOT_TOKEN>'})
+    print(config.serialize())

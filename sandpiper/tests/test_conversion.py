@@ -1,31 +1,34 @@
 import datetime as dt
 from typing import Optional, Union
 import unittest
-import unittest.mock as mock
 
+import discord
 import discord.ext.commands as commands
+import pytest
 import pytz
 
-from ._test_helpers import DiscordMockingTestCase
-from sandpiper.common.time import utc_now
+from ._helpers import *
+from sandpiper.common.time import TimezoneType, utc_now
 from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
-from sandpiper.user_data import DatabaseSQLite, UserData
+from sandpiper.user_data import UserData
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = (
-    'TestImperialShorthandRegex',
-    'TestUnitConversion',
-    'TestTimeConversion'
-)
-
-CONNECTION = ':memory:'
+pytestmark = pytest.mark.asyncio
 
 
-class TestImperialShorthandRegex(unittest.TestCase):
+@pytest.fixture()
+def bot(bot) -> commands.Bot:
+    bot.add_cog(Conversion(bot))
+    bot.add_cog(UserData(bot))
+    return bot
 
-    def assert_match(
-            self, test_str: str, foot: Optional[Union[int, float]],
+
+class TestImperialShorthandRegex:
+
+    @staticmethod
+    def _assert(
+            test_str: str, foot: Optional[Union[int, float]],
             inch: Optional[Union[int, float]]
     ):
         __tracebackhide__ = True
@@ -46,50 +49,50 @@ class TestImperialShorthandRegex(unittest.TestCase):
             assert match_inch == inch
 
     def test_int_feet(self):
-        self.assert_match("1'", 1, None)
-        self.assert_match("23'", 23, None)
-        self.assert_match("-4'", None, None)
-        self.assert_match(" 5'", None, None)
+        self._assert("1'", 1, None)
+        self._assert("23'", 23, None)
+        self._assert("-4'", None, None)
+        self._assert(" 5'", None, None)
 
     def test_int_inches(self):
-        self.assert_match("1\"", None, 1)
-        self.assert_match("23\"", None, 23)
-        self.assert_match("-4\"", None, None)
-        self.assert_match(" 5\"", None, None)
+        self._assert("1\"", None, 1)
+        self._assert("23\"", None, 23)
+        self._assert("-4\"", None, None)
+        self._assert(" 5\"", None, None)
 
     def test_int_both(self):
-        self.assert_match("1'2\"", 1, 2)
-        self.assert_match("3' 4\"", 3, 4)
-        self.assert_match("56' 78\"", 56, 78)
-        self.assert_match("0' 1\"", 0, 1)
-        self.assert_match("1' 0\"", 1, 0)
+        self._assert("1'2\"", 1, 2)
+        self._assert("3' 4\"", 3, 4)
+        self._assert("56' 78\"", 56, 78)
+        self._assert("0' 1\"", 0, 1)
+        self._assert("1' 0\"", 1, 0)
 
     def test_decimal_feet(self):
         # Decimal feet are not allowed (yet?)
-        self.assert_match("1.2'", None, None)
-        self.assert_match("0.3'", None, None)
-        self.assert_match(".4'", None, None)
+        self._assert("1.2'", None, None)
+        self._assert("0.3'", None, None)
+        self._assert(".4'", None, None)
 
     def test_decimal_inches(self):
-        self.assert_match("1.2\"", None, 1.2)
-        self.assert_match("0.3\"", None, 0.3)
-        self.assert_match(".4\"", None, 0.4)
+        self._assert("1.2\"", None, 1.2)
+        self._assert("0.3\"", None, 0.3)
+        self._assert(".4\"", None, 0.4)
 
     def test_decimal_both(self):
-        self.assert_match("1' 2.3\"", 1, 2.3)
-        self.assert_match(".4' 5.6\"", None, None)
-        self.assert_match("1' 2.3.4\"", None, None)
+        self._assert("1' 2.3\"", 1, 2.3)
+        self._assert(".4' 5.6\"", None, None)
+        self._assert("1' 2.3.4\"", None, None)
 
     def test_other_garbage(self):
-        self.assert_match("", None, None)
-        self.assert_match("5", None, None)
-        self.assert_match("30.00 °F", None, None)
+        self._assert("", None, None)
+        self._assert("5", None, None)
+        self._assert("30.00 °F", None, None)
 
 
 class TestConversionStringRegex(unittest.TestCase):
 
     @staticmethod
-    def assert_match(
+    def _assert(
             in_: str, quantity: Optional[str], out_unit: Optional[str]
     ):
         __tracebackhide__ = True
@@ -116,578 +119,704 @@ class TestConversionStringRegex(unittest.TestCase):
         assert len(conversion_pattern.findall(in_)) == len_
 
     def test_simple(self):
-        self.assert_match('{5pm}', '5pm', None)
-        self.assert_match('{ 5 ft }', '5 ft', None)
+        self._assert('{5pm}', '5pm', None)
+        self._assert('{ 5 ft }', '5 ft', None)
 
     def test_specifier_with_out_unit(self):
-        self.assert_match('{5ft>m}', '5ft', 'm')
-        self.assert_match('{5ft > m}', '5ft', 'm')
-        self.assert_match('{5 ft > m}', '5 ft', 'm')
-        self.assert_match('{5 km  >  mi}', '5 km', 'mi')
-        self.assert_match('{ 5pm  > new york}', '5pm', 'new york')
-        self.assert_match('{ 5pm  > new york   }', '5pm', 'new york')
+        self._assert('{5ft>m}', '5ft', 'm')
+        self._assert('{5ft > m}', '5ft', 'm')
+        self._assert('{5 ft > m}', '5 ft', 'm')
+        self._assert('{5 km  >  mi}', '5 km', 'mi')
+        self._assert('{ 5pm  > new york}', '5pm', 'new york')
+        self._assert('{ 5pm  > new york   }', '5pm', 'new york')
 
     def test_specifier_no_out_unit(self):
-        self.assert_match('{5pm>}', None, None)
-        self.assert_match('{5pm >}', None, None)
-        self.assert_match('{5pm> }', None, None)
-        self.assert_match('{5pm > }', None, None)
-        self.assert_match('{8:00 > }', None, None)
+        self._assert('{5pm>}', None, None)
+        self._assert('{5pm >}', None, None)
+        self._assert('{5pm> }', None, None)
+        self._assert('{5pm > }', None, None)
+        self._assert('{8:00 > }', None, None)
 
-    def test_code_block_simple(self):
-        self.assert_findall_len("hey there `{i don't want this}`", 0)
-        self.assert_findall_len(
-            "and ` blah blah hhhh {I also don't want this}  kljabfl`", 0
+
+class TestUnitConversion:
+
+    @staticmethod
+    def _assert(contents: list[str], *substrings: str):
+        assert len(contents) == 1
+        assert_in(contents[0], *substrings)
+
+    async def test_two_way_temperature(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "guys it's {30f} outside today, I'm so cold..."
         )
+        self._assert(contents, '30.00 °F', '-1.11 °C')
 
-    def test_code_block_simple_multi(self):
-        self.assert_findall_len(
-            "hey there `{i don't want this}` "
-            "but {i do want this} "
-            "and ` blah blah hhhh {I also don't want this}  kljabfl`",
-            1
+        contents = await dispatch_msg_get_contents(
+            "guys it's {-1.11c} outside today, I'm so cold..."
         )
+        self._assert(contents, '30.00 °F', '-1.11 °C')
 
-    def test_code_block_triple(self):
-        self.assert_findall_len("```this is {ignored too}```", 0)
-        self.assert_findall_len("```this is {ignored too}``` hi {good > hi}", 1)
-
-    def test_code_block_triple_newline(self):
-        self.assert_findall_len(
-            "first line ```\nis this {ignored too?}\n```", 0)
-
-    def test_code_block_escaped(self):
-        self.assert_findall_len(r"\`{this is escaped}", 1)
-        self.assert_findall_len(r"`{this is not escaped}\`", 0)
-
-    def test_code_block_escaped_multi(self):
-        self.assert_findall_len(
-            r"\`{this is escaped}  `{but not this}` `{this is not escaped}\`",
-            1
+    async def test_two_way_mass(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I've been working out a lot lately and I've already lost {2 kg}!!"
         )
+        self._assert(contents, '2.00 kg', '4.41 lb')
 
-    def test_code_block_weird(self):
-        self.assert_findall_len("``{what is this behavior}``", 0)
-        self.assert_findall_len("`{and this?}``", 0)
-        self.assert_findall_len("``{or this?}`", 0)
-
-    def test_code_block_complex(self):
-        self.assert_findall_len(
-            "hey `{BAD}` and {GOOD} and "
-            "` blah blah hhhh {BAD}  kljabfl`  "
-            "\`{GOOD}  `{BAD}` `{BAD}\`\n"
-            
-            "hello sometimes this doesn't match {GOOD}\n"
-            "another `{block}`\n"
-            
-            "```this is {BAD}``` hi {GOOD > hi}\n"
-            
-            "```\n"
-            "newline {BAD}\n"
-            "```\n"
-            
-            "``{BAD}``\n"
-            "`{BAD}``\n"
-            "``{BAD}`",
-            4
+        contents = await dispatch_msg_get_contents(
+            "I've been working out a lot lately and I've already lost {4.41 lb}!!"
         )
+        self._assert(contents, '2.00 kg', '4.41 lb')
 
+    async def test_two_way_distance(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "Is that a {33ft} boat, TJ?"
+        )
+        self._assert(contents, '33.00 ft', '10.06 m')
 
-class TestUnitConversion(DiscordMockingTestCase):
-
-    def add_cogs(self, bot: commands.Bot):
-        bot.add_cog(Conversion(bot))
-
-    async def assert_error(self, msg: str, *substrings: str):
-        __tracebackhide__ = True
-        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
-        super().assert_error(embed, *substrings)
-
-    async def test_two_way(self):
-        await self.assert_in_reply(
-            "guys it's {30f} outside today, I'm so cold...",
-            '30.00 °F', '-1.11 °C'
-        )
-        await self.assert_in_reply(
-            "guys it's {-1.11c} outside today, I'm so cold...",
-            '30.00 °F', '-1.11 °C'
-        )
-        await self.assert_in_reply(
-            "I've been working out a lot lately and I've already lost {2 kg}!!",
-            '2.00 kg', '4.41 lb'
-        )
-        await self.assert_in_reply(
-            "I've been working out a lot lately and I've already lost {4.41 lb}!!",
-            '2.00 kg', '4.41 lb'
-        )
-        await self.assert_in_reply(
-            "Is that a {33ft} boat, TJ?",
-            '33.00 ft', '10.06 m'
-        )
-        await self.assert_in_reply(
+    async def test_two_way_distance_multi(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
             "Lou lives about {15km} from me and TJ's staying at a hotel "
             "{2.5km} away, so he and I are gonna meet up and drive over to "
-            "Lou.",
-            '9.32 mi', '15.00 km',
-            '1.55 mi', '2.50 km'
+            "Lou."
         )
+        self._assert(contents, '9.32 mi', '15.00 km', '1.55 mi', '2.50 km')
 
-    async def test_one_way(self):
-        await self.assert_in_reply(
-            "I was only {4 yards} away in geoguessr!!",
-            '4.00 yd', '3.66 m'
+    async def test_one_way_distance(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I was only {4 yards} away in geoguessr!!"
         )
-        await self.assert_in_reply(
-            "I weigh around {9.3 stone}. whatever that means...",
-            '9.30 stone', '59.06 kg'
-        )
-        await self.assert_in_reply(
-            "any scientists in the chat?? {0 K}",
-            '0.00 K', '-273.15 °C'
-        )
+        self._assert(contents, '4.00 yd', '3.66 m')
 
-    async def test_imperial_shorthand(self):
-        await self.assert_in_reply(
-            "I think Jason is like {6' 2\"} tall",
-            '6.17 ft', '1.88 m'
+    async def test_one_way_mass(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I weigh around {9.3 stone}. whatever that means..."
         )
-        await self.assert_in_reply(
-            "I'm only {5'11\"} though!",
-            '5.92 ft', '1.80 m'
-        )
+        self._assert(contents, '9.30 stone', '59.06 kg')
 
-    async def test_explicit(self):
-        await self.assert_in_reply(
-            "{-5 f > kelvin} it's too late for apologies, imperial system",
-            '-5.00 °F', '252.59 K'
+    async def test_one_way_temperature(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "any scientists in the chat?? {0 K}"
         )
-        await self.assert_in_reply(
-            "how much is {9.3 stone > lbs}",
-            '9.30 stone', '130.20 lb'
+        self._assert(contents, '0.00 K', '-273.15 °C')
+
+    async def test_imperial_shorthand(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I think Jason is like {6' 2\"} tall"
         )
-        await self.assert_in_reply(
+        self._assert(contents, '6.17 ft', '1.88 m')
+
+        contents = await dispatch_msg_get_contents(
+            "I'm only {5'11\"} though!"
+        )
+        self._assert(contents, '5.92 ft', '1.80 m')
+
+    async def test_explicit(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "{-5 f > kelvin} it's too late for apologies, imperial system"
+        )
+        self._assert(contents, '-5.00 °F', '252.59 K')
+
+        contents = await dispatch_msg_get_contents(
+            "how much is {9.3 stone > lbs}"
+        )
+        self._assert(contents, '9.30 stone', '130.20 lb')
+
+        contents = await dispatch_msg_get_contents(
             "bc this is totally useful.. {5 mi > ft}"
-            '5 mi', '26400.00 ft'
         )
-        await self.assert_in_reply(
+        self._assert(contents, '5.00 mi', '26400.00 ft')
+
+        contents = await dispatch_msg_get_contents(
             "can't believe {3.000 hogshead > gallon} is even real"
-            '3 hogshead', '189.00 gal'
         )
-        await self.assert_in_reply(
-            "ma'am you forgot your spaces {5ft>yd}",
-            '5.00 ft', '1.67 yd'
-        )
+        self._assert(contents, '3.00 hogshead', '189.00 gal')
 
-    async def test_unit_math(self):
-        await self.assert_in_reply(
-            "I'm measuring wood planks, I need {2.3 ft + 5 in}",
-            '2.72 ft', '0.83 m'
+        contents = await dispatch_msg_get_contents(
+            "ma'am you forgot your spaces {5ft>yd}"
         )
-        await self.assert_in_reply(
-            "oops, I need that in inches {2.3 ft + 5 in > in}",
-            '2.72 ft', '32.60 in'
-        )
-        await self.assert_in_reply(
-            "my two favorite songs are a total of {5min+27s + 4min+34s > s}",
-            '10.02 min', '601.00 s'
-        )
+        self._assert(contents, '5.00 ft', '1.67 yd')
 
-    async def test_dimensionless_math(self):
-        await self.assert_in_reply(
-            "what's {2 + 7}?",
-            '2 + 7', '9'
+    async def test_unit_math(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "I'm measuring wood planks, I need {2.3 ft + 5 in}"
         )
-        await self.assert_in_reply(
-            "how about {2.5 + 7.8}?",
-            '2.5 + 7.8', '10.3'
-        )
-        await self.assert_in_reply(
-            "and {2 * 7}?",
-            '2 * 7', '14'
-        )
+        self._assert(contents, '2.72 ft', '0.83 m')
 
-    async def test_unknown_unit(self):
-        await self.assert_error(
-            "that's like {12.5 donuts} wide!",
-            'Unknown unit "donuts"'
+        contents = await dispatch_msg_get_contents(
+            "oops, I need that in inches {2.3 ft + 5 in > in}"
         )
-        await self.assert_error(
-            "how far away is that in blehs? {6 km > bleh}",
-            'Unknown unit "bleh"'
-        )
+        self._assert(contents, '2.72 ft', '32.60 in')
 
-    async def test_unmapped_unit(self):
-        await self.assert_error(
+        contents = await dispatch_msg_get_contents(
+            "my two favorite songs are a total of {5min+27s + 4min+34s > s}"
+        )
+        self._assert(contents, '10.02 min', '601.00 s')
+
+    async def test_dimensionless_math(self, dispatch_msg_get_contents):
+        contents = await dispatch_msg_get_contents(
+            "what's {2 + 7}?"
+        )
+        self._assert(contents, '2 + 7', '9')
+
+        contents = await dispatch_msg_get_contents(
+            "how about {2.5 + 7.8}?"
+        )
+        self._assert(contents, '2.5 + 7.8', '10.3')
+
+        contents = await dispatch_msg_get_contents(
+            "and {2 * 7}?"
+        )
+        self._assert(contents, '2 * 7', '14')
+
+    async def test_unknown_unit(self, dispatch_msg_get_embeds):
+        embeds = await dispatch_msg_get_embeds(
+            "that's like {12.5 donuts} wide!"
+        )
+        assert_error(embeds, 'Unknown unit "donuts"')
+
+        embeds = await dispatch_msg_get_embeds(
+            "how far away is that in blehs? {6 km > bleh}"
+        )
+        assert_error(embeds, 'Unknown unit "bleh"')
+
+    async def test_unmapped_unit(self, dispatch_msg_get_embeds):
+        embeds = await dispatch_msg_get_embeds(
             "{5 hogshead} is a real unit, but not really useful enough to be "
-            "mapped. fun name though",
-            '{5 hogshead > otherunit}'
+            "mapped. fun name though"
         )
+        assert_error(embeds, '{5 hogshead > otherunit}')
 
-    async def test_bad_conversion_string(self):
-        await self.assert_no_reply("oops I dropped my unit {5 ft >}",)
-        await self.assert_no_reply("oh crap not again {5 ft > }",)
-        await self.assert_no_reply("okay this is just disgusting {5 >}",)
-        await self.assert_no_reply("dude! {5 > }",)
+    async def test_bad_conversion_string(self, dispatch_msg):
+        send = await dispatch_msg("oops I dropped my unit {5 ft >}",)
+        assert_no_reply(send)
+
+        send = await dispatch_msg("oh crap not again {5 ft > }",)
+        assert_no_reply(send)
+
+        send = await dispatch_msg("okay this is just disgusting {5 >}",)
+        assert_no_reply(send)
+
+        send = await dispatch_msg("dude! {5 > }",)
+        assert_no_reply(send)
 
 
-class TestTimeConversion(DiscordMockingTestCase):
+class TestTimeConversion:
 
-    db: DatabaseSQLite
-    MOCK_NOW = dt.datetime(2020, 6, 1, 9, 32)
+    T_TimezoneUser = tuple[discord.User, dt.datetime]
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
+    # region Fixtures
 
-        # Connect to a dummy database
-        self.db = DatabaseSQLite(CONNECTION)
-        await self.db.connect()
+    @pytest.fixture(autouse=True)
+    def june_1st_2020_932_am(
+            self, patch_localzone_utc, patch_datetime_now
+    ) -> dt.datetime:
+        yield patch_datetime_now(dt.datetime(2020, 6, 1, 9, 32))
 
-        # Bypass UserData cog lookup by patching in the database
-        patcher = mock.patch(
-            'sandpiper.user_data.UserData.get_database',
-            return_value=self.db
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    @pytest.fixture()
+    def make_user_with_timezone(self, make_user, database):
+        async def f(timezone: TimezoneType) -> discord.User:
+            user = make_user()
+            await database.set_timezone(user.id, timezone)
+            await database.set_privacy_timezone(user.id, PrivacyType.PUBLIC)
+            return user
+        yield f
 
-        self.patch_time()
+    @pytest.fixture()
+    def american_tz(self) -> TimezoneType:
+        yield pytz.timezone('America/New_York')
 
-        self.dutch_user, self.dutch_now = await self.add_timezone_user('Europe/Amsterdam')
-        self.british_user, self.british_now = await self.add_timezone_user('Europe/London')
-        self.american_user, self.american_now = await self.add_timezone_user('America/New_York')
+    @pytest.fixture()
+    def american_now(self, american_tz) -> dt.datetime:
+        yield utc_now().astimezone(american_tz)
 
-    def patch_time(self):
-        # Patch datetime to use a static datetime
-        patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
-        mock_datetime = patcher.start()
-        self.addCleanup(patcher.stop)
+    @pytest.fixture()
+    async def american_user(
+            self, american_tz, make_user_with_timezone
+    ) -> discord.User:
+        yield await make_user_with_timezone(american_tz)
 
-        mock_datetime.datetime.now.return_value = self.MOCK_NOW
-        mock_datetime.datetime.side_effect = (
-            lambda *a, **kw: dt.datetime(*a, **kw)
-        )
-        mock_datetime.date.side_effect = (
-            lambda *a, **kw: dt.date(*a, **kw)
-        )
-        mock_datetime.time.side_effect = (
-            lambda *a, **kw: dt.time(*a, **kw)
-        )
+    @pytest.fixture()
+    def british_tz(self) -> TimezoneType:
+        yield pytz.timezone('Europe/London')
 
-        # Patch localzone to use UTC
-        patcher = mock.patch(
-            'sandpiper.common.time.tzlocal.get_localzone', autospec=True
-        )
-        mock_localzone = patcher.start()
-        self.addCleanup(patcher.stop)
+    @pytest.fixture()
+    def british_now(self, british_tz) -> dt.datetime:
+        yield utc_now().astimezone(british_tz)
 
-        mock_localzone.return_value = pytz.UTC
+    @pytest.fixture()
+    async def british_user(
+            self, british_tz, make_user_with_timezone
+    ) -> discord.User:
+        yield await make_user_with_timezone(british_tz)
 
-    async def asyncTearDown(self):
-        await self.db.disconnect()
+    @pytest.fixture()
+    def dutch_tz(self) -> TimezoneType:
+        yield pytz.timezone('Europe/Amsterdam')
 
-    def add_cogs(self, bot: commands.Bot):
-        bot.add_cog(Conversion(bot))
-        bot.add_cog(UserData(bot))
+    @pytest.fixture()
+    def dutch_now(self, dutch_tz) -> dt.datetime:
+        yield utc_now().astimezone(dutch_tz)
 
-    async def add_timezone_user(self, timezone: str) -> tuple[int, dt.datetime]:
-        uid = self.new_user_id()
-        tz = pytz.timezone(timezone)
-        now = utc_now().astimezone(tz)
-        await self.db.set_timezone(uid, tz)
-        await self.db.set_privacy_timezone(uid, PrivacyType.PUBLIC)
-        return uid, now
+    @pytest.fixture()
+    async def dutch_user(
+            self, dutch_tz, make_user_with_timezone
+    ) -> discord.User:
+        yield await make_user_with_timezone(dutch_tz)
 
-    async def assert_error(self, msg: str, *substrings: str):
-        __tracebackhide__ = True
-        embed = await self.dispatch_msg_get_embeds(msg, only_one=True)
-        super().assert_error(embed, *substrings)
+    @pytest.fixture(autouse=True)
+    def all_users(self, american_user, british_user, dutch_user):
+        pass
+
+    # endregion
+
+    @staticmethod
+    def _assert(contents: list[str], *patterns: str):
+        assert len(contents) == 1
+        assert_regex(contents[0], *patterns)
 
     # region Get user's timezone
 
-    async def test_basic(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            "do you guys wanna play at {9pm}?",
+    async def test_basic_hour_period(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            "do you guys wanna play at {9pm}?"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:00 PM',
             r'Europe/London.+8:00 PM',
             r'America/New_York.+3:00 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "I get off work at {330pm}",
+    async def test_basic_no_colon_period(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "I get off work at {330pm}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:30 PM',
             r'Europe/London.+8:30 PM',
             r'America/New_York.+3:30 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "In 24-hour time that's {1530}",
+    async def test_basic_no_colon(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "In 24-hour time that's {1530}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:30 PM',
             r'Europe/London.+8:30 PM',
             r'America/New_York.+3:30 PM'
         )
 
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
+    async def test_basic_hour_only(
+            self, message, british_user, dispatch_msg_get_contents
+    ):
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
             "yeah I've gotta wake up at {5} for work tomorrow, so it's an "
-            "early bedtime for me",
+            "early bedtime for me"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+6:00 AM',
             r'Europe/London.+5:00 AM',
             r'America/New_York.+12:00 AM'
         )
 
-    async def test_multiple(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "I wish I could, but I'm busy from {14} to {17:45}",
+    async def test_basic_multiple(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "I wish I could, but I'm busy from {14} to {17:45}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+8:00 PM.+11:45 PM',
             r'Europe/London.+7:00 PM.+10:45 PM',
             r'America/New_York.+2:00 PM.+5:45 PM'
         )
 
-    async def test_keyword(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            "It's nearly {noon}. Time for lunch!",
+    async def test_basic_noon(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            "It's nearly {noon}. Time for lunch!"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+12:00 PM',
             r'Europe/London.+11:00 AM',
             r'America/New_York.+6:00 AM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "Dude, it's {midnight} :gobed:!",
+    async def test_basic_midnight(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "Dude, it's {midnight} :gobed:!"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+6:00 AM',
             r'Europe/London.+5:00 AM',
             r'America/New_York.+12:00 AM'
         )
 
-    async def test_now(self):
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
-            "I'm free {now}, anyone want to do something?",
-            r'Europe/Amsterdam.+' + self.dutch_now.strftime("%I:%M %p").lstrip("0"),
-            r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
-            r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
+    async def test_basic_now_british(
+            self, message, british_user,
+            american_now, british_now, dutch_now,
+            dispatch_msg_get_contents
+    ):
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
+            "I'm free {now}, anyone want to do something?"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+' + dutch_now.strftime('%I:%M %p').lstrip('0'),
+            r'Europe/London.+' + british_now.strftime('%I:%M %p').lstrip('0'),
+            r'America/New_York.+' + american_now.strftime('%I:%M %p').lstrip('0')
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "I'm free {now}, anyone want to do something?",
-            r'Europe/Amsterdam.+' + self.dutch_now.strftime("%I:%M %p").lstrip("0"),
-            r'Europe/London.+' + self.british_now.strftime("%I:%M %p").lstrip("0"),
-            r'America/New_York.+' + self.american_now.strftime("%I:%M %p").lstrip("0")
+    async def test_basic_now_american(
+            self, message, american_user,
+            american_now, british_now, dutch_now,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "I'm free {now}, anyone want to do something?"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+' + dutch_now.strftime('%I:%M %p').lstrip('0'),
+            r'Europe/London.+' + british_now.strftime('%I:%M %p').lstrip('0'),
+            r'America/New_York.+' + american_now.strftime('%I:%M %p').lstrip('0')
         )
 
     # endregion
 
     # region Specified input timezone
 
-    async def test_in_basic(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "Jaakko's getting on at {8 pm helsinki}",
+    async def test_in_basic(
+            self, message, american_user, british_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "Jaakko's getting on at {8 pm helsinki}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+7:00 PM',
             r'Europe/London.+6:00 PM',
             r'America/New_York.+1:00 PM'
         )
 
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
-            "aka {8pm helsinki}",
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
+            "aka {8pm helsinki}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+7:00 PM',
             r'Europe/London.+6:00 PM',
             r'America/New_York.+1:00 PM'
         )
 
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            "aka {20:00 helsinki}",
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            "aka {20:00 helsinki}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+7:00 PM',
             r'Europe/London.+6:00 PM',
             r'America/New_York.+1:00 PM'
         )
 
-    async def test_in_multiple(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "my flight took off at {7pm new york} and landed at {8 AM london}",
+    async def test_in_multiple(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "my flight took off at {7pm new york} and landed at {8 AM london}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+1:00 AM.+9:00 AM',
             r'Europe/London.+12:00 AM.+8:00 AM',
             r'America/New_York.+7:00 PM.+3:00 AM'
         )
 
-    async def test_in_keyword(self):
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
-            "he's getting lunch around {noon los angeles}",
+    async def test_in_keyword(
+            self, message, american_user, british_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
+            "he's getting lunch around {noon los angeles}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+9:00 PM',
             r'Europe/London.+8:00 PM',
             r'America/New_York.+3:00 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "My flight's landing at {midnight brussels}",
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "My flight's landing at {midnight brussels}"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+12:00 AM',
             r'Europe/London.+11:00 PM',
             r'America/New_York.+6:00 PM'
         )
 
-    async def test_in_now(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "{now amsterdam} is redundant but it shouldn't fail",
+    async def test_in_now(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "{now amsterdam} is redundant but it shouldn't fail"
+        )
+        self._assert(
+            contents,
             r'Europe/Amsterdam.+11:32 AM',
             r'Europe/London.+10:32 AM',
             r'America/New_York.+5:32 AM'
         )
 
-    async def test_in_ambiguous_with_unit(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
+    async def test_in_ambiguous_with_unit(
+            self, message, american_user, dispatch_msg_get_embeds
+    ):
+        message.author = american_user
+        embeds = await dispatch_msg_get_embeds(
             "{20 helsinki} (8:00 pm Helsinki time) isn't allowed because it's "
             "ambiguous with a unit 'helsinki' with magnitude 20. You must add "
-            "AM/PM or use a colon.",
-
-            'Unknown unit "helsinki"',
+            "AM/PM or use a colon."
         )
+        assert_error(embeds, 'Unknown unit "helsinki"')
 
-    async def test_in_unknown_timezone(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
-            "this don't exist {8:00 ZBNMBSAEFHJBGEWB}",
-            'Timezone "ZBNMBSAEFHJBGEWB" not found'
+    async def test_in_unknown_timezone(
+            self, message, american_user, dispatch_msg_get_embeds
+    ):
+        message.author = american_user
+        embeds = await dispatch_msg_get_embeds(
+            "this don't exist {8:00 ZBNMBSAEFHJBGEWB}"
         )
+        assert_error(embeds, 'Timezone "ZBNMBSAEFHJBGEWB" not found')
 
     # endregion
 
     # region Specified output timezone
 
-    async def test_out_basic(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "alex, I'm gonna restart the server at {11 > amsterdam}",
-            r'Europe/Amsterdam.+5:00 PM',
+    async def test_out_basic(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "alex, I'm gonna restart the server at {11 > amsterdam}"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+5:00 PM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "or I can wait until {8pm > amsterdam}",
-            r'Europe/Amsterdam.+2:00 AM',
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "or I can wait until {8pm > amsterdam}"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+2:00 AM'
         )
 
-    async def test_out_multiple(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
+    async def test_out_multiple(
+            self, message, american_user, dutch_user,
+            dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
             "hey bruce I wanna show you something, I'm free between "
-            "{11am > london} and {3 PM > Europe/London}",
-            r'Europe/London.+4:00 PM.+8:00 PM',
+            "{11am > london} and {3 PM > Europe/London}"
+        )
+        self._assert(
+            contents,
+            r'Europe/London.+4:00 PM.+8:00 PM'
         )
 
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
             "the game's releasing for americans at {1 PM > new york} and "
             "{1500 > london} for europeans"
-            r'America/New_York.+7:00 AM',
-            r'Europe/London.+2:00 PM',
+            r'America/New_York.+7:00 AM'
+        )
+        self._assert(
+            contents,
+            r'Europe/London.+2:00 PM'
         )
 
-    async def test_out_keyword(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
+    async def test_out_keyword(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
             "the solar eclipse will be happening here while the hawaiians "
-            "are sleeping! {noon > honolulu}",
+            "are sleeping! {noon > honolulu}"
+        )
+        self._assert(
+            contents,
             r'Pacific/Honolulu.+6:00 AM'
         )
 
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
             "and while I'm sleeping, they'll be eating dinner "
-            "{midnight > honolulu}",
+            "{midnight > honolulu}"
+        )
+        self._assert(
+            contents,
             r'Pacific/Honolulu.+6:00 PM'
         )
 
-    async def test_out_now(self):
-        self.msg.author.id = self.american_user
-        await self.assert_regex_reply(
-            "what time is it in dubai? {now > dubai}",
-            r'Asia/Dubai.+1:32 PM',
+    async def test_out_now(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "what time is it in dubai? {now > dubai}"
+        )
+        self._assert(
+            contents,
+            r'Asia/Dubai.+1:32 PM'
         )
 
-    async def test_out_unknown_timezone(self):
-        self.msg.author.id = self.american_user
-        await self.assert_error(
-            "no timezone {8:00 > ZBNMBSAEFHJBGEWB}",
-            'Timezone "ZBNMBSAEFHJBGEWB" not found',
+    async def test_out_unknown_timezone(
+            self, message, american_user, dispatch_msg_get_embeds
+    ):
+        message.author = american_user
+        embeds = await dispatch_msg_get_embeds(
+            "no timezone {8:00 > ZBNMBSAEFHJBGEWB}"
+        )
+        assert_error(
+            embeds,
+            'Timezone "ZBNMBSAEFHJBGEWB" not found'
         )
 
-    async def test_out_empty(self):
-        self.msg.author.id = self.american_user
-        await self.assert_no_reply("no timezone {8:00 > }")
+    async def test_out_empty(
+            self, message, american_user, dispatch_msg
+    ):
+        message.author = american_user
+        mock_ = await dispatch_msg("no timezone {8:00 > }")
+        assert_no_reply(mock_)
 
     # endregion
 
     # region Specified input and output timezone
 
-    async def test_in_out_basic(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
+    async def test_in_out_basic(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
             "I've run out of interesting message ideas "
-            "{5:00 pm honolulu > los angeles}",
-
-            r'America/Los_Angeles.+8:00 PM',
+            "{5:00 pm honolulu > los angeles}"
+        )
+        self._assert(
+            contents,
+            r'America/Los_Angeles.+8:00 PM'
         )
 
-    async def test_in_out_multiple(self):
-        self.msg.author.id = self.british_user
-        await self.assert_regex_reply(
+    async def test_in_out_multiple(
+            self, message, british_user, dispatch_msg_get_contents
+    ):
+        message.author = british_user
+        contents = await dispatch_msg_get_contents(
             "you probably get the idea by now "
             "{5:00 pm honolulu > los angeles} and also "
             "{10:00 amsterdam > london} annnd back to "
-            "{1am new york > los angeles}",
-
+            "{1am new york > los angeles}"
+        )
+        self._assert(
+            contents,
             r'America/Los_Angeles.+8:00 PM.+10:00 PM',
-            r'Europe/London.+9:00 AM',
+            r'Europe/London.+9:00 AM'
         )
 
-    async def test_in_out_keyword(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            ":) {midnight los angeles > honolulu}",
-            r'Pacific/Honolulu.+9:00 PM',
+    async def test_in_out_keyword(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            ":) {midnight los angeles > honolulu}"
+        )
+        self._assert(
+            contents,
+            r'Pacific/Honolulu.+9:00 PM'
         )
 
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            ":D {noon london > new york}",
-            r'America/New_York.+7:00 AM',
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            ":D {noon london > new york}"
+        )
+        self._assert(
+            contents,
+            r'America/New_York.+7:00 AM'
         )
 
-    async def test_in_out_now(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_regex_reply(
-            ":O {now new york > amsterdam}",
-            r'Europe/Amsterdam.+11:32 AM',
+    async def test_in_out_now(
+            self, message, dutch_user, dispatch_msg_get_contents
+    ):
+        message.author = dutch_user
+        contents = await dispatch_msg_get_contents(
+            ":O {now new york > amsterdam}"
+        )
+        self._assert(
+            contents,
+            r'Europe/Amsterdam.+11:32 AM'
         )
 
-    async def test_in_out_unknown_timezone(self):
-        self.msg.author.id = self.dutch_user
-        await self.assert_error(
-            ":( {10 amsterdam > london}",
-            'Unknown unit "amsterdam"',
+    async def test_in_out_unknown_timezone(
+            self, message, dutch_user, dispatch_msg_get_embeds
+    ):
+        message.author = dutch_user
+        embeds = await dispatch_msg_get_embeds(
+            ":( {10 amsterdam > london}"
+        )
+        assert_error(
+            embeds,
+            'Unknown unit "amsterdam"'
         )
 
     # endregion
 
     # region Other
 
-    async def test_flags(self):
-        self.msg.author.id = self.american_user
-        await self.assert_in_reply(
-            "you can see the country flags too! {12am}",
+    async def test_flags(
+            self, message, american_user, dispatch_msg_get_contents
+    ):
+        message.author = american_user
+        contents = await dispatch_msg_get_contents(
+            "you can see the country flags too! {12am}"
+        )
+        self._assert(
+            contents,
             '🇺🇸', '🇬🇧', '🇳🇱'
         )
 

@@ -86,12 +86,21 @@ async def user_names_str(
     )
 
 
+def maybe_dm_only():
+    async def predicate(ctx: commands.Context):
+        bios: Bios = ctx.cog
+        if not bios.allow_public_setting:
+            return await commands.dm_only().predicate(ctx)
+        return True
+    return commands.check(predicate)
+
+
 class Bios(commands.Cog):
 
     __cog_cleaned_doc__ = (
         "Store some info about yourself to help your friends get to know you "
-        "more easily! Most of these commands can only be used in DMs with "
-        "Sandpiper for your privacy."
+        "more easily! These commands can be used in DMs with Sandpiper for "
+        "your privacy."
         "\n\n"
         "Some of this info is used by other Sandpiper features, such as "
         "time conversion and birthday notifications."
@@ -103,8 +112,11 @@ class Bios(commands.Cog):
 
     auto_order = AutoOrder()
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(
+            self, bot: commands.Bot, *, allow_public_setting: bool = False
+    ):
         self.bot = bot
+        self.allow_public_setting = allow_public_setting
 
     async def _get_database(self) -> Database:
         user_data: Optional[UserData] = self.bot.get_cog('UserData')
@@ -113,8 +125,9 @@ class Bios(commands.Cog):
         return await user_data.get_database()
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context,
-                               error: commands.CommandError):
+    async def on_command_error(
+            self, ctx: commands.Context, error: commands.CommandError
+    ):
         if isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, DatabaseUnavailable):
                 await Embeds.error(ctx, str(DatabaseUnavailable))
@@ -152,7 +165,7 @@ class Bios(commands.Cog):
         brief="Show all stored info.",
         help="Display all of your personal info stored in Sandpiper."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def bio_show(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -185,7 +198,7 @@ class Bios(commands.Cog):
         brief="Delete all stored info.",
         help="Delete all of your personal info stored in Sandpiper."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def bio_delete(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -321,7 +334,7 @@ class Bios(commands.Cog):
         name='show', aliases=_show_aliases,
         help="Display your preferred name."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def name_show(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -336,7 +349,7 @@ class Bios(commands.Cog):
         help="Set your preferred name. Must be 64 characters or less.",
         example="name set Hawk"
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def name_set(self, ctx: commands.Context, *, new_name: str):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -359,7 +372,7 @@ class Bios(commands.Cog):
         name='delete', aliases=_delete_aliases,
         help="Delete your preferred name."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def name_delete(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -382,7 +395,7 @@ class Bios(commands.Cog):
         name='show', aliases=_show_aliases,
         help="Display your pronouns."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def pronouns_show(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -397,7 +410,7 @@ class Bios(commands.Cog):
         help="Set your pronouns. Must be 64 characters or less.",
         example="pronouns set She/Her"
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def pronouns_set(self, ctx: commands.Context, *, new_pronouns: str):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -420,7 +433,7 @@ class Bios(commands.Cog):
         name='delete', aliases=_delete_aliases,
         help="Delete your pronouns."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def pronouns_delete(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -443,7 +456,7 @@ class Bios(commands.Cog):
         name='show', aliases=_show_aliases,
         help="Display your birthday."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def birthday_show(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -471,7 +484,7 @@ class Bios(commands.Cog):
             "birthday set 8 Aug",
         )
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def birthday_set(self, ctx: commands.Context, *,
                            new_birthday: date_handler):
         user_id: int = ctx.author.id
@@ -494,7 +507,7 @@ class Bios(commands.Cog):
         name='delete', aliases=_delete_aliases,
         help="Delete your birthday."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def birthday_delete(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -518,7 +531,7 @@ class Bios(commands.Cog):
         brief="Display your age.",
         help="Display your age (calculated automatically using your birthday)."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def age_show(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -537,7 +550,7 @@ class Bios(commands.Cog):
             "command exists only to let you know that you don't have to set it."
         )
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def age_set(self, ctx: commands.Context):
         await Embeds.error(
             ctx,
@@ -555,7 +568,7 @@ class Bios(commands.Cog):
             "exists only to let you know that you can only delete your birthday."
         )
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def age_delete(self, ctx: commands.Context):
         await Embeds.error(
             ctx,
@@ -581,7 +594,7 @@ class Bios(commands.Cog):
         name='show', aliases=_show_aliases,
         help="Display your timezone."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def timezone_show(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -608,7 +621,7 @@ class Bios(commands.Cog):
             "timezone set london",
         )
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def timezone_set(self, ctx: commands.Context, *, new_timezone: str):
         user_id: int = ctx.author.id
         db = await self._get_database()
@@ -656,7 +669,7 @@ class Bios(commands.Cog):
         name='delete', aliases=_delete_aliases,
         help="Delete your timezone."
     )
-    @commands.dm_only()
+    @maybe_dm_only()
     async def timezone_delete(self, ctx: commands.Context):
         user_id: int = ctx.author.id
         db = await self._get_database()

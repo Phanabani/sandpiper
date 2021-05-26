@@ -1,8 +1,8 @@
-from discord.ext.commands import Bot
-
 from .cog import Bios
+from sandpiper import Sandpiper
 
 
-def setup(bot: Bot):
-    bios = Bios(bot)
+def setup(bot: Sandpiper):
+    config = bot.modules_config.bios
+    bios = Bios(bot, allow_public_setting=config.allow_public_setting)
     bot.add_cog(bios)

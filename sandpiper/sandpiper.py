@@ -5,7 +5,7 @@ import sys
 import discord
 import discord.ext.commands as commands
 
-from . import Config
+from .config import SandpiperConfig
 from .help import HelpCommand
 
 __all__ = ('Sandpiper', 'run_bot')
@@ -13,9 +13,10 @@ __all__ = ('Sandpiper', 'run_bot')
 logger = logging.getLogger('sandpiper')
 
 
+# noinspection PyMethodMayBeStatic
 class Sandpiper(commands.Bot):
 
-    def __init__(self, config: Config.Bot):
+    def __init__(self, config: SandpiperConfig._Bot):
 
         # noinspection PyUnusedLocal
         def get_prefix(bot: commands.Bot, msg: discord.Message) -> str:
@@ -44,12 +45,18 @@ class Sandpiper(commands.Bot):
             help_command=HelpCommand()
         )
 
+        # Add a dummy command that triggers when the user tries to use the
+        # command prefix in DMs. It's not required in DMs, so it'll tell the
+        # user to just omit it
         @self.command(name=config.command_prefix.strip(), hidden=True)
         async def noprefix_notify(ctx: commands.Context, *, rest: str):
             if ctx.prefix == '':
                 raise commands.BadArgument(
-                    f'You don\'t need to prefix commands here. '
-                    f'Just type "{rest}".')
+                    f"You don't need to prefix commands here. "
+                    f"Just type `{rest}`."
+                )
+
+        self.modules_config = config.modules
 
         self.load_extension('sandpiper.user_data')
         self.load_extension('sandpiper.bios')
@@ -92,7 +99,13 @@ class Sandpiper(commands.Bot):
 def run_bot():
     # Load config
     config_path = Path(__file__).parent / 'config.json'
-    bot_token, config = Config.load_json(config_path)
+    with config_path.open() as f:
+        config = SandpiperConfig(f)
+
+    # Some extra steps against accidentally leaking the bot token into the
+    # public client
+    bot_token = config.bot_token
+    config.bot_token = None
 
     # Sandpiper logging
     logger = logging.getLogger('sandpiper')
