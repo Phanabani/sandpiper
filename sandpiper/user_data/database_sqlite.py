@@ -73,8 +73,9 @@ class DatabaseSQLite(Database):
 
     # region Getter/setter helpers
 
-    async def _do_execute_get(self, col_name: str, user_id: int,
-                              default: Any = None) -> Optional[Any]:
+    async def _do_execute_get(
+            self, col_name: str, user_id: int, default: Any = None
+    ) -> Optional[Any]:
         logger.info(f'Getting data from column {col_name} (user_id={user_id})')
         stmt = f'SELECT {col_name} FROM user_data WHERE user_id = ?'
         try:
@@ -83,16 +84,20 @@ class DatabaseSQLite(Database):
         except aiosqlite.Error:
             logger.error(
                 f'Failed to get value (column={col_name!r} user_id={user_id})',
-                exc_info=True)
+                exc_info=True
+            )
             raise DatabaseError('Failed to get value')
         if result is None or result[0] is None:
             return default
         return result[0]
 
-    async def _do_execute_set(self, col_name: str, user_id: int,
-                              new_value: Any) -> NoReturn:
-        logger.info(f'Setting data in column {col_name} (user_id={user_id} '
-                    f'new_value={new_value!r})')
+    async def _do_execute_set(
+            self, col_name: str, user_id: int, new_value: Any
+    ) -> NoReturn:
+        logger.info(
+            f'Setting data in column {col_name} (user_id={user_id} '
+            f'new_value={new_value!r})'
+        )
         stmt = f'''
             INSERT INTO user_data(user_id, {col_name})
             VALUES (:user_id, :new_value)
@@ -104,9 +109,11 @@ class DatabaseSQLite(Database):
             await self._con.execute(stmt, args)
             await self._con.commit()
         except aiosqlite.Error:
-            logger.error(f'Failed to set value (column={col_name!r} '
-                         f'user_id={user_id} new_value={new_value!r})',
-                         exc_info=True)
+            logger.error(
+                f'Failed to set value (column={col_name!r} user_id={user_id} '
+                f'new_value={new_value!r})',
+                exc_info=True
+            )
             raise DatabaseError('Failed to set value')
 
     # endregion
@@ -120,8 +127,10 @@ class DatabaseSQLite(Database):
             await self._con.execute(stmt, args)
             await self._con.commit()
         except aiosqlite.Error:
-            logger.error(f'Failed to delete row (user_id={user_id})',
-                         exc_info=True)
+            logger.error(
+                f'Failed to delete row (user_id={user_id})',
+                exc_info=True
+            )
             raise DatabaseError('Failed to delete user data')
 
     # endregion
@@ -130,19 +139,29 @@ class DatabaseSQLite(Database):
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
         return await self._do_execute_get('preferred_name', user_id)
 
-    async def set_preferred_name(self, user_id: int,
-                                 new_preferred_name: Optional[str]):
-        await self._do_execute_set('preferred_name', user_id, new_preferred_name)
+    async def set_preferred_name(
+            self, user_id: int, new_preferred_name: Optional[str]
+    ):
+        await self._do_execute_set(
+            'preferred_name', user_id, new_preferred_name
+        )
 
     async def get_privacy_preferred_name(self, user_id: int) -> PrivacyType:
-        privacy = await self._do_execute_get('privacy_preferred_name', user_id,
-                                             DEFAULT_PRIVACY)
+        privacy = await self._do_execute_get(
+            'privacy_preferred_name', user_id, DEFAULT_PRIVACY
+        )
         return PrivacyType(privacy)
 
-    async def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
-        await self._do_execute_set('privacy_preferred_name', user_id, new_privacy)
+    async def set_privacy_preferred_name(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
+        await self._do_execute_set(
+            'privacy_preferred_name', user_id, new_privacy
+        )
 
-    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
+    async def find_users_by_preferred_name(
+            self, name: str
+    ) -> list[tuple[int, str]]:
         logger.info(f'Finding users by preferred name (name={name!r})')
         if name == '':
             logger.info('Skipping empty string')
@@ -170,11 +189,14 @@ class DatabaseSQLite(Database):
         await self._do_execute_set('pronouns', user_id, new_pronouns)
 
     async def get_privacy_pronouns(self, user_id: int) -> PrivacyType:
-        privacy = await self._do_execute_get('privacy_pronouns', user_id,
-                                             DEFAULT_PRIVACY)
+        privacy = await self._do_execute_get(
+            'privacy_pronouns', user_id, DEFAULT_PRIVACY
+        )
         return PrivacyType(privacy)
 
-    async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_pronouns(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         await self._do_execute_set('privacy_pronouns', user_id, new_privacy)
 
     # endregion
@@ -183,22 +205,29 @@ class DatabaseSQLite(Database):
     async def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         return await self._do_execute_get('birthday', user_id)
 
-    async def set_birthday(self, user_id: int, new_birthday: Optional[datetime.date]):
+    async def set_birthday(
+            self, user_id: int, new_birthday: Optional[datetime.date]
+    ):
         await self._do_execute_set('birthday', user_id, new_birthday)
 
     async def get_privacy_birthday(self, user_id: int) -> PrivacyType:
-        privacy = await self._do_execute_get('privacy_birthday', user_id,
-                                             DEFAULT_PRIVACY)
+        privacy = await self._do_execute_get(
+            'privacy_birthday', user_id, DEFAULT_PRIVACY
+        )
         return PrivacyType(privacy)
 
-    async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_birthday(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         await self._do_execute_set('privacy_birthday', user_id, new_privacy)
 
     # endregion
     # region Age
 
     async def get_privacy_age(self, user_id: int) -> PrivacyType:
-        privacy = await self._do_execute_get('privacy_age', user_id, DEFAULT_PRIVACY)
+        privacy = await self._do_execute_get(
+            'privacy_age', user_id, DEFAULT_PRIVACY
+        )
         return PrivacyType(privacy)
 
     async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
@@ -213,18 +242,22 @@ class DatabaseSQLite(Database):
             return pytz.timezone(timezone_name)
         return None
 
-    async def set_timezone(self, user_id: int,
-                           new_timezone: Optional[TimezoneType]):
+    async def set_timezone(
+            self, user_id: int, new_timezone: Optional[TimezoneType]
+    ):
         if new_timezone:
             new_timezone = new_timezone.zone
         await self._do_execute_set('timezone', user_id, new_timezone)
 
     async def get_privacy_timezone(self, user_id: int) -> PrivacyType:
-        privacy = await self._do_execute_get('privacy_timezone', user_id,
-                                             DEFAULT_PRIVACY)
+        privacy = await self._do_execute_get(
+            'privacy_timezone', user_id, DEFAULT_PRIVACY
+        )
         return PrivacyType(privacy)
 
-    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_timezone(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         await self._do_execute_set('privacy_timezone', user_id, new_privacy)
 
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
