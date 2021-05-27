@@ -112,10 +112,7 @@ class Database(metaclass=ABCMeta):
     @abstractmethod
     async def get_birthdays_range(
             self, start: datetime.date, end: datetime.date
-    ) -> tuple[
-        Annotated[int, 'user_id'], Annotated[str, 'preferred_name'],
-        datetime.date, Annotated[Optional[int], 'age'], TimezoneType
-    ]:
+    ) -> tuple[Annotated[int, 'user_id'], datetime.date, TimezoneType]:
         pass
 
     # endregion
