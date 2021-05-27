@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import datetime
-from typing import Optional
+from typing import Annotated, Optional
 
 from ..common.time import TimezoneType
 from .enums import PrivacyType
@@ -107,6 +107,15 @@ class Database(metaclass=ABCMeta):
     async def set_privacy_birthday(
             self, user_id: int, new_privacy: PrivacyType
     ):
+        pass
+
+    @abstractmethod
+    async def get_birthdays_range(
+            self, start: datetime.date, end: datetime.date
+    ) -> tuple[
+        Annotated[int, 'user_id'], Annotated[str, 'preferred_name'],
+        datetime.date, Annotated[Optional[int], 'age'], TimezoneType
+    ]:
         pass
 
     # endregion
