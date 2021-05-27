@@ -71,53 +71,7 @@ class DatabaseSQLite(Database):
         except aiosqlite.Error:
             logger.error('Failed to create indices', exc_info=True)
 
-    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
-        logger.info(f'Finding users by preferred name (name={name!r})')
-        if name == '':
-            logger.info('Skipping empty string')
-            return []
-
-        stmt = '''
-            SELECT user_id, preferred_name FROM user_data
-            WHERE preferred_name like :name
-                AND privacy_preferred_name = :privacy
-        '''
-        args = {'name': f'%{name}%', 'privacy': PrivacyType.PUBLIC}
-        try:
-            cur = await self._con.execute(stmt, args)
-            return cast(list[tuple[int, str]], await cur.fetchall())
-        except aiosqlite.Error:
-            logger.error('Failed to find users by name', exc_info=True)
-
-    async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
-        logger.info(f'Getting all user timezones')
-        stmt = '''
-            SELECT user_id, timezone FROM user_data
-            WHERE privacy_timezone = :privacy
-        '''
-        args = {'privacy': PrivacyType.PUBLIC}
-        try:
-            cur = await self._con.execute(stmt, args)
-            result = await cur.fetchall()
-            return [(user_id, pytz.timezone(tz_name))
-                    for user_id, tz_name in result
-                    if tz_name is not None]
-        except aiosqlite.Error:
-            logger.error('Failed to get all user timezones', exc_info=True)
-
-    async def delete_user(self, user_id: int):
-        logger.info(f'Deleting user (user_id={user_id})')
-        stmt = 'DELETE FROM user_data WHERE user_id = ?'
-        args = (user_id,)
-        try:
-            await self._con.execute(stmt, args)
-            await self._con.commit()
-        except aiosqlite.Error:
-            logger.error(f'Failed to delete row (user_id={user_id})',
-                         exc_info=True)
-            raise DatabaseError('Failed to delete user data')
-
-    # Getter/setter helpers
+    # region Getter/setter helpers
 
     async def _do_execute_get(self, col_name: str, user_id: int,
                               default: Any = None) -> Optional[Any]:
@@ -155,7 +109,23 @@ class DatabaseSQLite(Database):
                          exc_info=True)
             raise DatabaseError('Failed to set value')
 
-    # Preferred name
+    # endregion
+    # region Batch
+
+    async def delete_user(self, user_id: int):
+        logger.info(f'Deleting user (user_id={user_id})')
+        stmt = 'DELETE FROM user_data WHERE user_id = ?'
+        args = (user_id,)
+        try:
+            await self._con.execute(stmt, args)
+            await self._con.commit()
+        except aiosqlite.Error:
+            logger.error(f'Failed to delete row (user_id={user_id})',
+                         exc_info=True)
+            raise DatabaseError('Failed to delete user data')
+
+    # endregion
+    # region Name
 
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
         return await self._do_execute_get('preferred_name', user_id)
@@ -172,7 +142,26 @@ class DatabaseSQLite(Database):
     async def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
         await self._do_execute_set('privacy_preferred_name', user_id, new_privacy)
 
-    # Pronouns
+    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
+        logger.info(f'Finding users by preferred name (name={name!r})')
+        if name == '':
+            logger.info('Skipping empty string')
+            return []
+
+        stmt = '''
+            SELECT user_id, preferred_name FROM user_data
+            WHERE preferred_name like :name
+                AND privacy_preferred_name = :privacy
+        '''
+        args = {'name': f'%{name}%', 'privacy': PrivacyType.PUBLIC}
+        try:
+            cur = await self._con.execute(stmt, args)
+            return cast(list[tuple[int, str]], await cur.fetchall())
+        except aiosqlite.Error:
+            logger.error('Failed to find users by name', exc_info=True)
+
+    # endregion
+    # region Pronouns
 
     async def get_pronouns(self, user_id: int) -> Optional[str]:
         return await self._do_execute_get('pronouns', user_id)
@@ -188,7 +177,8 @@ class DatabaseSQLite(Database):
     async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
         await self._do_execute_set('privacy_pronouns', user_id, new_privacy)
 
-    # Birthday
+    # endregion
+    # region Birthday
 
     async def get_birthday(self, user_id: int) -> Optional[datetime.date]:
         return await self._do_execute_get('birthday', user_id)
@@ -204,7 +194,18 @@ class DatabaseSQLite(Database):
     async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
         await self._do_execute_set('privacy_birthday', user_id, new_privacy)
 
-    # Timezone
+    # endregion
+    # region Age
+
+    async def get_privacy_age(self, user_id: int) -> PrivacyType:
+        privacy = await self._do_execute_get('privacy_age', user_id, DEFAULT_PRIVACY)
+        return PrivacyType(privacy)
+
+    async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
+        await self._do_execute_set('privacy_age', user_id, new_privacy)
+
+    # endregion
+    # region Timezone
 
     async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         timezone_name = await self._do_execute_get('timezone', user_id)
@@ -226,11 +227,20 @@ class DatabaseSQLite(Database):
     async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
         await self._do_execute_set('privacy_timezone', user_id, new_privacy)
 
-    # Age
+    async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
+        logger.info(f'Getting all user timezones')
+        stmt = '''
+            SELECT user_id, timezone FROM user_data
+            WHERE privacy_timezone = :privacy
+        '''
+        args = {'privacy': PrivacyType.PUBLIC}
+        try:
+            cur = await self._con.execute(stmt, args)
+            result = await cur.fetchall()
+            return [(user_id, pytz.timezone(tz_name))
+                    for user_id, tz_name in result
+                    if tz_name is not None]
+        except aiosqlite.Error:
+            logger.error('Failed to get all user timezones', exc_info=True)
 
-    async def get_privacy_age(self, user_id: int) -> PrivacyType:
-        privacy = await self._do_execute_get('privacy_age', user_id, DEFAULT_PRIVACY)
-        return PrivacyType(privacy)
-
-    async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
-        await self._do_execute_set('privacy_age', user_id, new_privacy)
+    # endregion

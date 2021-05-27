@@ -30,17 +30,14 @@ class Database(metaclass=ABCMeta):
     async def connected(self) -> bool:
         pass
 
-    @abstractmethod
-    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
-        pass
-
-    @abstractmethod
-    async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
-        pass
+    # region Batch
 
     @abstractmethod
     async def delete_user(self, user_id: int):
         pass
+
+    # endregion
+    # region Name
 
     @abstractmethod
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
@@ -59,6 +56,13 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
+        pass
+
+    # endregion
+    # region Pronouns
+
+    @abstractmethod
     async def get_pronouns(self, user_id: int) -> Optional[str]:
         pass
 
@@ -73,6 +77,9 @@ class Database(metaclass=ABCMeta):
     @abstractmethod
     async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
         pass
+
+    # endregion
+    # region Birthday
 
     @abstractmethod
     async def get_birthday(self, user_id: int) -> Optional[datetime.date]:
@@ -90,22 +97,8 @@ class Database(metaclass=ABCMeta):
     async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
         pass
 
-    @abstractmethod
-    async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
-        pass
-
-    @abstractmethod
-    async def set_timezone(self, user_id: int,
-                           new_timezone: Optional[TimezoneType]):
-        pass
-
-    @abstractmethod
-    async def get_privacy_timezone(self, user_id: int) -> PrivacyType:
-        pass
-
-    @abstractmethod
-    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
-        pass
+    # endregion
+    # region Age
 
     @staticmethod
     def _calculate_age(birthday: datetime.date, on_day: datetime.date):
@@ -133,3 +126,29 @@ class Database(metaclass=ABCMeta):
     @abstractmethod
     async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
         pass
+
+    # endregion
+    # region Timezone
+
+    @abstractmethod
+    async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
+        pass
+
+    @abstractmethod
+    async def set_timezone(self, user_id: int,
+                           new_timezone: Optional[TimezoneType]):
+        pass
+
+    @abstractmethod
+    async def get_privacy_timezone(self, user_id: int) -> PrivacyType:
+        pass
+
+    @abstractmethod
+    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
+        pass
+
+    @abstractmethod
+    async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
+        pass
+
+    # endregion
