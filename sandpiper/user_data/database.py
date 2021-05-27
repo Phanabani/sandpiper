@@ -44,7 +44,9 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_preferred_name(self, user_id: int, new_preferred_name: Optional[str]):
+    async def set_preferred_name(
+            self, user_id: int, new_preferred_name: Optional[str]
+    ):
         pass
 
     @abstractmethod
@@ -52,11 +54,15 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_preferred_name(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         pass
 
     @abstractmethod
-    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
+    async def find_users_by_preferred_name(
+            self, name: str
+    ) -> list[tuple[int, str]]:
         pass
 
     # endregion
@@ -75,7 +81,9 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_pronouns(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         pass
 
     # endregion
@@ -86,7 +94,9 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_birthday(self, user_id: int, new_birthday: Optional[datetime.date]):
+    async def set_birthday(
+            self, user_id: int, new_birthday: Optional[datetime.date]
+    ):
         pass
 
     @abstractmethod
@@ -94,7 +104,9 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_birthday(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         pass
 
     # endregion
@@ -102,8 +114,9 @@ class Database(metaclass=ABCMeta):
 
     @staticmethod
     def _calculate_age(birthday: datetime.date, on_day: datetime.date):
-        birthday_this_year = datetime.date(on_day.year, birthday.month,
-                                           birthday.day)
+        birthday_this_year = datetime.date(
+            on_day.year, birthday.month, birthday.day
+        )
         age = on_day.year - birthday.year
         if on_day < birthday_this_year:
             return age - 1
@@ -135,8 +148,9 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_timezone(self, user_id: int,
-                           new_timezone: Optional[TimezoneType]):
+    async def set_timezone(
+            self, user_id: int, new_timezone: Optional[TimezoneType]
+    ):
         pass
 
     @abstractmethod
@@ -144,7 +158,9 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
+    async def set_privacy_timezone(
+            self, user_id: int, new_privacy: PrivacyType
+    ):
         pass
 
     @abstractmethod
