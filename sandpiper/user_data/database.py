@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-import datetime
+import datetime as dt
 from typing import Annotated, Optional
 
 from ..common.time import TimezoneType
@@ -95,12 +95,12 @@ class Database(metaclass=ABCMeta):
     # region Birthday
 
     @abstractmethod
-    async def get_birthday(self, user_id: int) -> Optional[datetime.date]:
+    async def get_birthday(self, user_id: int) -> Optional[dt.date]:
         pass
 
     @abstractmethod
     async def set_birthday(
-            self, user_id: int, new_birthday: Optional[datetime.date]
+            self, user_id: int, new_birthday: Optional[dt.date]
     ):
         pass
 
@@ -116,16 +116,16 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     async def get_birthdays_range(
-            self, start: datetime.date, end: datetime.date
-    ) -> list[tuple[Annotated[int, 'user_id'], datetime.date, TimezoneType]]:
+            self, start: dt.date, end: dt.date
+    ) -> list[tuple[Annotated[int, 'user_id'], dt.date, TimezoneType]]:
         pass
 
     # endregion
     # region Age
 
     @staticmethod
-    def _calculate_age(birthday: datetime.date, on_day: datetime.date):
-        birthday_this_year = datetime.date(
+    def _calculate_age(birthday: dt.date, on_day: dt.date):
+        birthday_this_year = dt.date(
             on_day.year, birthday.month, birthday.day
         )
         age = on_day.year - birthday.year
@@ -141,7 +141,7 @@ class Database(metaclass=ABCMeta):
             # Birthdays with year == 1 are considered yearless since year can't
             # be None
             return None
-        return self._calculate_age(birthday, datetime.date.today())
+        return self._calculate_age(birthday, dt.date.today())
 
     @abstractmethod
     async def get_privacy_age(self, user_id: int) -> PrivacyType:
