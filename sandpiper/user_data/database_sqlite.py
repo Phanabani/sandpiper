@@ -229,49 +229,70 @@ class DatabaseSQLite(Database):
     ) -> list[tuple[int, dt.date, TimezoneType]]:
         logger.info(f"Getting all birthdays between {start} and {end}")
         if not isinstance(start, dt.date) or not isinstance(end, dt.date):
-            raise TypeError("Start and end must be instances of datetime.date")
+            raise TypeError("start and end must be instances of datetime.date")
+        if start > end:
+            raise ValueError(
+                f"Start date {start} is greater than end date {end}"
+            )
 
         stmt = '''
-            WITH min_date (month, day) AS (
-                VALUES (:min_month, :min_day)
-            ),
-            
-            max_date (month, day) AS (
-                VALUES (:max_month, :max_day)
-            ),
-            
-            split_birthday (user_id, month, day) AS (
-                SELECT
-                    user_id,
-                    CAST(strftime('%m', birthday) AS INT),
-                    CAST(strftime('%d', birthday) AS INT)
-                    FROM user_data
-                    WHERE birthday NOTNULL
-            )
-            
-            SELECT user_data.user_id, birthday, timezone
-                FROM user_data, min_date, max_date
-                INNER JOIN split_birthday ON (
-                    user_data.user_id = split_birthday.user_id
-                )
-                WHERE (
-                    (
-                        split_birthday.month > min_date.month
-                        AND split_birthday.month < max_date.month
-                    ) OR (
-                        split_birthday.month == min_date.month
-                        AND split_birthday.day >= min_date.day
-                    ) OR (
-                        split_birthday.month == max_date.month
-                        AND split_birthday.day <= max_date.day
-                    )
-                )
+WITH start_date (month, day) AS (
+    VALUES (:start_month, :start_day)
+),
+
+end_date (month, day) AS (
+    VALUES (:end_month, :end_day)
+),
+
+split_birthday (user_id, month, day) AS (
+    SELECT
+        user_id,
+        CAST(strftime('%m', birthday) AS INT),
+        CAST(strftime('%d', birthday) AS INT)
+        FROM user_data
+        WHERE birthday NOTNULL
+)
+
+SELECT user_data.user_id, birthday, timezone
+    FROM user_data, start_date, end_date
+    INNER JOIN split_birthday ON (
+        user_data.user_id = split_birthday.user_id
+    )
+    WHERE
+        CASE WHEN
+            -- Ensure we're between the start and end month (inclusive)
+            split_birthday.month >= start_date.month
+            AND split_birthday.month <= end_date.month
+        THEN
+            CASE WHEN
+                -- If we're between the start and end month (exclusive),
+                -- we don't have to check the day
+                split_birthday.month > start_date.month
+                AND split_birthday.month < end_date.month
+            THEN
+                1
+            ELSE
+                CASE WHEN split_birthday.month = start_date.month THEN
+                    -- We're in the start month, so check we're at least the earliest day
+                    split_birthday.day >= start_date.day
+                ELSE
+                    1
+                END AND CASE WHEN split_birthday.month = end_date.month THEN
+                    -- We're in the end month, so check we're at most the latest day
+                    split_birthday.day <= end_date.day
+                ELSE
+                    1
+                END
+            END
+        ELSE
+            0
+        END
         '''
         args = {
-            'min_month': start.month,
-            'min_day': start.day,
-            'max_month': end.month,
-            'max_day': end.day,
+            'start_month': start.month,
+            'start_day': start.day,
+            'end_month': end.month,
+            'end_day': end.day,
         }
         try:
             cur = await self._con.execute(stmt, args)
