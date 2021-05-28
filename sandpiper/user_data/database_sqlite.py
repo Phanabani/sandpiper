@@ -224,6 +224,67 @@ class DatabaseSQLite(Database):
     ):
         await self._do_execute_set('privacy_birthday', user_id, new_privacy)
 
+    async def get_birthdays_range(
+            self, start: dt.date, end: dt.date
+    ) -> list[tuple[int, dt.date, TimezoneType]]:
+        logger.info(f"Getting all birthdays between {start} and {end}")
+        if not isinstance(start, dt.date) or not isinstance(end, dt.date):
+            raise TypeError("Start and end must be instances of datetime.date")
+
+        stmt = '''
+            WITH min_date (month, day) AS (
+                VALUES (:min_month, :min_day)
+            ),
+            
+            max_date (month, day) AS (
+                VALUES (:max_month, :max_day)
+            ),
+            
+            split_birthday (user_id, month, day) AS (
+                SELECT
+                    user_id,
+                    CAST(strftime('%m', birthday) AS INT),
+                    CAST(strftime('%d', birthday) AS INT)
+                    FROM user_data
+                    WHERE birthday NOTNULL
+            )
+            
+            SELECT user_data.user_id, birthday, timezone
+                FROM user_data, min_date, max_date
+                INNER JOIN split_birthday ON (
+                    user_data.user_id = split_birthday.user_id
+                )
+                WHERE (
+                    (
+                        split_birthday.month > min_date.month
+                        AND split_birthday.month < max_date.month
+                    ) OR (
+                        split_birthday.month == min_date.month
+                        AND split_birthday.day >= min_date.day
+                    ) OR (
+                        split_birthday.month == max_date.month
+                        AND split_birthday.day <= max_date.day
+                    )
+                )
+        '''
+        args = {
+            'min_month': start.month,
+            'min_day': start.day,
+            'max_month': end.month,
+            'max_day': end.day,
+        }
+        try:
+            cur = await self._con.execute(stmt, args)
+            out = []
+            async for user_id, birthday, timezone in cur:
+                user_id: int
+                birthday: dt.date
+                timezone: TimezoneType = pytz.timezone(timezone)
+                out.append((user_id, birthday, timezone))
+            return out
+        except aiosqlite.Error:
+            logger.error("Failed to get birthdays range", exc_info=True)
+
     # endregion
     # region Age
 
