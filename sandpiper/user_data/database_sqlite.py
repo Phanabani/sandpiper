@@ -226,7 +226,7 @@ class DatabaseSQLite(Database):
 
     async def get_birthdays_range(
             self, start: dt.date, end: dt.date
-    ) -> list[tuple[int, dt.date, TimezoneType]]:
+    ) -> list[tuple[int, dt.date, Optional[TimezoneType]]]:
         logger.info(f"Getting all birthdays between {start} and {end}")
         if not isinstance(start, dt.date) or not isinstance(end, dt.date):
             raise TypeError("start and end must be instances of datetime.date")
@@ -300,7 +300,8 @@ SELECT user_data.user_id, birthday, timezone
             async for user_id, birthday, timezone in cur:
                 user_id: int
                 birthday: dt.date
-                timezone: TimezoneType = pytz.timezone(timezone)
+                if timezone is not None:
+                    timezone: TimezoneType = pytz.timezone(timezone)
                 out.append((user_id, birthday, timezone))
             return out
         except aiosqlite.Error:
