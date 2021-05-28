@@ -5,6 +5,11 @@ from typing import Annotated, Optional
 from ..common.time import TimezoneType
 from .enums import PrivacyType
 
+__all__ = (
+    'DEFAULT_PRIVACY',
+    'Database', 'DatabaseError',
+)
+
 DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
 

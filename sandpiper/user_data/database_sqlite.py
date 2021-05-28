@@ -1,12 +1,15 @@
+import datetime as dt
 import logging
 from pathlib import Path
 from sqlite3 import PARSE_DECLTYPES
-from typing import Any, NoReturn, Union, cast
+from typing import Any, NoReturn, Optional, Union, cast
 
 import aiosqlite
 import pytz
 
 from .database import *
+from .enums import PrivacyType
+from sandpiper.common.time import TimezoneType
 
 __all__ = ['DatabaseSQLite']
 
@@ -202,11 +205,11 @@ class DatabaseSQLite(Database):
     # endregion
     # region Birthday
 
-    async def get_birthday(self, user_id: int) -> Optional[datetime.date]:
+    async def get_birthday(self, user_id: int) -> Optional[dt.date]:
         return await self._do_execute_get('birthday', user_id)
 
     async def set_birthday(
-            self, user_id: int, new_birthday: Optional[datetime.date]
+            self, user_id: int, new_birthday: Optional[dt.date]
     ):
         await self._do_execute_set('birthday', user_id, new_birthday)
 
