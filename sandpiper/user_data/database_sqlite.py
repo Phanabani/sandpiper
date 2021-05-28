@@ -244,49 +244,55 @@ end_date (month, day) AS (
     VALUES (:end_month, :end_day)
 ),
 
-split_birthday (user_id, month, day) AS (
-    SELECT
-        user_id,
-        CAST(strftime('%m', birthday) AS INT),
-        CAST(strftime('%d', birthday) AS INT)
-        FROM user_data
-        WHERE birthday NOTNULL
+in_range (user_id) AS (
+    WITH split_birthday (user_id, month, day) AS (
+        SELECT
+            user_id,
+            CAST(strftime('%m', birthday) AS INT),
+            CAST(strftime('%d', birthday) AS INT)
+            FROM user_data
+            WHERE birthday NOTNULL
+    )
+    
+    SELECT user_data.user_id
+    FROM user_data, start_date, end_date
+    INNER JOIN split_birthday ON (user_data.user_id = split_birthday.user_id)
+    WHERE
+    CASE WHEN
+        -- Ensure we're between the start and end month (inclusive)
+        split_birthday.month >= start_date.month
+        AND split_birthday.month <= end_date.month
+    THEN
+        CASE WHEN
+            -- If we're between the start and end month (exclusive),
+            -- we don't have to check the day
+            split_birthday.month > start_date.month
+            AND split_birthday.month < end_date.month
+        THEN
+            1
+        ELSE
+            CASE WHEN split_birthday.month = start_date.month THEN
+                -- We're in the start month, so check we're at least the earliest day
+                split_birthday.day >= start_date.day
+            ELSE
+                1
+            END AND CASE WHEN split_birthday.month = end_date.month THEN
+                -- We're in the end month, so check we're at most the latest day
+                split_birthday.day <= end_date.day
+            ELSE
+                1
+            END
+        END
+    ELSE
+        0
+    END
 )
 
 SELECT user_data.user_id, birthday, timezone
     FROM user_data, start_date, end_date
-    INNER JOIN split_birthday ON (
-        user_data.user_id = split_birthday.user_id
+    INNER JOIN in_range ON (
+        user_data.user_id = in_range.user_id
     )
-    WHERE
-        CASE WHEN
-            -- Ensure we're between the start and end month (inclusive)
-            split_birthday.month >= start_date.month
-            AND split_birthday.month <= end_date.month
-        THEN
-            CASE WHEN
-                -- If we're between the start and end month (exclusive),
-                -- we don't have to check the day
-                split_birthday.month > start_date.month
-                AND split_birthday.month < end_date.month
-            THEN
-                1
-            ELSE
-                CASE WHEN split_birthday.month = start_date.month THEN
-                    -- We're in the start month, so check we're at least the earliest day
-                    split_birthday.day >= start_date.day
-                ELSE
-                    1
-                END AND CASE WHEN split_birthday.month = end_date.month THEN
-                    -- We're in the end month, so check we're at most the latest day
-                    split_birthday.day <= end_date.day
-                ELSE
-                    1
-                END
-            END
-        ELSE
-            0
-        END
         '''
         args = {
             'start_month': start.month,
