@@ -179,3 +179,12 @@ class Database(metaclass=ABCMeta):
         pass
 
     # endregion
+    # region Guild settings
+
+    @abstractmethod
+    async def get_guild_announcement_channel(
+            self, guild_id: int
+    ) -> Optional[int]:
+        pass
+
+    # endregion
