@@ -29,7 +29,7 @@ class DatabaseSQLite(Database):
         self._con = await aiosqlite.connect(
             self.db_path, detect_types=PARSE_DECLTYPES
         )
-        await self.create_table()
+        await self.create_tables()
 
     async def disconnect(self):
         logger.info(f'Disconnecting from database (path={self.db_path})')
@@ -39,7 +39,7 @@ class DatabaseSQLite(Database):
     async def connected(self):
         return self._con is not None
 
-    async def create_table(self):
+    async def create_tables(self):
         logger.info('Creating user_data table if not exists')
         stmt = '''
             CREATE TABLE IF NOT EXISTS user_data (

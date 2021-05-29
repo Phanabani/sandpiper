@@ -20,7 +20,7 @@ class DatabaseError(Exception):
 class Database(metaclass=ABCMeta):
 
     @abstractmethod
-    async def create_table(self):
+    async def create_tables(self):
         pass
 
     @abstractmethod
