@@ -20,10 +20,6 @@ class DatabaseError(Exception):
 class Database(metaclass=ABCMeta):
 
     @abstractmethod
-    async def create_tables(self):
-        pass
-
-    @abstractmethod
     async def connect(self):
         pass
 
@@ -33,6 +29,10 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     async def connected(self) -> bool:
+        pass
+
+    @abstractmethod
+    async def create_tables(self):
         pass
 
     # region Batch
