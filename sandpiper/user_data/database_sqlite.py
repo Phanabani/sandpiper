@@ -40,8 +40,10 @@ class DatabaseSQLite(Database):
         return self._con is not None
 
     async def create_tables(self):
-        logger.info('Creating user_data table if not exists')
-        stmt = '''
+        logger.info(
+            "Creating user_data and guild_settings tables if they don't exist"
+        )
+        table1 = '''
             CREATE TABLE IF NOT EXISTS user_data (
                 user_id INTEGER PRIMARY KEY UNIQUE, 
                 preferred_name TEXT, 
@@ -55,8 +57,15 @@ class DatabaseSQLite(Database):
                 privacy_timezone TINYINT
             )
         '''
+        table2 = '''
+            CREATE TABLE IF NOT EXISTS guild_settings (
+                guild_id INTEGER PRIMARY KEY UNIQUE, 
+                announcement_channel INTEGER
+            )
+        '''
         try:
-            await self._con.execute(stmt)
+            await self._con.execute(table1)
+            await self._con.execute(table2)
             await self._con.commit()
         except aiosqlite.Error:
             logger.error('Failed to create table', exc_info=True)
