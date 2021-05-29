@@ -10,6 +10,7 @@ certifi = "*"
 fuzzywuzzy = {version = "*", extras = ["speedup"]}
 pytz = "*"
 regex = "*"
+sqlalchemy = "*"
 tzlocal = "*"
 Pint = "*"
 
