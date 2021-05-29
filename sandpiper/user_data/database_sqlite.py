@@ -371,3 +371,11 @@ SELECT user_data.user_id, birthday
             logger.error('Failed to get all user timezones', exc_info=True)
 
     # endregion
+    # region Guild settings
+
+    async def get_guild_announcement_channel(
+            self, guild_id: int
+    ) -> Optional[int]:
+        pass
+
+    # endregion
