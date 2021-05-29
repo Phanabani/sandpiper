@@ -10,6 +10,7 @@ import pytz
 from sandpiper.common.time import utc_now
 from sandpiper.user_data import UserData
 from sandpiper.user_data.database import Database
+from sandpiper.user_data.enums import PrivacyType
 
 __all__ = ['Birthdays']
 
@@ -41,14 +42,25 @@ class Birthdays(commands.Cog):
         db = await self._get_database()
         now = utc_now()
         today = now.date()
-        for user_id, birthday, timezone in await db.get_birthdays_range(
+        for user_id, birthday in await db.get_birthdays_range(
                 today, today + dt.timedelta(days=1)
         ):
+            timezone = None
+            if await db.get_privacy_timezone(user_id) is PrivacyType.PUBLIC:
+                timezone = await db.get_timezone(user_id)
+            if timezone is None:
+                # If the user's timezone is null, just use UTC
+                timezone = pytz.UTC
+
+            # Determine midnight in this person's timezone so we can
+            # wish them happy birthday at the start of their day
             midnight_local: dt.datetime = timezone.localize(
                 dt.datetime(today.year, birthday.month, birthday.day)
             )
             midnight_utc = midnight_local.astimezone(pytz.UTC)
             midnight_delta = midnight_utc - now
+            # Only schedule the birthday task if their localized midnight is
+            # within 24 hours from now
             # TODO I'm worried that it could be possible we lose a birthday
             #   in a race condition here...
             if (midnight_delta > dt.timedelta(0)
