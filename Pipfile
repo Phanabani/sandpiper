@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 aiosqlite = "*"
+alembic = "*"
 certifi = "*"
 "discord.py" = "*"
 fuzzywuzzy = {version = "*", extras = ["speedup"]}
