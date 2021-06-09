@@ -1,6 +1,6 @@
 # Sandpiper
 
-[![release](https://img.shields.io/github/v/release/phanabani/sandpiper)](https://github.com/Hawkpath/sandpiper/releases)
+[![release](https://img.shields.io/github/v/release/phanabani/sandpiper)](https://github.com/phanabani/sandpiper/releases)
 [![license](https://img.shields.io/github/license/phanabani/sandpiper)](LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
@@ -227,7 +227,7 @@ for more info about managing your privacy.
 
 Command | Description | Example
 ------- | ----------- | -------
-`name set <new_name>` | Set your preferred name (max 64 characters). | `name set Hawk`
+`name set <new_name>` | Set your preferred name (max 64 characters). | `name set Phana`
 `pronouns set <new_pronouns>` | Set your pronouns (max 64 characters). | `pronouns set She/Her`
 `birthday set <new_birthday>` | Set your birthday in one of the following formats: `1997-08-27`, `8 August 1997`, `Aug 8 1997`, `August 8`, `8 Aug`. You may omit your birth year with the month-name format (age will not be calculated). | `birthday set 1997-08-27`
 `timezone set <new_timezone>` | Set your timezone. Don't worry about formatting. Typing the name of the nearest major city should be good enough, but you can also try your state/country if that doesn't work. If you're confused, use this website to find your full timezone name: http://kevalbhatt.github.io/timezone-picker | `timezone set new york`
