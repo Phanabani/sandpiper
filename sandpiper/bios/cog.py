@@ -347,7 +347,7 @@ class Bios(commands.Cog):
         name='set', aliases=_set_aliases,
         brief="Set your preferred name.",
         help="Set your preferred name. Must be 64 characters or less.",
-        example="name set Hawk"
+        example="name set Phana"
     )
     @maybe_dm_only()
     async def name_set(self, ctx: commands.Context, *, new_name: str):
@@ -687,7 +687,7 @@ class Bios(commands.Cog):
             "matching users, showing their preferred name, Discord username, "
             "and nicknames in servers you share with them."
         ),
-        example="whois hawk"
+        example="whois phana"
     )
     async def whois(self, ctx: commands.Context, *, name: str):
         if len(name) < 2:

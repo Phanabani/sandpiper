@@ -1,7 +1,7 @@
 # Sandpiper
 
-[![release](https://img.shields.io/github/v/release/hawkpath/sandpiper)](https://github.com/Hawkpath/sandpiper/releases)
-[![license](https://img.shields.io/github/license/hawkpath/sandpiper)](LICENSE)
+[![release](https://img.shields.io/github/v/release/phanabani/sandpiper)](https://github.com/Hawkpath/sandpiper/releases)
+[![license](https://img.shields.io/github/license/phanabani/sandpiper)](LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 Sandpiper is a Discord bot that makes it easier to communicate with friends
@@ -35,7 +35,7 @@ Her current features include:
 To get started, clone the repo.
 
 ```shell script
-git clone https://github.com/hawkpath/sandpiper.git
+git clone https://github.com/phanabani/sandpiper.git
 cd sandpiper
 ```
 
@@ -330,4 +330,4 @@ These Discord bots inspired the development of Sandpiper:
 
 ## License
 
-[MIT © Hawkpath.](LICENSE)
+[MIT © Phanabani.](LICENSE)

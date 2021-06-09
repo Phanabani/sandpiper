@@ -24,7 +24,7 @@ class SandpiperConfig(ConfigSchema):
             "A bot that makes it easier to communicate with friends around the "
             "world.\n"
             "Visit my GitHub page for more info about commands and features: "
-            "https://github.com/Hawkpath/sandpiper#commands-and-features"
+            "https://github.com/phanabani/sandpiper#commands-and-features"
         )
         modules: _Modules
 
