@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sandpiper.common.time import TimezoneType
 from sandpiper.user_data.database import Database
 from sandpiper.user_data.enums import PrivacyType
-from sandpiper.user_data.models.base import Base
+from sandpiper.user_data.models import Base
 
 logger = logging.getLogger(__name__)
 
