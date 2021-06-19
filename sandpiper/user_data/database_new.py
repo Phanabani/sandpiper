@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated, Callable, Optional, Union, cast
 
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from sandpiper.common.time import TimezoneType
@@ -21,12 +21,12 @@ T_Sessionmaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 class DatabaseSQLAlchemy(Database):
 
     _connected: bool = False
-    _engine: Optional[AsyncSession] = None
+    _engine: Optional[AsyncEngine] = None
     _session_maker: Optional[T_Sessionmaker] = None
     db_path: Union[str, Path]
 
     def __init__(self, db_path: Union[str, Path]):
-        self.db_path = db_path
+        self.db_path = db_path.absolute()
 
     async def connect(self):
         logger.info(f"Connecting to database (path={self.db_path})")
@@ -35,7 +35,7 @@ class DatabaseSQLAlchemy(Database):
 
         self._connected = True
         self._engine = create_async_engine(
-            f"sqlite+aiosqlite://{self.db_path}",
+            f"sqlite+aiosqlite:///{self.db_path}",
             echo=True, future=True
         )
         self._session_maker = cast(T_Sessionmaker, sessionmaker(
