@@ -1,11 +1,14 @@
 import sqlalchemy as sa
-from sqlalchemy import Column
+from sqlalchemy import Column, Index
 
 from .base import Base
 
 
 class UserData(Base):
     __tablename__ = 'user_data'
+    __table_args__ = (
+        Index('index_users_preferred_name', 'preferred_name'),
+    )
     __mapper_args__ = {'eager_defaults': True}
 
     user_id = Column(sa.BigInteger, primary_key=True)
