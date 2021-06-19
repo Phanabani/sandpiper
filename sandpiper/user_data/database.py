@@ -31,10 +31,6 @@ class Database(metaclass=ABCMeta):
     async def connected(self) -> bool:
         pass
 
-    @abstractmethod
-    async def create_tables(self):
-        pass
-
     # region Batch
 
     @abstractmethod
