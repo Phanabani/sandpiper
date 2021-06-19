@@ -4,8 +4,8 @@ from sqlalchemy import Column, Index
 from .base import Base
 
 
-class UserData(Base):
-    __tablename__ = 'user_data'
+class Users(Base):
+    __tablename__ = 'users'
     __table_args__ = (
         Index('index_users_preferred_name', 'preferred_name'),
     )
