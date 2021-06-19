@@ -9,4 +9,4 @@ class Guilds(Base):
     __mapper_args__ = {'eager_defaults': True}
 
     guild_id = Column(sa.BigInteger, primary_key=True)
-    announcement_channel = Column(sa.BigInteger)
+    birthday_channel = Column(sa.BigInteger)
