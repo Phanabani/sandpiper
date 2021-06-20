@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from sandpiper.user_data.models import Base
 
-__all__ = ['run_with_migration_context', 'run_migrations']
+__all__ = ['get_current_heads', 'stamp', 'upgrade']
 
 config_path = Path(__file__, '../alembic.ini').resolve().absolute()
 config = Config(str(config_path))
@@ -22,40 +22,38 @@ context = EnvironmentContext(config, script)
 target_metadata = Base.metadata
 
 
-async def run_with_migration_context(
-        engine: AsyncEngine, fn: Callable[[MigrationContext], Any]
-):
-    def do(connection):
-        migration_ctx = MigrationContext.configure(connection)
-        return fn(migration_ctx)
-
-    async with engine.begin() as conn:
-        conn: AsyncConnection
-        return await conn.run_sync(do)
-
-
-def _do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_migrations():
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-    """
-    connectable = AsyncEngine(
-        engine_from_config(
-            config.get_section(config.config_ini_section),
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-            future=True,
-        )
-    )
-
-    async with connectable.connect() as connection:
+async def _run_sync(engine: AsyncEngine, fn: Callable[[AsyncConnection], Any]):
+    async with engine.connect() as connection:
         connection: AsyncConnection
-        await connection.run_sync(_do_run_migrations)
+        try:
+            return await connection.run_sync(fn)
+        except Exception as e:
+            raise
+
+
+async def get_current_heads(engine: AsyncEngine) -> tuple[str]:
+    def fn(connection: AsyncConnection):
+        migration_ctx = MigrationContext.configure(connection)
+        return migration_ctx.get_current_heads()
+    return await _run_sync(engine, fn)
+
+
+async def stamp(engine: AsyncEngine, revision: str):
+    def fn(connection: AsyncConnection):
+        migration_ctx = MigrationContext.configure(connection)
+        return migration_ctx.stamp(script, revision)
+    await _run_sync(engine, fn)
+
+
+async def upgrade(engine: AsyncEngine, revision: str):
+    def do_upgrade(rev, context):
+        return script._upgrade_revs(revision, rev)
+
+    def fn(connection: AsyncConnection):
+        context.configure(
+            connection, target_metadata=target_metadata, fn=do_upgrade
+        )
+        with context.begin_transaction():
+            context.run_migrations()
+
+    await _run_sync(engine, fn)
