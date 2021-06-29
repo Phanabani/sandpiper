@@ -119,4 +119,5 @@ def run_bot():
 
     # Run bot
     sandpiper = Sandpiper(config.bot)
+    sandpiper.loop.set_debug(True)
     sandpiper.run(bot_token)
