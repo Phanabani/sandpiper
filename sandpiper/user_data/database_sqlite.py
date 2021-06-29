@@ -11,12 +11,12 @@ from .database import *
 from .enums import PrivacyType
 from sandpiper.common.time import TimezoneType
 
-__all__ = ['DatabaseSQLite']
+__all__ = ['DatabaseSQLiteOld']
 
 logger = logging.getLogger('sandpiper.user_data.database_sqlite')
 
 
-class DatabaseSQLite(Database):
+class DatabaseSQLiteOld(Database):
 
     _con: Optional[aiosqlite.Connection] = None
     db_path: Union[str, Path]

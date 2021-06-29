@@ -5,7 +5,8 @@ from typing import Optional
 from discord.ext.commands import Bot
 
 from .cog import UserData, DatabaseUnavailable
-from .database_sqlite import DatabaseSQLite
+from .database import Database
+from .database_new import DatabaseSQLite
 
 DB_FILE = Path(__file__).parent.parent / 'sandpiper.db'
 

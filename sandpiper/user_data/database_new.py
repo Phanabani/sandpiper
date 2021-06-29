@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 T_Sessionmaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
 
-class DatabaseSQLAlchemy(Database):
+class DatabaseSQLite(Database):
 
     _connected: bool = False
     _engine: Optional[AsyncEngine] = None
