@@ -9,8 +9,7 @@ import pytz
 
 from ._helpers import *
 from sandpiper.bios import Bios
-from sandpiper.user_data import UserData
-from sandpiper.user_data.database_sqlite import DatabaseSQLite
+from sandpiper.user_data import DatabaseSQLite, UserData
 from sandpiper.user_data.enums import PrivacyType
 
 pytestmark = pytest.mark.asyncio

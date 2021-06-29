@@ -3,7 +3,7 @@ import unittest
 
 import pytz
 
-from sandpiper.user_data.database_sqlite import DatabaseSQLite
+from sandpiper.user_data import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
 
 __all__ = ['TestDatabaseConnection', 'TestDatabase']
