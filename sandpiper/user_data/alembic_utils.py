@@ -1,4 +1,5 @@
 from collections import Callable
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -6,13 +7,13 @@ from alembic.config import Config
 from alembic.runtime.environment import EnvironmentContext
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from sandpiper.user_data.models import Base
 
 __all__ = ['get_current_heads', 'stamp', 'upgrade']
+
+logger = logging.getLogger(__name__)
 
 config_path = Path(__file__, '../alembic.ini').resolve().absolute()
 config = Config(str(config_path))
@@ -23,11 +24,12 @@ target_metadata = Base.metadata
 
 
 async def _run_sync(engine: AsyncEngine, fn: Callable[[AsyncConnection], Any]):
-    async with engine.connect() as connection:
+    async with engine.begin() as connection:
         connection: AsyncConnection
         try:
             return await connection.run_sync(fn)
         except Exception as e:
+            logger.error("Unhandled exception in Alembic run_sync", exc_info=e)
             raise
 
 
