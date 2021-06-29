@@ -5,5 +5,8 @@ if sys.platform == 'win32':
     import os
     os.environ['SSL_CERT_FILE'] = certifi.where()
 
+import logging
+logger = logging.getLogger(__name__)
+
 from .config import SandpiperConfig
 from .sandpiper import *
