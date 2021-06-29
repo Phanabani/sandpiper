@@ -5,13 +5,16 @@ from pathlib import Path
 from typing import Annotated, Callable, Optional, Union, cast
 
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
+)
 from sqlalchemy.orm import sessionmaker
 
 from sandpiper.common.time import TimezoneType
+import sandpiper.user_data.alembic_utils as alembic_utils
 from sandpiper.user_data.database import Database
 from sandpiper.user_data.enums import PrivacyType
-from sandpiper.user_data.models import Base
+from sandpiper.user_data.models import Base, Guilds, Users
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +38,12 @@ class DatabaseSQLite(Database):
 
         self._connected = True
         self._engine = create_async_engine(
-            f"sqlite+aiosqlite:///{self.db_path}",
-            echo=True, future=True
+            f"sqlite+aiosqlite:///{self.db_path}", echo=False, future=True
         )
         self._session_maker = cast(T_Sessionmaker, sessionmaker(
             self._engine, expire_on_commit=False, class_=AsyncSession
         ))
-        await self.create_tables()
+        await self._do_upgrades()
 
     async def disconnect(self):
         logger.info(f"Disconnecting from database (path={self.db_path})")
@@ -55,10 +57,56 @@ class DatabaseSQLite(Database):
     async def connected(self) -> bool:
         return self._connected
 
-    async def create_tables(self):
-        logger.info("Creating database tables if they don't exist")
+    async def _do_upgrades(self):
+        revision = await alembic_utils.get_current_heads(self._engine)
+        if revision:
+            logger.info("Performing Alembic upgrade to head (may be a no-op)")
+            await alembic_utils.upgrade(self._engine, 'head')
+            return
+
+        logger.info("Database has no Alembic version")
         async with self._engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            # Check the sqlite meta table for table definitions
+            conn: AsyncConnection
+            no_tables = (await conn.execute(sa.text(
+                "SELECT 1 FROM sqlite_master LIMIT 1"
+            ))).fetchone() is None
+            user_data_table_exists = (await conn.execute(sa.text(
+                "SELECT 1 FROM sqlite_master WHERE name = 'user_data' LIMIT 1"
+            ))).fetchone() is not None
+
+        if no_tables:
+            # This database is empty, we can create all and stamp as head
+            logger.info(
+                "Empty database; creating all and stamping as Alembic head"
+            )
+            async with self._engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            await alembic_utils.stamp(self._engine, 'head')
+
+        elif user_data_table_exists:
+            # The database already existed but was not tracked yet by Alembic.
+            # This means the database is aligned with the init migration.
+            # Stamp it as such so we can then apply migrations to it.
+            logger.info(
+                "user_data table found; stamping with the appropriate "
+                "Alembic revision to continue with upgrades"
+            )
+            await alembic_utils.stamp(self._engine, '91e18fdd475a')
+            logger.info("Upgrading to head")
+            await alembic_utils.upgrade(self._engine, 'head')
+
+        else:
+            err_msg = (
+                f"Database is in an unexpected state. There appears to be "
+                f"data in it but it is untracked by Alembic and it cannot "
+                f"be automatically handled. You may have to manually stamp "
+                f"the Alembic revision."
+            )
+            logger.fatal(err_msg)
+            raise RuntimeError(err_msg)
+
+        logger.info("Upgrade complete")
 
     async def delete_user(self, user_id: int):
         pass
