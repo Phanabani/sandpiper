@@ -17,8 +17,18 @@ class User(Base):
     birthday = Column(sa.Date)
     timezone = Column(sa.String)
 
-    privacy_preferred_name = Column(sa.SmallInteger)
-    privacy_pronouns = Column(sa.SmallInteger)
-    privacy_birthday = Column(sa.SmallInteger)
-    privacy_age = Column(sa.SmallInteger)
-    privacy_timezone = Column(sa.SmallInteger)
+    privacy_preferred_name = Column(
+        sa.SmallInteger, nullable=False, server_default=sa.text('0')
+    )
+    privacy_pronouns = Column(
+        sa.SmallInteger, nullable=False, server_default=sa.text('0')
+    )
+    privacy_birthday = Column(
+        sa.SmallInteger, nullable=False, server_default=sa.text('0')
+    )
+    privacy_age = Column(
+        sa.SmallInteger, nullable=False, server_default=sa.text('0')
+    )
+    privacy_timezone = Column(
+        sa.SmallInteger, nullable=False, server_default=sa.text('0')
+    )
