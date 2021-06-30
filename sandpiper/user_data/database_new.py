@@ -14,7 +14,7 @@ from sandpiper.common.time import TimezoneType
 import sandpiper.user_data.alembic_utils as alembic_utils
 from sandpiper.user_data.database import Database
 from sandpiper.user_data.enums import PrivacyType
-from sandpiper.user_data.models import Base, Guilds, Users
+from sandpiper.user_data.models import Base, Guild, User
 
 logger = logging.getLogger(__name__)
 

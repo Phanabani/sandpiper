@@ -1,3 +1,3 @@
 from .base import Base
-from .guilds import Guilds
-from .users import Users
+from .guild import Guild
+from .user import User

@@ -4,7 +4,7 @@ from sqlalchemy import Column
 from .base import Base
 
 
-class Guilds(Base):
+class Guild(Base):
     __tablename__ = 'guilds'
     __mapper_args__ = {'eager_defaults': True}
 
