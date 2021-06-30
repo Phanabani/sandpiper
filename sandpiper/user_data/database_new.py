@@ -29,7 +29,9 @@ class DatabaseSQLite(Database):
     db_path: Union[str, Path]
 
     def __init__(self, db_path: Union[str, Path]):
-        self.db_path = db_path.absolute()
+        if isinstance(db_path, Path):
+            db_path = db_path.absolute()
+        self.db_path = db_path
 
     async def connect(self):
         logger.info(f"Connecting to database (path={self.db_path})")
