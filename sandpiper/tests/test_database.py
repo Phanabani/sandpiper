@@ -1,199 +1,218 @@
 import datetime as dt
-import unittest
 
+import pytest
 import pytz
 
-from sandpiper.user_data import DatabaseSQLite
+from ._helpers import *
+from sandpiper.common.time import TimezoneType
 from sandpiper.user_data.enums import PrivacyType
 
-__all__ = ['TestDatabaseConnection', 'TestDatabase']
-
-CONNECTION = ':memory:'
+pytestmark = pytest.mark.asyncio
 
 
-class TestDatabaseConnection(unittest.IsolatedAsyncioTestCase):
-
-    async def test_connection(self):
-        db = DatabaseSQLite(CONNECTION)
-        await db.connect()
-        self.assertTrue(await db.connected())
-        await db.disconnect()
-        self.assertFalse(await db.connected())
+@pytest.fixture
+def user_id(new_id) -> int:
+    return new_id()
 
 
-class TestDatabase(unittest.IsolatedAsyncioTestCase):
+class TestConnection:
 
-    async def asyncSetUp(self) -> None:
-        self._db = DatabaseSQLite(CONNECTION)
-        await self._db.connect()
+    async def test_connected(self, database):
+        assert (await database.connected()) is True
 
-    async def asyncTearDown(self) -> None:
-        await self._db.disconnect()
+    async def test_disconnected(self, database):
+        await database.disconnect()
+        assert (await database.connected()) is False
 
-    async def test_privacy(self):
-        db = self._db
-        user_id = 123
 
-        # Nonexistent user
-        async def assert_all_privacies(privacy: PrivacyType):
-            self.assertIs(await db.get_privacy_preferred_name(user_id), privacy)
-            self.assertIs(await db.get_privacy_pronouns(user_id), privacy)
-            self.assertIs(await db.get_privacy_birthday(user_id), privacy)
-            self.assertIs(await db.get_privacy_age(user_id), privacy)
-            self.assertIs(await db.get_privacy_timezone(user_id), privacy)
+class TestPreferredName:
 
-        # Set and get
-        await db.set_privacy_preferred_name(user_id, PrivacyType.PUBLIC)
-        await db.set_privacy_pronouns(user_id, PrivacyType.PUBLIC)
-        await db.set_privacy_birthday(user_id, PrivacyType.PUBLIC)
-        await db.set_privacy_age(user_id, PrivacyType.PUBLIC)
-        await db.set_privacy_timezone(user_id, PrivacyType.PUBLIC)
-        await assert_all_privacies(PrivacyType.PUBLIC)
+    async def test_main(self, database, user_id):
+        value = 'Greg'
+        await database.set_preferred_name(user_id, value)
+        assert (await database.get_preferred_name(user_id)) == value
 
-        # Delete user
-        await db.delete_user(user_id)
-        await assert_all_privacies(PrivacyType.PRIVATE)
+    async def test_privacy(self, database, user_id):
+        value = PrivacyType.PUBLIC
+        await database.set_privacy_preferred_name(user_id, value)
+        assert (await database.get_privacy_preferred_name(user_id)) is value
 
-    async def test_info(self):
-        db = self._db
 
-        user_id = 123
-        name = 'Greg'
-        pronouns = 'He/Him'
-        birthday = dt.date(2000, 6, 1)
-        birthday_20years = dt.date(2020, 6, 1)
-        timezone = pytz.timezone('America/New_York')
+class TestPronouns:
 
-        async def assert_all_none():
-            self.assertIsNone(await db.get_preferred_name(user_id))
-            self.assertIsNone(await db.get_pronouns(user_id))
-            self.assertIsNone(await db.get_birthday(user_id))
-            self.assertIsNone(await db.get_age(user_id))
-            self.assertIsNone(await db.get_timezone(user_id))
+    async def test_main(self, database, user_id):
+        value = 'She/Her'
+        await database.set_pronouns(user_id, value)
+        assert (await database.get_pronouns(user_id)) == value
 
-        async def set_and_assert_equals():
-            await db.set_preferred_name(user_id, name)
-            await db.set_pronouns(user_id, pronouns)
-            await db.set_birthday(user_id, birthday)
-            await db.set_timezone(user_id, timezone)
-            self.assertEqual(await db.get_preferred_name(user_id), name)
-            self.assertEqual(await db.get_pronouns(user_id), pronouns)
-            self.assertEqual(await db.get_birthday(user_id), birthday)
-            self.assertEqual(await db.get_timezone(user_id), timezone)
+    async def test_privacy(self, database, user_id):
+        value = PrivacyType.PUBLIC
+        await database.set_privacy_pronouns(user_id, value)
+        assert (await database.get_privacy_pronouns(user_id)) is value
 
-        # Nonexistent user
-        await assert_all_none()
 
-        # Basic
-        await set_and_assert_equals()
+class TestBirthday:
 
-        # Can't reliably test db.get_age since today is always changing, so
-        # first assert that get_age is an int, then test the age calculation
-        # method with static dates
-        self.assertIsInstance(await db.get_age(user_id), int)
-        self.assertEqual(
-            db._calculate_age(birthday, birthday_20years - dt.timedelta(days=1)),
-            19
+    async def test_main(self, database, user_id):
+        value = dt.date(2000, 2, 14)
+        await database.set_birthday(user_id, value)
+        assert (await database.get_birthday(user_id)) == value
+
+    async def test_privacy(self, database, user_id):
+        value = PrivacyType.PUBLIC
+        await database.set_privacy_birthday(user_id, value)
+        assert (await database.get_privacy_birthday(user_id)) is value
+
+
+class TestAge:
+
+    async def test_privacy(self, database, user_id):
+        value = PrivacyType.PUBLIC
+        await database.set_privacy_age(user_id, value)
+        assert (await database.get_privacy_age(user_id)) is value
+
+
+class TestTimezone:
+
+    async def test_main(self, database, user_id):
+        value = pytz.timezone('America/New_York')
+        await database.set_timezone(user_id, value)
+        assert (await database.get_timezone(user_id)) == value
+
+    async def test_privacy(self, database, user_id):
+        value = PrivacyType.PUBLIC
+        await database.set_privacy_timezone(user_id, value)
+        assert (await database.get_privacy_timezone(user_id)) is value
+
+
+class TestFindUsersByPreferredName:
+
+    @pytest.fixture()
+    def user_factory(self, database, new_id):
+        async def f(
+                preferred_name: str, privacy: PrivacyType = PrivacyType.PUBLIC
+        ) -> int:
+            uid = new_id()
+            await database.set_preferred_name(uid, preferred_name)
+            await database.set_privacy_preferred_name(uid, privacy)
+            return uid
+        return f
+
+    async def test_no_users(self, database):
+        found = await database.find_users_by_preferred_name('Name')
+        assert found == []
+
+    async def test_no_users_with_name(self, database, user_factory):
+        await user_factory('Greg')
+        found = await database.find_users_by_preferred_name('Alan')
+        assert found == []
+
+    async def test_basic(self, database, user_factory):
+        uid = await user_factory('Greg')
+        found = await database.find_users_by_preferred_name('Alan')
+        assert found == [(uid, 'Greg')]
+
+    async def test_empty_string(self, database, user_factory):
+        await user_factory('Greg')
+        found = await database.find_users_by_preferred_name('')
+        assert found == []
+
+    async def test_duplicate(self, database, user_factory):
+        uid1 = await user_factory('Fred')
+        uid2 = await user_factory('Fred')
+        found = await database.find_users_by_preferred_name('Fred')
+        assert_count_equal(found, [(uid1, 'Fred'), (uid2, 'Fred')])
+
+    async def test_case_insensitive(self, database, user_factory):
+        uid1 = await user_factory('Ned')
+        uid2 = await user_factory('ned')
+        found = await database.find_users_by_preferred_name('ned')
+        assert_count_equal(found, [(uid1, 'Ned'), (uid2, 'ned')])
+
+    async def test_substring(self, database, user_factory):
+        uid1 = await user_factory('Pizzaman')
+        uid2 = await user_factory('Eat Pizza')
+        found = await database.find_users_by_preferred_name('Pizza')
+        assert_count_equal(found, [(uid1, 'Pizzaman'), (uid2, 'Eat Pizza')])
+
+    async def test_superstring(self, database, user_factory):
+        uid1 = await user_factory('Pizzaman')
+        uid2 = await user_factory('Eat Pizza')
+        found = await database.find_users_by_preferred_name('Pizzaman')
+        assert found == [(uid1, 'Pizzaman')]
+
+    async def test_private(self, database, user_factory):
+        uid1 = await user_factory('Alan')
+        uid1 = await user_factory('Alan', PrivacyType.PRIVATE)
+        found = await database.find_users_by_preferred_name('Alan')
+        assert found == [(uid1, 'Alan')]
+
+
+class TestGetAllTimezones:
+
+    @pytest.fixture()
+    def user_factory(self, database, new_id):
+        async def f(
+                timezone: TimezoneType,
+                privacy: PrivacyType = PrivacyType.PUBLIC
+        ) -> int:
+            uid = new_id()
+            await database.set_timezone(uid, timezone)
+            await database.set_privacy_timezone(uid, privacy)
+            return uid
+        return f
+
+    @pytest.fixture()
+    def tz_london(self):
+        return pytz.timezone('Europe/London')
+
+    @pytest.fixture()
+    def tz_new_york(self):
+        return pytz.timezone('America/New_York')
+
+    @pytest.fixture()
+    def tz_denver(self):
+        return pytz.timezone('America/Denver')
+
+    @pytest.fixture()
+    def tz_boise(self):
+        return pytz.timezone('America/Boise')
+
+    async def test_no_users(self, database, user_factory):
+        timezones = await database.get_all_timezones()
+        assert timezones == []
+
+    async def test_basic(self, database, user_factory, tz_london):
+        uid = await user_factory(tz_london)
+        timezones = await database.get_all_timezones()
+        assert timezones == [(uid, tz_london)]
+
+    async def test_many(
+            self, database, user_factory, tz_london, tz_new_york, tz_denver,
+            tz_boise
+    ):
+        uid1 = await user_factory(tz_london)
+        uid2 = await user_factory(tz_new_york)
+        uid3 = await user_factory(tz_denver)
+        uid4 = await user_factory(tz_boise)
+        timezones = await database.get_all_timezones()
+        assert_count_equal(
+            timezones, [
+                (uid1, tz_london), (uid2, tz_new_york), (uid3, tz_denver),
+                (uid4, tz_boise)
+            ]
         )
-        self.assertEqual(
-            db._calculate_age(birthday, birthday_20years),
-            20
-        )
-        self.assertEqual(
-            db._calculate_age(birthday, birthday_20years + dt.timedelta(days=1)),
-            20
-        )
 
-        # Clear fields
-        await db.set_preferred_name(user_id, None)
-        await db.set_pronouns(user_id, None)
-        await db.set_birthday(user_id, None)
-        await db.set_timezone(user_id, None)
-        await assert_all_none()
+    async def test_duplicate(self, database, user_factory, tz_london):
+        uid1 = await user_factory(tz_london)
+        uid2 = await user_factory(tz_london)
+        timezones = await database.get_all_timezones()
+        assert_count_equal(timezones, [(uid1, tz_london), (uid2, tz_london)])
 
-        # Set fields again and test delete user
-        await set_and_assert_equals()
-        await db.delete_user(user_id)
-        await assert_all_none()
-
-    async def test_find_users_by_preferred_name(self):
-        db = self._db
-
-        # No users in table
-        found = await db.find_users_by_preferred_name('anything')
-        self.assertEqual(found, [])
-
-        await db.set_preferred_name(1, 'Greg')
-        await db.set_preferred_name(2, 'Pizzaman')
-        await db.set_preferred_name(3, 'Eat pizza')
-        await db.set_preferred_name(4, 'Fred')
-        await db.set_preferred_name(5, 'Fred')
-        await db.set_preferred_name(6, 'fred')
-        await db.set_preferred_name(7, 'Ned')
-        await db.set_preferred_name(8, 'Ned')
-        for i in range(1, 8):
-            await db.set_privacy_preferred_name(i, PrivacyType.PUBLIC)
-        await db.set_privacy_preferred_name(8, PrivacyType.PRIVATE)
-
-        # Empty and missing names
-        found = await db.find_users_by_preferred_name('')
-        self.assertEqual(found, [])
-        found = await db.find_users_by_preferred_name('Not a name')
-        self.assertEqual(found, [])
-
-        # Input case insensitivity
-        found = await db.find_users_by_preferred_name('Greg')
-        self.assertCountEqual(found, [(1, 'Greg')])
-        found = await db.find_users_by_preferred_name('greg')
-        self.assertCountEqual(found, [(1, 'Greg')])
-
-        # Substrings
-        found = await db.find_users_by_preferred_name('pizza')
-        self.assertCountEqual(found, [(2, 'Pizzaman'), (3, 'Eat pizza')])
-        found = await db.find_users_by_preferred_name('pizzaman')
-        self.assertCountEqual(found, [(2, 'Pizzaman')])
-
-        # Duplicates and output case insensitivity
-        found = await db.find_users_by_preferred_name('Fred')
-        self.assertCountEqual(found, [(4, 'Fred'), (5, 'Fred'), (6, 'fred')])
-
-        # Private name
-        found = await db.find_users_by_preferred_name('Ned')
-        self.assertCountEqual(found, [(7, 'Ned')])
-
-    async def test_get_all_timezones(self):
-        db = self._db
-
-        tz_london = pytz.timezone('Europe/London')
-        tz_new_york = pytz.timezone('America/New_York')
-        tz_denver = pytz.timezone('America/Denver')
-        tz_boise = pytz.timezone('America/Boise')
-
-        # No users in table
-        timezones = await db.get_all_timezones()
-        self.assertEqual(timezones, [])
-
-        # Basic
-        await db.set_timezone(1, tz_london)
-        await db.set_privacy_timezone(1, PrivacyType.PUBLIC)
-        timezones = await db.get_all_timezones()
-        self.assertCountEqual(timezones, [(1, tz_london)])
-
-        # Duplicate timezones
-        await db.set_timezone(2, tz_london)
-        await db.set_privacy_timezone(2, PrivacyType.PUBLIC)
-        timezones = await db.get_all_timezones()
-        self.assertCountEqual(timezones, [(1, tz_london), (2, tz_london)])
-
-        # More timezones and private timezone
-        await db.set_timezone(3, tz_new_york)
-        await db.set_timezone(4, tz_denver)
-        await db.set_timezone(5, tz_boise)
-        await db.set_privacy_timezone(3, PrivacyType.PUBLIC)
-        await db.set_privacy_timezone(4, PrivacyType.PUBLIC)
-        await db.set_privacy_timezone(5, PrivacyType.PRIVATE)
-        timezones = await db.get_all_timezones()
-        self.assertCountEqual(
-            timezones,
-            [(1, tz_london), (2, tz_london), (3, tz_new_york), (4, tz_denver)]
-        )
+    async def test_private(
+            self, database, user_factory, tz_new_york, tz_denver
+    ):
+        uid1 = await user_factory(tz_new_york)
+        uid2 = await user_factory(tz_denver, PrivacyType.PRIVATE)
+        timezones = await database.get_all_timezones()
+        assert timezones == [(uid1, tz_new_york)]
