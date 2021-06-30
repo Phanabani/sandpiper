@@ -7,7 +7,7 @@ import discord.ext.commands as commands
 import pytest
 import pytz
 
-from ._helpers import *
+from ._discord_helpers import *
 from sandpiper.user_data import DatabaseSQLite
 
 
