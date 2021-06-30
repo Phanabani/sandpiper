@@ -50,7 +50,7 @@ class DatabaseSQLite(Database):
         if not self._connected:
             raise RuntimeError("Database is not connected")
         self._connected = False
-        await self._engine.close()
+        await self._engine.dispose()
         self._engine = None
         self._session_maker = None
 
