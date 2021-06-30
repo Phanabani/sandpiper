@@ -8,6 +8,7 @@ import pytest
 import pytz
 
 from ._helpers import *
+from ._discord_helpers import *
 from sandpiper.common.time import TimezoneType, utc_now
 from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern

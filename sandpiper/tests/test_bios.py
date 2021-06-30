@@ -8,6 +8,7 @@ import pytest
 import pytz
 
 from ._helpers import *
+from ._discord_helpers import *
 from sandpiper.bios import Bios
 from sandpiper.user_data import DatabaseSQLite, UserData
 from sandpiper.user_data.enums import PrivacyType
