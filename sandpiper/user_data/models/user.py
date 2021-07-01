@@ -14,7 +14,14 @@ class User(Base):
     )
     __mapper_args__ = {'eager_defaults': True}
 
-    user_id = Column(sa.BigInteger, primary_key=True)
+    # Could be BigInteger in other database backends, but not SQLite because
+    # 64-bit ints are signed. :(
+    # This realistically won't even be a problem until like year 2084, but
+    # we might as well use a good practice.
+    #
+    # ceil(log10((1<<64) - 1)) == 20 (AKA the number of bytes required to
+    # represent the decimal form of the highest 64-bit unsigned int)
+    user_id = Column(sa.String(20), primary_key=True)
     preferred_name = Column(sa.String)
     pronouns = Column(sa.String)
     birthday = Column(sa.Date)
