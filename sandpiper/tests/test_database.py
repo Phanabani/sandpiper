@@ -27,12 +27,18 @@ class TestConnection:
 
 class TestPreferredName:
 
-    async def test_main(self, database, user_id):
+    async def test_get(self, database, user_id):
+        assert (await database.get_preferred_name(user_id)) is None
+
+    async def test_set_get(self, database, user_id):
         value = 'Greg'
         await database.set_preferred_name(user_id, value)
         assert (await database.get_preferred_name(user_id)) == value
 
-    async def test_privacy(self, database, user_id):
+    async def test_privacy_get(self, database, user_id):
+        assert (await database.get_privacy_preferred_name(user_id)) is None
+
+    async def test_privacy_set_get(self, database, user_id):
         value = PrivacyType.PUBLIC
         await database.set_privacy_preferred_name(user_id, value)
         assert (await database.get_privacy_preferred_name(user_id)) is value
@@ -40,12 +46,18 @@ class TestPreferredName:
 
 class TestPronouns:
 
-    async def test_main(self, database, user_id):
+    async def test_get(self, database, user_id):
+        assert (await database.get_pronouns(user_id)) is None
+
+    async def test_set_get(self, database, user_id):
         value = 'She/Her'
         await database.set_pronouns(user_id, value)
         assert (await database.get_pronouns(user_id)) == value
 
-    async def test_privacy(self, database, user_id):
+    async def test_privacy_get(self, database, user_id):
+        assert (await database.get_privacy_pronouns(user_id)) is None
+
+    async def test_privacy_set_get(self, database, user_id):
         value = PrivacyType.PUBLIC
         await database.set_privacy_pronouns(user_id, value)
         assert (await database.get_privacy_pronouns(user_id)) is value
@@ -53,12 +65,18 @@ class TestPronouns:
 
 class TestBirthday:
 
-    async def test_main(self, database, user_id):
+    async def test_get(self, database, user_id):
+        assert (await database.get_birthday(user_id)) is None
+
+    async def test_set_get(self, database, user_id):
         value = dt.date(2000, 2, 14)
         await database.set_birthday(user_id, value)
         assert (await database.get_birthday(user_id)) == value
 
-    async def test_privacy(self, database, user_id):
+    async def test_privacy_get(self, database, user_id):
+        assert (await database.get_privacy_birthday(user_id)) is None
+
+    async def test_privacy_set_get(self, database, user_id):
         value = PrivacyType.PUBLIC
         await database.set_privacy_birthday(user_id, value)
         assert (await database.get_privacy_birthday(user_id)) is value
@@ -66,7 +84,10 @@ class TestBirthday:
 
 class TestAge:
 
-    async def test_privacy(self, database, user_id):
+    async def test_privacy_get(self, database, user_id):
+        assert (await database.get_privacy_age(user_id)) is None
+
+    async def test_privacy_set_get(self, database, user_id):
         value = PrivacyType.PUBLIC
         await database.set_privacy_age(user_id, value)
         assert (await database.get_privacy_age(user_id)) is value
@@ -74,12 +95,18 @@ class TestAge:
 
 class TestTimezone:
 
-    async def test_main(self, database, user_id):
+    async def test_get(self, database, user_id):
+        assert (await database.get_timezone(user_id)) is None
+
+    async def test_set_get(self, database, user_id):
         value = pytz.timezone('America/New_York')
         await database.set_timezone(user_id, value)
         assert (await database.get_timezone(user_id)) == value
 
-    async def test_privacy(self, database, user_id):
+    async def test_privacy_get(self, database, user_id):
+        assert (await database.get_privacy_timezone(user_id)) is None
+
+    async def test_privacy_set_get(self, database, user_id):
         value = PrivacyType.PUBLIC
         await database.set_privacy_timezone(user_id, value)
         assert (await database.get_privacy_timezone(user_id)) is value
