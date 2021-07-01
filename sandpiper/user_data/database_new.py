@@ -248,10 +248,62 @@ class DatabaseSQLite(Database):
     ):
         await self._set_privacy_field('birthday', user_id, new_privacy)
 
+    @staticmethod
+    def _birthday_range_predicate(start: dt.date, end: dt.date):
+        wrap = (
+            (32 * start.month + start.day) > (32 * end.month + end.day)
+        )
+
+        def f(d: dt.date) -> bool:
+            if wrap:
+                # Start date goes forward and wraps around the year to end date
+                if end.month < d.month < start.month:
+                    # Between the start and end months
+                    return False
+            else:
+                if d.month < start.month or d.month > end.month:
+                    # Around the start and end months
+                    return False
+
+            if wrap and (d.month == start.month and d.month == end.month):
+                # We're wrapping around and the start/end month are the same.
+                # This means there will be a little sliver of exclusion within
+                # this month, between the end and start day.
+                if end.day < d.day < start.day:
+                    return False
+            else:
+                # Otherwise we just need to ensure the day is greater/less than
+                # the target days if this date's month equals either of the
+                # bounded dates' months
+                if d.month == start.month and d.day < start.day:
+                    return False
+                if d.month == end.month and d.day > end.day:
+                    return False
+
+            return True
+
+        return f
+
     async def get_birthdays_range(
             self, start: dt.date, end: dt.date
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
-        pass
+        logger.info(
+            f"Getting all birthdays between {start.day}-{start.month} and "
+            f"{end.day}-{end.month}"
+        )
+        if not isinstance(start, dt.date) or not isinstance(end, dt.date):
+            raise TypeError("start and end must be instances of datetime.date")
+
+        async with self._session_maker() as session, session.begin():
+            birthdays_unfiltered = (await session.execute(
+                sa.select(User.user_id, User.birthday)
+                .where(User.privacy_birthday == PrivacyType.PUBLIC)
+            )).all()
+
+        return list(filter(
+            lambda r: self._birthday_range_predicate(start, end)(r[1]),
+            birthdays_unfiltered
+        ))
 
     # endregion
     # region Age
