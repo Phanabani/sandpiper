@@ -180,9 +180,15 @@ class Database(metaclass=ABCMeta):
     # region Guild settings
 
     @abstractmethod
-    async def get_guild_announcement_channel(
+    async def get_guild_birthday_channel(
             self, guild_id: int
     ) -> Optional[int]:
+        pass
+
+    @abstractmethod
+    async def set_guild_birthday_channel(
+            self, guild_id: int, new_birthday_channel: Optional[int]
+    ):
         pass
 
     # endregion
