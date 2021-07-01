@@ -287,7 +287,14 @@ class DatabaseSQLite(Database):
         await self._set_privacy_field('timezone', user_id, new_privacy)
 
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
-        pass
+        logger.info(f"Getting all user timezones")
+        async with self._session_maker() as session, session.begin():
+            result = (await session.execute(
+                sa.select(User.user_id, User.timezone)
+                .where(User.timezone.isnot(None))
+                .where(User.privacy_timezone == PrivacyType.PUBLIC)
+            )).all()
+        return [(uid, pytz.timezone(tz_name)) for uid, tz_name in result]
 
     # endregion
     # region Guilds
