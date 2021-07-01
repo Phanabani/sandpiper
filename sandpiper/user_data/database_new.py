@@ -119,7 +119,7 @@ class DatabaseSQLite(Database):
         try:
             return (await session.execute(
                 sa.select(User).where(User.user_id == user_id)
-            )).one()
+            )).scalar_one()
         except NoResultFound:
             user = User(user_id=user_id)
             session.add(user)
