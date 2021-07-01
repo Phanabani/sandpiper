@@ -200,7 +200,16 @@ class DatabaseSQLite(Database):
     async def find_users_by_preferred_name(
             self, name: str
     ) -> list[tuple[int, str]]:
-        pass
+        logger.info(f"Finding users by preferred name (name={name})")
+        if name == '':
+            logger.info("Skipping empty string")
+
+        async with self._session_maker() as session, session.begin():
+            return (await session.execute(
+                sa.select(User.user_id, User.preferred_name)
+                .where(User.preferred_name.like(f'%{name}%'))
+                .where(User.privacy_preferred_name == PrivacyType.PUBLIC)
+            )).all()
 
     # endregion
     # region Pronouns
