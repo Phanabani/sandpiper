@@ -343,3 +343,19 @@ class TestGetAllTimezones:
         uid2 = await user_factory(tz_denver, PrivacyType.PRIVATE)
         timezones = await database.get_all_timezones()
         assert timezones == [(uid1, tz_new_york)]
+
+
+class TestSnowflakes:
+
+    async def test_max_64_bit_int_user_id(self, database):
+        uid = 0xFFFF_FFFF_FFFF_FFFF
+        await database.set_preferred_name(uid, 'Name')
+
+    async def test_max_64_bit_int_guild_id(self, database):
+        gid = 0xFFFF_FFFF_FFFF_FFFF
+        await database.set_guild_birthday_channel(gid, 0)
+
+    async def test_max_64_bit_int_birthday_channel_id(self, database, new_id):
+        gid = new_id()
+        channel = 0xFFFF_FFFF_FFFF_FFFF
+        await database.set_guild_birthday_channel(gid, channel)
