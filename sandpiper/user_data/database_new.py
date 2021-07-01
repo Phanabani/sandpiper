@@ -125,6 +125,17 @@ class DatabaseSQLite(Database):
             session.add(user)
             return user
 
+    @staticmethod
+    async def _get_guild(session: AsyncSession, guild_id: int) -> Guild:
+        try:
+            return (await session.execute(
+                sa.select(Guild).where(Guild.guild_id == guild_id)
+            )).scalar_one()
+        except NoResultFound:
+            guild = Guild(guild_id=guild_id)
+            session.add(guild)
+            return guild
+
     async def _get_field(self, field_name: str, user_id: int) -> Optional[str]:
         logger.info(f"Getting {field_name} (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
@@ -351,9 +362,25 @@ class DatabaseSQLite(Database):
     # endregion
     # region Guilds
 
-    async def get_guild_announcement_channel(
+    async def get_guild_birthday_channel(
             self, guild_id: int
-    ) -> Optional[int]:
-        pass
+    ) -> Optional[str]:
+        logger.info(f"Getting guild birthday_channel (guild_id={guild_id})")
+        async with self._session_maker() as session, session.begin():
+            return (await session.execute(
+                sa.select(Guild.birthday_channel)
+                .where(Guild.guild_id == guild_id)
+            )).scalar()
+
+    async def set_guild_birthday_channel(
+            self, guild_id: int, new_birthday_channel: Optional[int]
+    ):
+        logger.info(
+            f"Setting guild birthday_channel (guild_id={guild_id}, "
+            f"new_value={new_birthday_channel})"
+        )
+        async with self._session_maker() as session, session.begin():
+            guild = await self._get_guild(session, guild_id)
+            guild.birthday_channel = new_birthday_channel
 
     # endregion
