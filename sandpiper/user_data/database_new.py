@@ -203,6 +203,7 @@ class DatabaseSQLite(Database):
         logger.info(f"Finding users by preferred name (name={name})")
         if name == '':
             logger.info("Skipping empty string")
+            return []
 
         async with self._session_maker() as session, session.begin():
             return (await session.execute(
