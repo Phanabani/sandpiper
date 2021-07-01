@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Annotated, Callable, Optional, Union, cast
 
 import sqlalchemy as sa
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import (
     AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
 )
@@ -12,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 
 from sandpiper.common.time import TimezoneType
 import sandpiper.user_data.alembic_utils as alembic_utils
-from sandpiper.user_data.database import Database
+from sandpiper.user_data.database import *
 from sandpiper.user_data.enums import PrivacyType
 from sandpiper.user_data.models import Base, Guild, User
 
@@ -110,29 +111,78 @@ class DatabaseSQLite(Database):
 
         logger.info("Upgrade complete")
 
+    @staticmethod
+    async def _get_user(session: AsyncSession, user_id: int) -> User:
+        try:
+            return (await session.execute(
+                sa.select(User).where(User.user_id == user_id)
+            )).one()
+        except NoResultFound:
+            user = User(user_id=user_id)
+            session.add(user)
+            return user
+
+    # region Batch
+
     async def delete_user(self, user_id: int):
-        pass
+        logger.info(f"Deleting user (user_id={user_id})")
+        async with self._session_maker() as session, session.begin():
+            await session.execute(
+                sa.delete(User).where(User.user_id == user_id)
+            )
+
+    # endregion
+    # region Preferred name
 
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
-        pass
+        logger.info(f"Getting preferred name (user_id={user_id})")
+        async with self._session_maker() as session, session.begin():
+            return (await session.execute(
+                sa.select(User.preferred_name).where(User.user_id == user_id)
+            )).scalar()
 
     async def set_preferred_name(
             self, user_id: int, new_preferred_name: Optional[str]
     ):
-        pass
+        logger.info(
+            f"Setting preferred name (user_id={user_id}, "
+            f"new_value={new_preferred_name})"
+        )
+        async with self._session_maker() as session, session.begin():
+            user = await self._get_user(session, user_id)
+            user.preferred_name = new_preferred_name
 
-    async def get_privacy_preferred_name(self, user_id: int) -> PrivacyType:
-        pass
+    async def get_privacy_preferred_name(
+            self, user_id: int
+    ) -> Optional[PrivacyType]:
+        logger.info(
+            f"Getting preferred name privacy (user_id={user_id})"
+        )
+        async with self._session_maker() as session, session.begin():
+            privacy = (await session.execute(
+                sa.select(User.privacy_preferred_name)
+                .where(User.user_id == user_id))
+            ).scalar()
+            return PrivacyType(privacy) if privacy is not None else None
 
     async def set_privacy_preferred_name(
             self, user_id: int, new_privacy: PrivacyType
     ):
-        pass
+        logger.info(
+            f"Setting preferred name privacy (user_id={user_id} "
+            f"new_value={new_privacy})"
+        )
+        async with self._session_maker() as session, session.begin():
+            user = await self._get_user(session, user_id)
+            user.privacy_preferred_name = new_privacy.value
 
     async def find_users_by_preferred_name(
             self, name: str
     ) -> list[tuple[int, str]]:
         pass
+
+    # endregion
+    # region Pronouns
 
     async def get_pronouns(self, user_id: int) -> Optional[str]:
         pass
@@ -140,13 +190,16 @@ class DatabaseSQLite(Database):
     async def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
         pass
 
-    async def get_privacy_pronouns(self, user_id: int) -> PrivacyType:
+    async def get_privacy_pronouns(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
     async def set_privacy_pronouns(
             self, user_id: int, new_privacy: PrivacyType
     ):
         pass
+
+    # endregion
+    # region Birthday
 
     async def get_birthday(self, user_id: int) -> Optional[dt.date]:
         pass
@@ -156,7 +209,7 @@ class DatabaseSQLite(Database):
     ):
         pass
 
-    async def get_privacy_birthday(self, user_id: int) -> PrivacyType:
+    async def get_privacy_birthday(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
     async def set_privacy_birthday(
@@ -169,11 +222,17 @@ class DatabaseSQLite(Database):
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
         pass
 
-    async def get_privacy_age(self, user_id: int) -> PrivacyType:
+    # endregion
+    # region Age
+
+    async def get_privacy_age(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
     async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
         pass
+
+    # endregion
+    # region Timezone
 
     async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         pass
@@ -183,7 +242,7 @@ class DatabaseSQLite(Database):
     ):
         pass
 
-    async def get_privacy_timezone(self, user_id: int) -> PrivacyType:
+    async def get_privacy_timezone(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
     async def set_privacy_timezone(
@@ -194,7 +253,12 @@ class DatabaseSQLite(Database):
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
         pass
 
+    # endregion
+    # region Guilds
+
     async def get_guild_announcement_channel(
             self, guild_id: int
     ) -> Optional[int]:
         pass
+
+    # endregion
