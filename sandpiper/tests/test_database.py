@@ -139,7 +139,7 @@ class TestFindUsersByPreferredName:
 
     async def test_basic(self, database, user_factory):
         uid = await user_factory('Greg')
-        found = await database.find_users_by_preferred_name('Alan')
+        found = await database.find_users_by_preferred_name('Greg')
         assert found == [(uid, 'Greg')]
 
     async def test_empty_string(self, database, user_factory):
