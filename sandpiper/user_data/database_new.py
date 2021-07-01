@@ -164,7 +164,7 @@ class DatabaseSQLite(Database):
         )
         async with self._session_maker() as session, session.begin():
             user = await self._get_user(session, user_id)
-            setattr(user, f"privacy_{field_name}", new_privacy.value)
+            setattr(user, f"privacy_{field_name}", new_privacy)
 
     # endregion
     # region Batch
