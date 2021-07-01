@@ -115,6 +115,17 @@ class TestTimezone:
         assert (await database.get_privacy_timezone(user_id)) is value
 
 
+class TestGuildBirthdayChannel:
+
+    async def test_get(self, database, user_id):
+        assert (await database.get_guild_birthday_channel(user_id)) is None
+
+    async def test_set_get(self, database, user_id, new_id):
+        value = new_id()
+        await database.set_guild_birthday_channel(user_id, value)
+        assert (await database.get_guild_birthday_channel(user_id)) == value
+
+
 class TestFindUsersByPreferredName:
 
     @pytest.fixture()
