@@ -72,10 +72,10 @@ class DatabaseSQLite(Database):
             conn: AsyncConnection
             no_tables = (await conn.execute(sa.text(
                 "SELECT 1 FROM sqlite_master LIMIT 1"
-            ))).fetchone() is None
+            ))).first() is None
             user_data_table_exists = (await conn.execute(sa.text(
                 "SELECT 1 FROM sqlite_master WHERE name = 'user_data' LIMIT 1"
-            ))).fetchone() is not None
+            ))).first() is not None
 
         if no_tables:
             # This database is empty, we can create all and stamp as head
