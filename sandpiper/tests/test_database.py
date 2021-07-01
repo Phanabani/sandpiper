@@ -178,6 +178,68 @@ class TestFindUsersByPreferredName:
         assert found == [(uid1, 'Alan')]
 
 
+class TestGetBirthdaysRange:
+
+    @pytest.fixture()
+    def user_factory(self, database, new_id):
+        async def f(
+                birthday: dt.date, privacy: PrivacyType = PrivacyType.PUBLIC
+        ) -> int:
+            uid = new_id()
+            await database.set_birthday(uid, birthday)
+            await database.set_privacy_birthday(uid, privacy)
+            return uid
+        return f
+
+    @pytest.fixture()
+    async def birthdays(self, user_factory) -> list[tuple[int, dt.date]]:
+        dates = (
+            dt.date(3, 10, 2000),
+            dt.date(3, 15, 1992),
+            dt.date(4, 5, 2004),
+            dt.date(4, 30, 2000),
+            dt.date(5, 2, 1999),
+            dt.date(5, 27, 1998)
+        )
+        yield [(await user_factory(bday), bday) for bday in dates]
+
+    async def test_no_results(self, database, birthdays):
+        result = await database.get_birthdays_range(
+            dt.date(2, 1, 2021), dt.date(2, 20, 2021)
+        )
+        assert result == []
+
+    async def test_same_month(self, database, birthdays):
+        result = await database.get_birthdays_range(
+            dt.date(4, 4, 2021), dt.date(4, 25, 2021)
+        )
+        assert_count_equal(result, [birthdays[2]])
+
+    async def test_multiple_months(self, database, birthdays):
+        result = await database.get_birthdays_range(
+            dt.date(4, 21, 2021), dt.date(5, 15, 2021)
+        )
+        assert_count_equal(result, [birthdays[3], birthdays[4]])
+
+    async def test_inclusive(self, database, birthdays):
+        result = await database.get_birthdays_range(
+            dt.date(4, 5, 2021), dt.date(4, 30, 2021)
+        )
+        assert_count_equal(result, [birthdays[2], birthdays[3]])
+
+    async def test_year_agnostic(self, database, birthdays):
+        result = await database.get_birthdays_range(
+            dt.date(4, 21, 582), dt.date(5, 15, 4827)
+        )
+        assert_count_equal(result, [birthdays[3], birthdays[4]])
+
+    async def test_year_wraparound(self, database, birthdays):
+        result = await database.get_birthdays_range(
+            dt.date(5, 1, 2020), dt.date(3, 13, 2020)
+        )
+        assert_count_equal(result, [birthdays[4], birthdays[5], birthdays[0]])
+
+
 class TestGetAllTimezones:
 
     @pytest.fixture()
