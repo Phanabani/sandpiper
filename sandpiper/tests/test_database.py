@@ -5,6 +5,7 @@ import pytz
 
 from ._helpers import *
 from sandpiper.common.time import TimezoneType
+from sandpiper.user_data import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
 
 pytestmark = pytest.mark.asyncio
@@ -20,7 +21,9 @@ class TestConnection:
     async def test_connected(self, database):
         assert (await database.connected()) is True
 
-    async def test_disconnected(self, database):
+    async def test_disconnected(self):
+        database = DatabaseSQLite(':memory:')
+        await database.connect()
         await database.disconnect()
         assert (await database.connected()) is False
 
