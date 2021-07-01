@@ -1,5 +1,6 @@
 from contextlib import AbstractAsyncContextManager
 import datetime as dt
+from functools import wraps
 import logging
 from pathlib import Path
 from typing import Annotated, Callable, Optional, Union, cast
@@ -20,6 +21,67 @@ from sandpiper.user_data.models import Base, Guild, User
 logger = logging.getLogger(__name__)
 
 T_Sessionmaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
+
+
+def get_field(field_name: str):
+    def decorator(f):
+        @wraps(f)
+        async def wrapper(self, user_id: int) -> Optional[str]:
+            logger.info(f"Getting {field_name} (user_id={user_id})")
+            async with self._session_maker() as session, session.begin():
+                return (await session.execute(
+                    sa.select(getattr(User, field_name))
+                    .where(User.user_id == user_id)
+                )).scalar()
+        return wrapper
+    return decorator
+
+
+def set_field(field_name: str):
+    def decorator(f):
+        @wraps(f)
+        async def wrapper(self, user_id: int, value: Optional[str]):
+            logger.info(
+                f"Setting {field_name} (user_id={user_id}, "
+                f"new_value={value})"
+            )
+            async with self._session_maker() as session, session.begin():
+                user = await self._get_user(session, user_id)
+                setattr(user, field_name, value)
+        return wrapper
+    return decorator
+
+
+def get_privacy_field(field_name: str):
+    def decorator(f):
+        @wraps(f)
+        async def wrapper(self, user_id: int) -> Optional[PrivacyType]:
+            logger.info(
+                f"Getting {field_name} privacy (user_id={user_id})"
+            )
+            async with self._session_maker() as session, session.begin():
+                privacy = (await session.execute(
+                    sa.select(getattr(User, f"privacy_{field_name}"))
+                    .where(User.user_id == user_id))
+                ).scalar()
+                return PrivacyType(privacy) if privacy is not None else None
+        return wrapper
+    return decorator
+
+
+def set_privacy_field(field_name: str):
+    def decorator(f):
+        @wraps(f)
+        async def wrapper(self, user_id: int, new_privacy: PrivacyType):
+            logger.info(
+                f"Setting {field_name} privacy (user_id={user_id} "
+                f"new_value={new_privacy})"
+            )
+            async with self._session_maker() as session, session.begin():
+                user = await self._get_user(session, user_id)
+                setattr(user, f"privacy_{field_name}", new_privacy.value)
+        return wrapper
+    return decorator
 
 
 class DatabaseSQLite(Database):
@@ -134,47 +196,27 @@ class DatabaseSQLite(Database):
     # endregion
     # region Preferred name
 
+    @get_field('preferred_name')
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
-        logger.info(f"Getting preferred name (user_id={user_id})")
-        async with self._session_maker() as session, session.begin():
-            return (await session.execute(
-                sa.select(User.preferred_name).where(User.user_id == user_id)
-            )).scalar()
+        pass
 
+    @set_field('preferred_name')
     async def set_preferred_name(
             self, user_id: int, new_preferred_name: Optional[str]
     ):
-        logger.info(
-            f"Setting preferred name (user_id={user_id}, "
-            f"new_value={new_preferred_name})"
-        )
-        async with self._session_maker() as session, session.begin():
-            user = await self._get_user(session, user_id)
-            user.preferred_name = new_preferred_name
+        pass
 
+    @get_privacy_field('preferred_name')
     async def get_privacy_preferred_name(
             self, user_id: int
     ) -> Optional[PrivacyType]:
-        logger.info(
-            f"Getting preferred name privacy (user_id={user_id})"
-        )
-        async with self._session_maker() as session, session.begin():
-            privacy = (await session.execute(
-                sa.select(User.privacy_preferred_name)
-                .where(User.user_id == user_id))
-            ).scalar()
-            return PrivacyType(privacy) if privacy is not None else None
+        pass
 
+    @set_privacy_field('preferred_name')
     async def set_privacy_preferred_name(
             self, user_id: int, new_privacy: PrivacyType
     ):
-        logger.info(
-            f"Setting preferred name privacy (user_id={user_id} "
-            f"new_value={new_privacy})"
-        )
-        async with self._session_maker() as session, session.begin():
-            user = await self._get_user(session, user_id)
-            user.privacy_preferred_name = new_privacy.value
+        pass
 
     async def find_users_by_preferred_name(
             self, name: str
@@ -184,15 +226,19 @@ class DatabaseSQLite(Database):
     # endregion
     # region Pronouns
 
+    @get_field('pronouns')
     async def get_pronouns(self, user_id: int) -> Optional[str]:
         pass
 
+    @set_field('pronouns')
     async def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
         pass
 
+    @get_privacy_field('pronouns')
     async def get_privacy_pronouns(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
+    @set_privacy_field('pronouns')
     async def set_privacy_pronouns(
             self, user_id: int, new_privacy: PrivacyType
     ):
@@ -201,17 +247,21 @@ class DatabaseSQLite(Database):
     # endregion
     # region Birthday
 
+    @get_field('birthday')
     async def get_birthday(self, user_id: int) -> Optional[dt.date]:
         pass
 
+    @set_field('birthday')
     async def set_birthday(
             self, user_id: int, new_birthday: Optional[dt.date]
     ):
         pass
 
+    @get_privacy_field('birthday')
     async def get_privacy_birthday(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
+    @set_privacy_field('birthday')
     async def set_privacy_birthday(
             self, user_id: int, new_privacy: PrivacyType
     ):
@@ -225,26 +275,32 @@ class DatabaseSQLite(Database):
     # endregion
     # region Age
 
+    @get_privacy_field('age')
     async def get_privacy_age(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
+    @set_privacy_field('age')
     async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     # endregion
     # region Timezone
 
+    @get_field('timezone')
     async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
         pass
 
+    @set_field('timezone')
     async def set_timezone(
             self, user_id: int, new_timezone: Optional[TimezoneType]
     ):
         pass
 
+    @get_privacy_field('timezone')
     async def get_privacy_timezone(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
+    @set_privacy_field('timezone')
     async def set_privacy_timezone(
             self, user_id: int, new_privacy: PrivacyType
     ):
