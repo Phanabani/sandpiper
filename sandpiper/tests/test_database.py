@@ -173,7 +173,7 @@ class TestFindUsersByPreferredName:
 
     async def test_private(self, database, user_factory):
         uid1 = await user_factory('Alan')
-        uid1 = await user_factory('Alan', PrivacyType.PRIVATE)
+        uid2 = await user_factory('Alan', PrivacyType.PRIVATE)
         found = await database.find_users_by_preferred_name('Alan')
         assert found == [(uid1, 'Alan')]
 
