@@ -19,7 +19,7 @@ logger = logging.getLogger('sandpiper.birthdays')
 class Birthdays(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
-        """ Send happy birthday messages to users. """
+        """Send happy birthday messages to users."""
         self.bot = bot
         self.tasks: dict[int, asyncio.Task] = {}
         self.daily_loop.start()
