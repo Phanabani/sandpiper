@@ -21,6 +21,7 @@ class Birthdays(commands.Cog):
     def __init__(self, bot: commands.Bot):
         """ Send happy birthday messages to users. """
         self.bot = bot
+        self.tasks: dict[int, asyncio.Task] = {}
         self.daily_loop.start()
 
     async def _get_database(self) -> Database:
@@ -92,7 +93,7 @@ class Birthdays(commands.Cog):
         # TODO I'm worried that it could be possible we lose a birthday
         #   in a race condition here...
         if dt.timedelta(0) < midnight_delta <= dt.timedelta(hours=24):
-            await self.bot.loop.create_task(
+            self.tasks[user_id] = self.bot.loop.create_task(
                 self.send_birthday_message(user_id, midnight_delta)
             )
             return True
