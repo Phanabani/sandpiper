@@ -50,7 +50,7 @@ class SandpiperConfig(ConfigSchema):
         when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
         interval: Annotated[int, Bounded(1, None)] = 1
         backup_count: Annotated[int, Bounded(0, None)] = 7
-        format = "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
+        format = "%(asctime)s %(levelname)s %(name)s | %(message)s"
 
         @cached_property
         def formatter(self):
