@@ -5,6 +5,7 @@ import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
+from sandpiper.birthdays import Birthdays
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import Embeds
 from sandpiper.common.misc import join
@@ -148,6 +149,29 @@ class Bios(commands.Cog):
             f'Running command "{ctx.command}" (author={ctx.author} '
             f'content={ctx.message.content!r})'
         )
+
+    @commands.Cog.listener('on_command_completion')
+    async def notify_birthdays_cog(self, ctx: commands.Context):
+        if ctx.command_failed:
+            # Not sure if this is possible here but might as well check
+            return
+
+        if ctx.command.qualified_name in (
+                'birthday set', 'timezone set',
+                'privacy all', 'privacy birthday', 'privacy timezone'
+        ):
+            logger.debug(
+                f"Notifying birthdays cog about change from command "
+                f"{ctx.command.qualified_name} (user_id={ctx.author.id})"
+            )
+            birthdays_cog: Birthdays
+            birthdays_cog = self.bot.get_cog('Birthdays')
+            if birthdays_cog is None:
+                logger.debug(
+                    "No birthdays cog loaded; skipping change notification"
+                )
+                return
+            await birthdays_cog.notify_change(ctx.author.id)
 
     @auto_order
     @commands.group(
