@@ -60,6 +60,7 @@ class Sandpiper(commands.Bot):
 
         self.load_extension('sandpiper.user_data')
         self.load_extension('sandpiper.bios')
+        self.load_extension('sandpiper.birthdays')
         self.load_extension('sandpiper.conversion')
 
     async def on_connect(self):
