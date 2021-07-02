@@ -308,6 +308,7 @@ class DatabaseSQLite(Database):
         async with self._session_maker() as session, session.begin():
             birthdays_unfiltered = (await session.execute(
                 sa.select(User.user_id, User.birthday)
+                .where(User.birthday.isnot(None))
                 .where(User.privacy_birthday == PrivacyType.PUBLIC)
             )).all()
 

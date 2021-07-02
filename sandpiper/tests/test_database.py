@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Optional
 
 import pytest
 import pytz
@@ -194,7 +195,8 @@ class TestGetBirthdaysRange:
     @pytest.fixture()
     def user_factory(self, database, new_id):
         async def f(
-                birthday: dt.date, privacy: PrivacyType = PrivacyType.PUBLIC
+                birthday: Optional[dt.date],
+                privacy: PrivacyType = PrivacyType.PUBLIC
         ) -> int:
             uid = new_id()
             await database.set_birthday(uid, birthday)
@@ -273,6 +275,13 @@ class TestGetBirthdaysRange:
             dt.date(2021, 3, 1), dt.date(2021, 3, 31)
         )
         assert_count_equal(result, [birthdays[0]])
+
+    async def test_null_birthday(self, database, birthdays, user_factory):
+        await user_factory(None)
+        result = await database.get_birthdays_range(
+            dt.date(2021, 3, 1), dt.date(2021, 3, 31)
+        )
+        assert_count_equal(result, [birthdays[0], birthdays[1]])
 
 
 class TestGetAllTimezones:
