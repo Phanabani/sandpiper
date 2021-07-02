@@ -8,14 +8,12 @@ import discord.ext.commands as commands
 import discord.ext.tasks as tasks
 import pytz
 
-from sandpiper.common.time import TimezoneType, utc_now
+from sandpiper.common.time import utc_now
 from sandpiper.user_data import UserData, Database, PrivacyType
 
 __all__ = ['Birthdays']
 
 logger = logging.getLogger('sandpiper.birthdays')
-
-NoChange = object()
 
 
 class Birthdays(commands.Cog):
@@ -34,6 +32,9 @@ class Birthdays(commands.Cog):
 
     async def _try_cancel_task(self, user_id):
         if user_id in self.tasks:
+            logger.info(
+                f"Canceling birthday notification task (user_id={user_id})"
+            )
             self.tasks[user_id].cancel()
             del self.tasks[user_id]
 
@@ -179,16 +180,21 @@ class Birthdays(commands.Cog):
         )
         return past_birthdays, upcoming_birthdays
 
-    async def notify_change(
-            self, user_id: int,
-            *,
-            birthday: Optional[dt.date] = NoChange,
-            timezone: Optional[TimezoneType] = NoChange,
-            birthday_privacy: Optional[PrivacyType] = NoChange,
-            timezone_privacy: Optional[PrivacyType] = NoChange
-    ):
+    async def notify_change(self, user_id: int):
+        """
+        This method should be called when any one of the following user data
+        change, as birthday scheduling updates may need to be made:
+            - birthday
+            - timezone
+            - birthday privacy
+            - timezone privacy
+        """
+        db = await self._get_database()
+        birthday = await db.get_birthday(user_id)
+        birthday_privacy = await db.get_privacy_birthday(user_id)
+
         # Either of these two conditions means the birthday must be canceled
-        # and nothing else matters
+        # and we will not reschedule
         if (
                 birthday is None
                 or birthday_privacy is PrivacyType.PRIVATE
@@ -196,18 +202,4 @@ class Birthdays(commands.Cog):
             await self._try_cancel_task(user_id)
             return
 
-        # Ensure something has changed
-        if (
-                birthday is NoChange
-                and timezone is NoChange
-                and birthday_privacy is NoChange
-                and timezone_privacy is NoChange
-        ):
-            return
-
-        if birthday is NoChange:
-            # We need this for scheduling
-            birthday = (await self._get_database()).get_birthday(user_id)
-
-        # Any other reason we're here means we need to schedule the birthday
         await self.schedule_birthday(user_id, birthday)
