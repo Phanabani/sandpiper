@@ -31,6 +31,11 @@ class Database(metaclass=ABCMeta):
     async def connected(self) -> bool:
         pass
 
+    @abstractmethod
+    async def ready(self):
+        """Awaits until the database is ready"""
+        pass
+
     # region Batch
 
     @abstractmethod

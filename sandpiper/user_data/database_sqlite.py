@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import AbstractAsyncContextManager
 import datetime as dt
 import logging
@@ -34,20 +35,28 @@ class DatabaseSQLite(Database):
         if isinstance(db_path, Path):
             db_path = db_path.absolute()
         self.db_path = db_path
+        self._ready_fut = None
 
     async def connect(self):
         logger.info(f"Connecting to database (path={self.db_path})")
         if self._connected:
             raise RuntimeError("Database is already connected")
-
         self._connected = True
+
+        loop = asyncio.get_event_loop()
+        # Let dependents await until ready
+        self._ready_fut = loop.create_future()
+
         self._engine = create_async_engine(
             f"sqlite+aiosqlite:///{self.db_path}", echo=False, future=True
         )
         self._session_maker = cast(T_Sessionmaker, sessionmaker(
             self._engine, expire_on_commit=False, class_=AsyncSession
         ))
+
         await self._do_upgrades()
+
+        self._ready_fut.set_result(None)
 
     async def disconnect(self):
         logger.info(f"Disconnecting from database (path={self.db_path})")
@@ -60,6 +69,10 @@ class DatabaseSQLite(Database):
 
     async def connected(self) -> bool:
         return self._connected
+
+    async def ready(self):
+        if self._ready_fut is not None:
+            await self._ready_fut
 
     async def _do_upgrades(self):
         revision = await alembic_utils.get_current_heads(self._engine)
