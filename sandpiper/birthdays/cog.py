@@ -117,6 +117,12 @@ class Birthdays(commands.Cog):
         )
         db = await self._get_database()
         user: discord.User = self.bot.get_user(user_id)
+        if user is None:
+            logger.info(
+                f"Tried to send birthday message, but user is not in any "
+                f"guilds with Sandpiper (user_id={user_id})"
+            )
+            return
         guilds: list[discord.Guild] = user.mutual_guilds
 
         for guild in guilds:
