@@ -5,8 +5,16 @@ from typing import Optional
 from discord.ext.commands import Bot
 
 from .cog import UserData, DatabaseUnavailable
-from .database import Database
-from .database_new import DatabaseSQLite
+from .database import Database, DatabaseError
+from .database_sqlite import DatabaseSQLite
+from .enums import PrivacyType
+
+__all__ = [
+    'UserData', 'DatabaseUnavailable',
+    'Database', 'DatabaseError',
+    'DatabaseSQLite',
+    'PrivacyType'
+]
 
 DB_FILE = Path(__file__).parent.parent / 'sandpiper.db'
 

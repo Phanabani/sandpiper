@@ -5,13 +5,11 @@ import discord
 import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
 
-from ..common.discord import *
-from ..common.embeds import Embeds
-from ..common.misc import join
-from ..common.time import format_date, fuzzy_match_timezone
-from ..user_data.cog import UserData, DatabaseUnavailable
-from ..user_data.database import Database, DatabaseError
-from ..user_data.enums import PrivacyType
+from sandpiper.common.discord import *
+from sandpiper.common.embeds import Embeds
+from sandpiper.common.misc import join
+from sandpiper.common.time import format_date, fuzzy_match_timezone
+from sandpiper.user_data import *
 
 __all__ = ['Bios']
 

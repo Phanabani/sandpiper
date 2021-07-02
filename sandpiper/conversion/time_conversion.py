@@ -7,7 +7,7 @@ import discord
 
 from sandpiper.common.time import *
 from sandpiper.common.misc import RuntimeMessages
-from sandpiper.user_data.database import Database
+from sandpiper.user_data import Database
 
 __all__ = (
     'UserTimezoneUnset',
