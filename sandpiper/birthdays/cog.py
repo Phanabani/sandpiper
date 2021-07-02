@@ -48,10 +48,13 @@ class Birthdays(commands.Cog):
         now = utc_now()
         today = now.date()
 
+        scheduled_count = 0
         for user_id, birthday in await db.get_birthdays_range(
                 today, today + dt.timedelta(days=1)
         ):
-            await self.schedule_birthday(user_id, birthday, now=now)
+            if await self.schedule_birthday(user_id, birthday, now=now):
+                scheduled_count += 1
+        logger.info(f"{scheduled_count} birthdays scheduled for today")
 
     async def schedule_birthday(
             self, user_id: int, birthday: dt.date,
@@ -97,6 +100,8 @@ class Birthdays(commands.Cog):
             await self.bot.loop.create_task(
                 self.send_birthday_message(user_id, midnight_delta)
             )
+            return True
+        return False
 
     async def send_birthday_message(self, user_id: int, delta: dt.timedelta):
         await asyncio.sleep(delta.total_seconds())
