@@ -8,12 +8,14 @@ import discord.ext.commands as commands
 import discord.ext.tasks as tasks
 import pytz
 
-from sandpiper.common.time import utc_now
+from sandpiper.common.time import TimezoneType, utc_now
 from sandpiper.user_data import UserData, Database, PrivacyType
 
 __all__ = ['Birthdays']
 
 logger = logging.getLogger('sandpiper.birthdays')
+
+NoChange = object()
 
 
 class Birthdays(commands.Cog):
@@ -29,6 +31,11 @@ class Birthdays(commands.Cog):
         if user_data is None:
             raise RuntimeError('UserData cog is not loaded.')
         return await user_data.get_database()
+
+    async def _try_cancel_task(self, user_id):
+        if user_id in self.tasks:
+            self.tasks[user_id].cancel()
+            del self.tasks[user_id]
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
@@ -73,6 +80,12 @@ class Birthdays(commands.Cog):
         if now is None:
             now = utc_now()
         today = now.date()
+
+        # Cancel and remove the user's birthday task if it already exists.
+        # This may happen if the user changes their timezone or something
+        # when their birthday task is already scheduled.
+        # We want to overwrite it.
+        await self._try_cancel_task(user_id)
 
         timezone = None
         if await db.get_privacy_timezone(user_id) is PrivacyType.PUBLIC:
@@ -165,3 +178,36 @@ class Birthdays(commands.Cog):
             today + dt.timedelta(days=1), today + upcoming_delta
         )
         return past_birthdays, upcoming_birthdays
+
+    async def notify_change(
+            self, user_id: int,
+            *,
+            birthday: Optional[dt.date] = NoChange,
+            timezone: Optional[TimezoneType] = NoChange,
+            birthday_privacy: Optional[PrivacyType] = NoChange,
+            timezone_privacy: Optional[PrivacyType] = NoChange
+    ):
+        # Either of these two conditions means the birthday must be canceled
+        # and nothing else matters
+        if (
+                birthday is None
+                or birthday_privacy is PrivacyType.PRIVATE
+        ):
+            await self._try_cancel_task(user_id)
+            return
+
+        # Ensure something has changed
+        if (
+                birthday is NoChange
+                and timezone is NoChange
+                and birthday_privacy is NoChange
+                and timezone_privacy is NoChange
+        ):
+            return
+
+        if birthday is NoChange:
+            # We need this for scheduling
+            birthday = (await self._get_database()).get_birthday(user_id)
+
+        # Any other reason we're here means we need to schedule the birthday
+        await self.schedule_birthday(user_id, birthday)
