@@ -35,4 +35,5 @@ class UserData(commands.Cog):
             raise DatabaseUnavailable('Database adapter is not set.')
         if not await self._database.connected():
             raise DatabaseUnavailable('Database is not connected.')
+        await self._database.ready()
         return self._database
