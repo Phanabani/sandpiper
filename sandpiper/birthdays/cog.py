@@ -17,10 +17,12 @@ logger = logging.getLogger('sandpiper.birthdays')
 
 class Birthdays(commands.Cog):
 
-    def __init__(
-            self, bot: commands.Bot, *, past_birthdays_day_range: int = 7,
-            upcoming_birthdays_day_range: int = 14
-    ):
+    def __init__(self, bot: commands.Bot):
+        """
+        Send happy birthday messages to users.
+
+        :param bot: the Discord bot
+        """
         self.bot = bot
         self.past_birthdays_day_range = past_birthdays_day_range
         self.upcoming_birthdays_day_range = upcoming_birthdays_day_range
@@ -37,6 +39,11 @@ class Birthdays(commands.Cog):
         await self.schedule_todays_birthdays()
 
     async def schedule_todays_birthdays(self):
+        """
+        Gets all birthdays occurring either today or tomorrow and then tries
+        to schedule each of them. Only birthdays occurring within the next 24
+        hours will be scheduled.
+        """
         db = await self._get_database()
         now = utc_now()
         today = now.date()
@@ -49,7 +56,19 @@ class Birthdays(commands.Cog):
     async def schedule_birthday(
             self, user_id: int, birthday: dt.date,
             *, now: Optional[dt.datetime] = None
-    ):
+    ) -> bool:
+        """
+        Schedule a task that will wish this user happy birthday if their
+        birthday is within the next 24 hours. Will try to access their timezone
+        to wish them happy birthday at midnight in their timezone.
+
+        :param user_id: the user's Discord ID
+        :param birthday: the user's birthday
+        :param now: The datetime to use for calculating if the birthday occurs
+            within the next 24 hours. This is important when several birthdays
+            are being scheduled in a loop to prevent a possible race condition.
+        :return: whether the birthday was scheduled
+        """
         db = await self._get_database()
 
         if now is None:
@@ -84,6 +103,10 @@ class Birthdays(commands.Cog):
         # send message here
 
     async def get_past_upcoming_birthdays(self) -> tuple[list, list]:
+        """
+        Get two lists of past and upcoming birthdays. This may be used in a
+        user command to see who's having a birthday soon.
+        """
         db = await self._get_database()
         now = utc_now()
         today = now.date()
