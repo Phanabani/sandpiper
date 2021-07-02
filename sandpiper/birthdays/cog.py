@@ -133,7 +133,8 @@ class Birthdays(commands.Cog):
             if bday_channel_id is None:
                 continue
 
-            bday_channel: discord.TextChannel = self.bot.get_channel(bday_channel_id)
+            bday_channel: discord.TextChannel
+            bday_channel = self.bot.get_channel(bday_channel_id)
             if bday_channel is None:
                 continue
 
