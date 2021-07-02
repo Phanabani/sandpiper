@@ -3,6 +3,7 @@ import datetime as dt
 import logging
 from typing import Optional
 
+import discord
 import discord.ext.commands as commands
 import discord.ext.tasks as tasks
 import pytz
@@ -98,9 +99,36 @@ class Birthdays(commands.Cog):
         return False
 
     async def send_birthday_message(self, user_id: int, delta: dt.timedelta):
-        await asyncio.sleep(delta.total_seconds())
-        # send message here
+        """
+        Wait for `delta` time and then send a message wishing the user a happy
+        birthday in all guilds they share with Sandpiper.
 
+        :param user_id: the user's Discord ID
+        :param delta: how long to wait before sending the message
+        :return:
+        """
+        logger.info(
+            f"Waiting to send birthday message (user_id={user_id} "
+            f"seconds={delta.total_seconds()})"
+        )
+        await asyncio.sleep(delta.total_seconds())
+        logger.info(
+            f"Sending birthday notifications for user (user_id={user_id})"
+        )
+        db = await self._get_database()
+        user: discord.User = self.bot.get_user(user_id)
+        guilds: list[discord.Guild] = user.mutual_guilds
+
+        for guild in guilds:
+            bday_channel_id = await db.get_guild_birthday_channel(guild.id)
+            if bday_channel_id is None:
+                continue
+
+            bday_channel: discord.TextChannel = self.bot.get_channel(bday_channel_id)
+            if bday_channel is None:
+                continue
+
+            await bday_channel.send(f"it's {user.name}'s birthday!")
 
     async def get_past_upcoming_birthdays(
             self, past_birthdays_day_range: int = 7,
