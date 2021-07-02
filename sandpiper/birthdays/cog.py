@@ -111,7 +111,9 @@ class Birthdays(commands.Cog):
             f"Waiting to send birthday message (user_id={user_id} "
             f"seconds={delta.total_seconds()})"
         )
+
         await asyncio.sleep(delta.total_seconds())
+
         logger.info(
             f"Sending birthday notifications for user (user_id={user_id})"
         )
