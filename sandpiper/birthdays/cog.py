@@ -18,14 +18,8 @@ logger = logging.getLogger('sandpiper.birthdays')
 class Birthdays(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
-        """
-        Send happy birthday messages to users.
-
-        :param bot: the Discord bot
-        """
+        """ Send happy birthday messages to users. """
         self.bot = bot
-        self.past_birthdays_day_range = past_birthdays_day_range
-        self.upcoming_birthdays_day_range = upcoming_birthdays_day_range
         self.daily_loop.start()
 
     async def _get_database(self) -> Database:
@@ -107,16 +101,25 @@ class Birthdays(commands.Cog):
         await asyncio.sleep(delta.total_seconds())
         # send message here
 
-    async def get_past_upcoming_birthdays(self) -> tuple[list, list]:
+
+    async def get_past_upcoming_birthdays(
+            self, past_birthdays_day_range: int = 7,
+            upcoming_birthdays_day_range: int = 14
+    ) -> tuple[list, list]:
         """
         Get two lists of past and upcoming birthdays. This may be used in a
         user command to see who's having a birthday soon.
+
+        :param past_birthdays_day_range: how many days to search backward for
+            past birthdays
+        :param upcoming_birthdays_day_range: how many days to search forward
+            for upcoming birthdays
         """
         db = await self._get_database()
         now = utc_now()
         today = now.date()
-        past_delta = dt.timedelta(days=self.past_birthdays_day_range)
-        upcoming_delta = dt.timedelta(days=self.upcoming_birthdays_day_range)
+        past_delta = dt.timedelta(days=past_birthdays_day_range)
+        upcoming_delta = dt.timedelta(days=upcoming_birthdays_day_range)
         past_birthdays = await db.get_birthdays_range(
             today - past_delta, today
         )
