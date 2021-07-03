@@ -22,10 +22,14 @@ privacy_emojis = {
 }
 
 
+def info_str(field_name: str, value: Any):
+    return f"**{field_name}** • {value}"
+
+
 def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
     privacy_emoji = privacy_emojis[privacy]
     privacy = privacy.name.capitalize()
-    return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
+    return f"{privacy_emoji} `{privacy:7}` | {info_str(field_name, value)}"
 
 
 async def user_names_str(
@@ -697,6 +701,90 @@ class Bios(commands.Cog):
         db = await self._get_database()
         await db.set_timezone(user_id, None)
         await Embeds.success(ctx, "Timezone deleted!")
+
+    # region Server commands
+
+    @auto_order
+    @commands.group(
+        name='server', invoke_without_command=False,
+        brief="Server commands. (admin only)",
+        help="Commands for managing server settings. (admin only)"
+    )
+    async def server(self, ctx: commands.Context):
+        pass
+
+    # region Birthday channel
+
+    @auto_order
+    @server.group(
+        name='birthday_channel', invoke_without_command=False,
+        brief="Birthday notification channel commands",
+        help=(
+            "Commands for managing the birthday notification channel"
+        )
+    )
+    async def server_birthday_channel(self, ctx: commands.Context):
+        pass
+
+    @auto_order
+    @server_birthday_channel.command(
+        name='show', aliases=_show_aliases,
+        brief="Show the birthday notification channel",
+        help=(
+            "Show the birthday notification channel in your server. This is "
+            "where Sandpiper will send messages when it's someone's birthday."
+        )
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def server_birthday_channel_show(self, ctx: commands.Context):
+        guild_id: int = ctx.guild.id
+        db = await self._get_database()
+
+        bday_channel_id = await db.get_guild_birthday_channel(guild_id)
+        if bday_channel_id is None:
+            await Embeds.info(ctx, info_str("Birthday channel", "N/A"))
+            return
+
+        await Embeds.info(ctx, info_str(
+            "Birthday channel", f"<#{bday_channel_id}> (id={bday_channel_id})"
+        ))
+
+    @auto_order
+    @server_birthday_channel.command(
+        name='set', aliases=_set_aliases,
+        brief="Set the birthday notification channel",
+        help=(
+            "Set the birthday notification channel in your server. This is "
+            "where Sandpiper will send messages when it's someone's birthday."
+        )
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def server_birthday_channel_set(
+            self, ctx: commands.Context, new_channel: discord.TextChannel
+    ):
+        guild_id: int = ctx.guild.id
+        db = await self._get_database()
+        await db.set_guild_birthday_channel(guild_id, new_channel.id)
+        await Embeds.success(ctx, "Birthday channel set!")
+
+    @auto_order
+    @server_birthday_channel.command(
+        name='delete', aliases=_delete_aliases,
+        brief="Delete the birthday notification channel",
+        help=(
+            "Delete the birthday notification channel in your server. This is "
+            "where Sandpiper will send messages when it's someone's birthday."
+        )
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def server_birthday_channel_delete(self, ctx: commands.Context):
+        guild_id: int = ctx.guild.id
+        db = await self._get_database()
+        await db.set_guild_birthday_channel(guild_id, None)
+        await Embeds.success(ctx, "Birthday channel deleted!")
+
+    # endregion
+    # endregion
 
     # Extra commands
 
