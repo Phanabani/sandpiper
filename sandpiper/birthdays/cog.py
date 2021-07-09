@@ -1,6 +1,7 @@
 import asyncio
 import datetime as dt
 import logging
+import random
 from typing import Optional
 
 import discord
@@ -16,11 +17,41 @@ __all__ = ['Birthdays']
 logger = logging.getLogger('sandpiper.birthdays')
 
 
+def format_birthday_message(
+        msg: str,
+        *,
+        user_id: int = None,
+        name: str = '',
+        they: str = 'they',
+        them: str = 'them',
+        their: str = 'their',
+        are: str = 'are',
+        theyre: str = "they're",
+        age: Optional[int] = None
+):
+    return msg.format(
+        name=name,
+        NAME=name.upper(),
+        ping=f"<@{user_id}>",
+        they=they, They=they.capitalize(), THEY=they.upper(),
+        them=them, Them=them.capitalize(), THEM=them.upper(),
+        their=their, Their=their.capitalize(), THEIR=their.upper(),
+        are=are, ARE=are.upper(),
+        theyre=theyre, Theyre=theyre.capitalize(), THEYRE=theyre.upper(),
+        age=age
+    )
+
+
 class Birthdays(commands.Cog):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(
+            self, bot: commands.Bot, messages_no_age: list[str],
+            messages_age: list[str]
+    ):
         """Send happy birthday messages to users."""
         self.bot = bot
+        self.messages_no_age = messages_no_age
+        self.messages_age = messages_age
         self.tasks: dict[int, asyncio.Task] = {}
         self.daily_loop.start()
 
@@ -33,10 +64,15 @@ class Birthdays(commands.Cog):
     async def _try_cancel_task(self, user_id):
         if user_id in self.tasks:
             logger.info(
-                f"Canceling birthday notification task (user_id={user_id})"
+                f"Canceling birthday notification task (user={user_id})"
             )
             self.tasks[user_id].cancel()
             del self.tasks[user_id]
+
+    def _get_random_message(self, age=False):
+        if age:
+            return random.choice(self.messages_age)
+        return random.choice(self.messages_no_age)
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
@@ -123,26 +159,47 @@ class Birthdays(commands.Cog):
         :return:
         """
         logger.info(
-            f"Waiting to send birthday message (user_id={user_id} "
+            f"Waiting to send birthday message (user={user_id} "
             f"seconds={delta.total_seconds()})"
         )
 
         await asyncio.sleep(delta.total_seconds())
 
         logger.info(
-            f"Sending birthday notifications for user (user_id={user_id})"
+            f"Sending birthday notifications for user (user={user_id})"
         )
         db = await self._get_database()
         user: discord.User = self.bot.get_user(user_id)
         if user is None:
             logger.info(
                 f"Tried to send birthday message, but user is not in any "
-                f"guilds with Sandpiper (user_id={user_id})"
+                f"guilds with Sandpiper (user={user_id})"
             )
             return
         guilds: list[discord.Guild] = user.mutual_guilds
 
+        # Get some user info to use in the message
+
+        name = None
+        if (await db.get_privacy_preferred_name(user_id)) is PrivacyType.PUBLIC:
+            name = await db.get_preferred_name(user_id)
+        has_preferred_name = name is not None
+
+        age = None
+        if (await db.get_privacy_age(user_id)) is PrivacyType.PUBLIC:
+            age = await db.get_age(user_id)
+
+        # Send the message to each guild they're in with Sandpiper
+
         for guild in guilds:
+            member: discord.Member = guild.get_member(user_id)
+            if member is None:
+                logger.debug(
+                    f"User not found as a member in the guild, most likely "
+                    f"a rare race condition (user={user_id} guild={guild.id})"
+                )
+                continue
+
             bday_channel_id = await db.get_guild_birthday_channel(guild.id)
             if bday_channel_id is None:
                 continue
@@ -150,9 +207,20 @@ class Birthdays(commands.Cog):
             bday_channel: discord.TextChannel
             bday_channel = self.bot.get_channel(bday_channel_id)
             if bday_channel is None:
+                logger.debug(
+                    f"Birthday channel does not exist (guild={guild.id} "
+                    f"channel={bday_channel_id})"
+                )
                 continue
 
-            await bday_channel.send(f"it's {user.name}'s birthday!")
+            if not has_preferred_name:
+                name = member.display_name
+
+            bday_msg_template = self._get_random_message(age=age is not None)
+            bday_msg = format_birthday_message(
+                bday_msg_template, user_id=user_id, name=name, age=age
+            )
+            await bday_channel.send(bday_msg)
 
     async def get_past_upcoming_birthdays(
             self, past_birthdays_day_range: int = 7,
