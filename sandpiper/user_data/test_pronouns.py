@@ -47,18 +47,24 @@ class TestParse:
         ]
 
     # endregion
-    # region Unknown class
+    # region Unique class
 
-    def test_unknown_class_three_cases(self):
-        pronouns = Pronouns.parse('Unknown/missing/some')
+    def test_unique_class_one_case(self):
+        pronouns = Pronouns.parse('Pup')
         assert pronouns == [
-            Pronouns('unknown', 'missing', 'some', 'theirs', 'themself')
+            Pronouns('pup', 'pup', 'pups', 'pups', 'pupself')
         ]
 
-    def test_unknown_class_five_cases(self):
-        pronouns = Pronouns.parse('Unknown/but/not/missing/any')
+    def test_unique_class_three_cases(self):
+        pronouns = Pronouns.parse('Unique/missing/some')
         assert pronouns == [
-            Pronouns('unknown', 'but', 'not', 'missing', 'any')
+            Pronouns('unique', 'missing', 'some', 'uniques', 'uniqueself')
+        ]
+
+    def test_unique_class_five_cases(self):
+        pronouns = Pronouns.parse('Unique/but/not/missing/any')
+        assert pronouns == [
+            Pronouns('unique', 'but', 'not', 'missing', 'any')
         ]
 
     # endregion

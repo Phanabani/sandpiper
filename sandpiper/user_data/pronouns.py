@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import astuple, dataclass
 import re
 
 __all__ = ['Pronouns']
@@ -11,10 +11,35 @@ _slashed_group_pattern = re.compile(r'([a-zA-Z]+(?:[/\\][a-zA-Z]+)*)')
 class Pronouns:
 
     subjective: str = 'they'
-    objective: str = 'them'
-    determiner: str = 'their'
-    possessive: str = 'theirs'
-    reflexive: str = 'themself'
+    objective: str = None
+    determiner: str = None
+    possessive: str = None
+    reflexive: str = None
+
+    def __post_init__(self):
+        if self.objective is None:
+            if self.subjective == 'they':
+                self.objective = 'them'
+            else:
+                self.objective = self.subjective
+
+        if self.determiner is None:
+            if self.subjective == 'they':
+                self.determiner = 'their'
+            else:
+                self.determiner = f"{self.subjective}s"
+
+        if self.possessive is None:
+            if self.subjective == 'they':
+                self.possessive = 'theirs'
+            else:
+                self.possessive = f"{self.subjective}s"
+
+        if self.reflexive is None:
+            if self.subjective == 'they':
+                self.reflexive = 'themself'
+            else:
+                self.reflexive = f"{self.subjective}self"
 
     def __contains__(self, pronoun: str):
         return (
@@ -41,11 +66,8 @@ class Pronouns:
             return "they're"
         return f"{self.subjective}'s"
 
-    def to_tuple(self) -> tuple[str, ...]:
-        return (
-            self.subjective, self.objective, self.determiner, self.possessive,
-            self.reflexive
-        )
+    def to_tuple(self):
+        return astuple(self)
 
     @classmethod
     def parse(cls, string: str) -> list[Pronouns]:
