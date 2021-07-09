@@ -3,6 +3,13 @@ from .pronouns import *
 
 class TestParse:
 
+    def test_no_args(self):
+        pronouns = Pronouns.parse('')
+        assert pronouns == [
+            Pronouns('they', 'them', 'their', 'theirs', 'themself')
+        ]
+
+
     # region One class
 
     def test_one_class_one_case(self):

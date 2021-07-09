@@ -80,6 +80,8 @@ class Pronouns:
             They/he
             Xe/xem/xyr/xyrs/xemself
         """
+        if string == '':
+            return [Pronouns()]
 
         out = []
         tuples = []
