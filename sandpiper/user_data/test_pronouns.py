@@ -65,6 +65,14 @@ class TestUniqueClass:
             Pronouns('unique', 'but', 'not', 'missing', 'any')
         ]
 
+    def test_five_cases_mixed_with_known(self):
+        pronouns = Pronouns.parse('He/pup/she')
+        assert pronouns == [
+            Pronouns('he', 'him', 'his', 'his', 'himself'),
+            Pronouns('pup', 'pup', 'pups', 'pups', 'pupself'),
+            Pronouns('she', 'her', 'her', 'hers', 'herself')
+        ]
+
 
 class TestMisc:
 

@@ -87,6 +87,7 @@ class Pronouns:
         tuples = []
         for slashed_group in _slashed_group_pattern.finditer(string):
             # Iterate through groups of slashed pronouns ("she/her they/them")
+            first = True
             split = iter(re.split(r' *[\\/] *', slashed_group.group()))
             for pronoun in map(lambda x: x.lower(), split):
                 pronoun = pronoun
@@ -94,14 +95,23 @@ class Pronouns:
                 pronouns = _infer_pronouns(pronoun)
 
                 if pronouns is None:
-                    # Create new pronouns by iterating through the rest of
-                    # this split
-                    pronouns = Pronouns(pronoun, *split)
+                    # Unique pronouns
+                    if first:
+                        # Assume the rest of the pronouns listed in this group
+                        # are ordered cases (subjective, objective, ...)
+                        pronouns = Pronouns(pronoun, *split)
+                    else:
+                        # This isn't the first pronoun, so we're just going to
+                        # assume they've listed a bunch of their subjective
+                        # pronouns (like she/he/they)
+                        pronouns = Pronouns(pronoun)
 
                 pronouns_tuple = pronouns.to_tuple()
                 if pronouns_tuple not in tuples:
                     out.append(pronouns)
                     tuples.append(pronouns_tuple)
+
+                first = False
 
         return out
 
