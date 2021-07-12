@@ -4,7 +4,7 @@ import re
 
 __all__ = ['Pronouns']
 
-_slashed_group_pattern = re.compile(r'([a-zA-Z]+(?:[/\\][a-zA-Z]+)*)')
+_slashed_group_pattern = re.compile(r'[a-zA-Z]+(?: *[/\\] *[a-zA-Z]+)*')
 
 
 @dataclass
@@ -87,7 +87,7 @@ class Pronouns:
         tuples = []
         for slashed_group in _slashed_group_pattern.finditer(string):
             # Iterate through groups of slashed pronouns ("she/her they/them")
-            split = iter(re.split(r'[\\/]', slashed_group.group()))
+            split = iter(re.split(r' *[\\/] *', slashed_group.group()))
             for pronoun in map(lambda x: x.lower(), split):
                 pronoun = pronoun
                 # Infer set of pronouns from this one

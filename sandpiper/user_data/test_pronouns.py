@@ -78,8 +78,16 @@ class TestParse:
     # region Other
 
     def test_backslash(self):
-        pronouns = Pronouns.parse('he\\him')
+        pronouns = Pronouns.parse('she\\he')
         assert pronouns == [
+            Pronouns('she', 'her', 'her', 'hers', 'herself'),
+            Pronouns('he', 'him', 'his', 'his', 'himself')
+        ]
+
+    def test_spaces(self):
+        pronouns = Pronouns.parse('she / he')
+        assert pronouns == [
+            Pronouns('she', 'her', 'her', 'hers', 'herself'),
             Pronouns('he', 'him', 'his', 'his', 'himself')
         ]
 
