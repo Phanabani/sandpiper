@@ -9,7 +9,6 @@ class TestParse:
             Pronouns('they', 'them', 'their', 'theirs', 'themself')
         ]
 
-
     # region One class
 
     def test_one_class_one_case(self):
