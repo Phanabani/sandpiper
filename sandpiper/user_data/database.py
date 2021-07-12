@@ -2,8 +2,9 @@ from abc import ABCMeta, abstractmethod
 import datetime as dt
 from typing import Annotated, Optional
 
-from ..common.time import TimezoneType
 from .enums import PrivacyType
+from .pronouns import Pronouns
+from sandpiper.common.time import TimezoneType
 
 __all__ = (
     'DEFAULT_PRIVACY',
@@ -93,6 +94,12 @@ class Database(metaclass=ABCMeta):
             self, user_id: int, new_privacy: PrivacyType
     ):
         pass
+
+    async def get_pronouns_parsed(self, user_id: int) -> list[Pronouns]:
+        pronouns = await self.get_pronouns(user_id)
+        if pronouns is None:
+            return []
+        return Pronouns.parse(pronouns)
 
     # endregion
     # region Birthday

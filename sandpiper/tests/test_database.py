@@ -8,6 +8,7 @@ from ._helpers import *
 from sandpiper.common.time import TimezoneType
 from sandpiper.user_data import DatabaseSQLite
 from sandpiper.user_data.enums import PrivacyType
+from ..user_data.pronouns import Pronouns
 
 pytestmark = pytest.mark.asyncio
 
@@ -65,6 +66,19 @@ class TestPronouns:
         value = PrivacyType.PUBLIC
         await database.set_privacy_pronouns(user_id, value)
         assert (await database.get_privacy_pronouns(user_id)) is value
+
+    async def test_get_parsed(self, database, user_id):
+        parsed_pronouns = (await database.get_pronouns_parsed(user_id))
+        assert parsed_pronouns == []
+
+    async def test_set_get_parsed(self, database, user_id):
+        value = 'She/they'
+        await database.set_pronouns(user_id, value)
+        parsed_pronouns = (await database.get_pronouns_parsed(user_id))
+        assert parsed_pronouns == [
+            Pronouns('she', 'her', 'her', 'hers', 'herself'),
+            Pronouns('they', 'them', 'their', 'theirs', 'themself')
+        ]
 
 
 class TestBirthday:
