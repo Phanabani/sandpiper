@@ -31,10 +31,30 @@ class SandpiperConfig(ConfigSchema):
         class _Modules(ConfigSchema):
 
             bios: _Bios
+            birthdays: _Birthdays
 
             class _Bios(ConfigSchema):
 
                 allow_public_setting = False
+
+            class _Birthdays(ConfigSchema):
+
+                messages_no_age: list[str] = [
+                    "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
+
+                    "{name}! It's your birthday!! Hope it's a great one "
+                    "{ping}!",
+
+                    "omg! did yall know it's {name}'s birthday?? happy "
+                    "birthday {ping}! :D",
+
+                    "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! "
+                    "Happy birthday {ping}!!"
+                ]
+                messages_age: list[str] = [
+                    "Hey!! It's {name}'s birthday! {They} turned {age} today. "
+                    "Happy birthday {ping}!",
+                ]
 
     class _Logging(ConfigSchema):
 
