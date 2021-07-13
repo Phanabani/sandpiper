@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import astuple, dataclass
 import re
 
-__all__ = ['Pronouns']
+__all__ = ['Pronouns', 'common_pronouns']
 
 _slashed_group_pattern = re.compile(r'[a-zA-Z]+(?: *[/\\] *[a-zA-Z]+)*')
 
@@ -116,27 +116,27 @@ class Pronouns:
         return out
 
 
-common_pronouns = [
-    Pronouns('they', 'them', 'their', 'theirs', 'themself'),
-    Pronouns('she', 'her', 'her', 'hers', 'herself'),
-    Pronouns('he', 'him', 'his', 'his', 'himself'),
-    Pronouns('it', 'it', 'its', 'its', 'itself'),
-    Pronouns('one', 'one', "one's", "one's", 'oneself'),
-    Pronouns('thon', 'thon', 'thons', "thon's", 'thonself'),
-    Pronouns('ae', 'aer', 'aer', 'aers', 'aerself'),
-    Pronouns('co', 'co', 'cos', "co's", 'coself'),
-    Pronouns('ve', 'ver', 'vis', 'vers', 'verself'),
-    Pronouns('vi', 'vir', 'vis', 'virs', 'virself'),
-    Pronouns('xe', 'xem', 'xyr', 'xyrs', 'xemself'),
-    Pronouns('per', 'per', 'per', 'pers', 'perself'),  # person
-    Pronouns('ey', 'em', 'eir', 'eirs', 'emself'),  # Elverson
-    Pronouns('hu', 'hum', 'hus', 'hus', 'huself'),  # humanist
-    Pronouns('e', 'em', 'eir', 'eirs', 'emself'),  # Spivak
-    Pronouns('ze', 'zir', 'zir', 'zirs', 'zirself'),
-    Pronouns('fae', 'faer', 'faer', 'faers', 'faerself'),
-    # Conflicts with Spivak
-    Pronouns('e', 'em', 'es', 'ems', 'emself'),
-]
+common_pronouns = {
+    'they': Pronouns('they', 'them', 'their', 'theirs', 'themself'),
+    'she': Pronouns('she', 'her', 'her', 'hers', 'herself'),
+    'he': Pronouns('he', 'him', 'his', 'his', 'himself'),
+    'it': Pronouns('it', 'it', 'its', 'its', 'itself'),
+    'one': Pronouns('one', 'one', "one's", "one's", 'oneself'),
+    'thon': Pronouns('thon', 'thon', 'thons', "thon's", 'thonself'),
+    'ae': Pronouns('ae', 'aer', 'aer', 'aers', 'aerself'),
+    'co': Pronouns('co', 'co', 'cos', "co's", 'coself'),
+    've': Pronouns('ve', 'ver', 'vis', 'vers', 'verself'),
+    'vi': Pronouns('vi', 'vir', 'vis', 'virs', 'virself'),
+    'xe': Pronouns('xe', 'xem', 'xyr', 'xyrs', 'xemself'),
+    'per': Pronouns('per', 'per', 'per', 'pers', 'perself'),  # person
+    'ey': Pronouns('ey', 'em', 'eir', 'eirs', 'emself'),  # Elverson
+    'hu': Pronouns('hu', 'hum', 'hus', 'hus', 'huself'),  # humanist
+    # Conflicts with e below, so it's disambiguated
+    'e_spivak': Pronouns('e', 'em', 'eir', 'eirs', 'emself'),  # Spivak
+    'ze': Pronouns('ze', 'zir', 'zir', 'zirs', 'zirself'),
+    'fae': Pronouns('fae', 'faer', 'faer', 'faers', 'faerself'),
+    'e': Pronouns('e', 'em', 'es', 'ems', 'emself'),
+}
 
 
 def _infer_pronouns(pronoun: str):
@@ -144,7 +144,7 @@ def _infer_pronouns(pronoun: str):
     Return the first pronoun class (defined above) in which this pronoun first
     appears, or None if it is not found.
     """
-    for pronouns in common_pronouns:
+    for pronouns in common_pronouns.values():
         if pronoun in pronouns:
             return pronouns
     return None
