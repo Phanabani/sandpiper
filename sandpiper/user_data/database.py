@@ -2,9 +2,11 @@ from abc import ABCMeta, abstractmethod
 import datetime as dt
 from typing import Annotated, Optional
 
+import pytz
+
 from .enums import PrivacyType
 from .pronouns import Pronouns
-from sandpiper.common.time import TimezoneType
+from sandpiper.common.time import TimezoneType, utc_now
 
 __all__ = (
     'DEFAULT_PRIVACY',
@@ -134,14 +136,19 @@ class Database(metaclass=ABCMeta):
     # region Age
 
     @staticmethod
-    def _calculate_age(birthday: dt.date, on_day: dt.date):
-        birthday_this_year = dt.date(
-            on_day.year, birthday.month, birthday.day
-        )
-        age = on_day.year - birthday.year
-        if on_day < birthday_this_year:
-            return age - 1
-        return age
+    def _calculate_age(
+            birthday: dt.date, tz: TimezoneType, at_time: dt.datetime
+    ):
+        # The user's birthday in `at_time`'s year at midnight (localized to
+        # their timezone)
+        birthday_this_year = tz.localize(dt.datetime(
+            at_time.year, birthday.month, birthday.day, 0, 0
+        ))
+        year_diff = at_time.year - birthday.year
+        if at_time < birthday_this_year:
+            # They haven't reached their birthday for this year
+            return year_diff - 1
+        return year_diff
 
     async def get_age(self, user_id: int) -> Optional[int]:
         birthday = await self.get_birthday(user_id)
@@ -151,7 +158,12 @@ class Database(metaclass=ABCMeta):
             # Birthdays with year == 1 are considered yearless since year can't
             # be None
             return None
-        return self._calculate_age(birthday, dt.date.today())
+
+        tz = await self.get_timezone(user_id)
+        if tz is None:
+            tz = pytz.UTC
+
+        return self._calculate_age(birthday, tz, utc_now())
 
     @abstractmethod
     async def get_privacy_age(self, user_id: int) -> Optional[PrivacyType]:

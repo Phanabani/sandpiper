@@ -111,6 +111,40 @@ class TestAge:
         assert (await database.get_privacy_age(user_id)) is value
 
 
+class TestCalculateAge:
+
+    @pytest.fixture()
+    async def birthday(self) -> dt.date:
+        yield dt.date(2000, 2, 14)
+
+    @pytest.fixture()
+    async def tz_new_york(self) -> TimezoneType:
+        yield pytz.timezone('America/New_York')
+
+    @pytest.fixture()
+    def calculate_age(self, database, birthday, tz_new_york):
+        def f(at_time: dt.datetime, tz: TimezoneType = pytz.UTC):
+            return database._calculate_age(
+                birthday, tz_new_york, tz.localize(at_time)
+            )
+        return f
+
+    async def test_jan_1(self, calculate_age):
+        assert calculate_age(dt.datetime(2020, 1, 1, 0, 0)) == 19
+
+    async def test_on_birthday_midnight_utc(self, calculate_age):
+        assert calculate_age(dt.datetime(2020, 2, 14, 0, 0)) == 19
+
+    async def test_on_birthday_almost_midnight_local(self, calculate_age):
+        assert calculate_age(dt.datetime(2020, 2, 14, 4, 59)) == 19
+
+    async def test_on_birthday_midnight_local(self, calculate_age):
+        assert calculate_age(dt.datetime(2020, 2, 14, 5, 0)) == 20
+
+    async def test_day_after_birthday(self, calculate_age):
+        assert calculate_age(dt.datetime(2020, 2, 15, 0, 0)) == 20
+
+
 class TestTimezone:
 
     async def test_get(self, database, user_id):
