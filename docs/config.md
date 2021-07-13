@@ -41,17 +41,17 @@ Key | Value
 Fields which describe how the Birthdays module runs. This module handles sending
 messages to servers when it's a user's birthday.
 
-A message is randomly selected, formatted, and sent for each birthday.
-If the user allows their age to be visible, the message will be picked from
-`messages_age`, otherwise from `messages_no_age`.
+A message template is randomly selected, formatted, and sent for each birthday.
+If the user allows their age to be visible, the template will be picked from
+`message_templates_with_age`, otherwise from `message_templates_no_age`.
 
-See [Birthday message formatting](#birthday-message-formatting) for more details
-on how to format the messages fields.
+See [Birthday message template formatting](#birthday-message-template-formatting) for more details
+on how to format the message template fields.
 
 Key | Value
 --- | -----
-`messages_no_age` *(list\[str])* | A list of birthday messages ***without*** the user's age announced
-`messages_age` *(list\[str])* | A list of birthday messages ***with*** the user's age announced
+`message_templates_no_age` *(list\[str])* | A list of birthday message templates ***without*** the user's age announced
+`message_templates_with_age` *(list\[str])* | A list of birthday message templates ***with*** the user's age announced
 
 ### logging
 
@@ -70,11 +70,11 @@ Key | Value
 `backup_count` *(integer)* | Number of backup log files to retain (deletes oldest after limit is reached)
 `format` *(string)* | Format string used when writing log messages ([format string reference](https://docs.python.org/3/library/logging.html#logrecord-attributes))
 
-## Birthday message formatting
+## Birthday message template formatting
 
-Several formatting fields are allowed within birthday messages. If the birthday-haver
-has stored personal info in Sandpiper and set it to public, she will use
-it to personalize the message.
+Several formatting fields are allowed within birthday message templates. If the
+birthday-haver has stored personal info in Sandpiper and set it to public, she
+will use it to personalize the message.
 
 - `name`
 - `age`

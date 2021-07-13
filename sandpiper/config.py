@@ -39,7 +39,7 @@ class SandpiperConfig(ConfigSchema):
 
             class _Birthdays(ConfigSchema):
 
-                messages_no_age: list[str] = [
+                message_templates_no_age: list[str] = [
                     "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
 
                     "{name}! It's your birthday!! Hope it's a great one "
@@ -51,7 +51,7 @@ class SandpiperConfig(ConfigSchema):
                     "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! "
                     "Happy birthday {ping}!!"
                 ]
-                messages_age: list[str] = [
+                message_templates_with_age: list[str] = [
                     "Hey!! It's {name}'s birthday! {They} turned {age} today. "
                     "Happy birthday {ping}!",
                 ]
