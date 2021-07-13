@@ -10,7 +10,10 @@ import discord.ext.tasks as tasks
 import pytz
 
 from sandpiper.common.time import utc_now
-from sandpiper.user_data import UserData, Database, PrivacyType
+from sandpiper.user_data import (
+    UserData, Database, PrivacyType,
+    Pronouns, common_pronouns
+)
 
 __all__ = ['Birthdays']
 
@@ -19,25 +22,34 @@ logger = logging.getLogger('sandpiper.birthdays')
 
 def format_birthday_message(
         msg: str,
-        *,
-        user_id: int = None,
-        name: str = '',
-        they: str = 'they',
-        them: str = 'them',
-        their: str = 'their',
-        are: str = 'are',
-        theyre: str = "they're",
+        user_id: int,
+        name: str,
+        pronouns: Pronouns = common_pronouns['they'],
         age: Optional[int] = None
 ):
+    p = pronouns
+
+    # Generate normal (not explicitly lower), capitalized, and upper versions
+    # of these args
+    generate_cases = {
+        'name': name,
+        'they': p.subjective,
+        'them': p.objective,
+        'their': p.determiner,
+        'theirs': p.possessive,
+        'themself': p.reflexive,
+        'are': p.to_be_conjugation,
+        'theyre': p.subjective_to_be_contraction,
+    }
+    args_generated_cases = {}
+    for k, v in generate_cases.items():
+        args_generated_cases[k] = v
+        args_generated_cases[k.capitalize()] = v.capitalize()
+        args_generated_cases[k.upper()] = v.upper()
+
     return msg.format(
-        name=name,
-        NAME=name.upper(),
+        **args_generated_cases,
         ping=f"<@{user_id}>",
-        they=they, They=they.capitalize(), THEY=they.upper(),
-        them=them, Them=them.capitalize(), THEM=them.upper(),
-        their=their, Their=their.capitalize(), THEIR=their.upper(),
-        are=are, ARE=are.upper(),
-        theyre=theyre, Theyre=theyre.capitalize(), THEYRE=theyre.upper(),
         age=age
     )
 
