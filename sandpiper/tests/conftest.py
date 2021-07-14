@@ -1,6 +1,7 @@
 import datetime as dt
+import sys
 import unittest.mock as mock
-from typing import Optional
+from typing import Any, Optional
 
 import discord
 import discord.ext.commands as commands
@@ -339,11 +340,57 @@ async def database() -> DatabaseSQLite:
     patcher.stop()
 
 
+def __patch_all_symbol_imports(
+        module_search_prefix: str, target_symbol: Any,
+        skip_substring: Optional[str] = None
+):
+    """
+    Iterate through every imported module (in sys.modules) that starts with
+    `module_search_prefix`, find imports of `target_symbol`, and yield a
+    patcher for each import.
+
+    This is helpful when a module is imported with an alias, or when a specific
+    symbol is imported from a module.
+
+    Example:
+
+    ::
+
+        patchers = []
+        for patcher in __patch_all_symbol_imports('my_project.', datetime, 'test'):
+            patchers.append(patcher)
+            mock_dt = patcher.start()
+            # ...
+        for patcher in patchers:
+            patcher.stop()
+
+    :param module_search_prefix: only search for imports in modules that begin
+        with this name
+    :param target_symbol: the symbol to search for imports of (may be a module)
+    :param skip_substring: if not None, skip any module that contains this
+        substring (e.g. 'test' to skip unit test modules)
+    :return: patchers for each import of the target module
+    """
+
+    # Iterate through all currently imported modules
+    for m in sys.modules.values():
+        if (
+                m.__name__.startswith(module_search_prefix)
+                and (skip_substring is None or skip_substring not in m.__name__)
+        ):
+            # Iterate through this module's locals
+            for local_name, local in m.__dict__.items():
+                if local is target_symbol:
+                    yield mock.patch(
+                        f'{m.__name__}.{local_name}', autospec=True
+                    )
+
+
 @pytest.fixture()
 def patch_localzone_utc() -> pytz.UTC:
     # Patch localzone to use UTC
     patcher = mock.patch(
-        'sandpiper.common.time.tzlocal.get_localzone', autospec=True
+        'tzlocal.get_localzone', autospec=True
     )
     mock_localzone = patcher.start()
     mock_localzone.return_value = pytz.UTC
@@ -354,24 +401,28 @@ def patch_localzone_utc() -> pytz.UTC:
 
 
 @pytest.fixture()
-def patch_datetime_now():
+def patch_datetime():
     patchers = []
 
     def f(static_datetime: dt.datetime) -> dt.datetime:
         # Patch datetime to use a static datetime
-        patcher = mock.patch('sandpiper.common.time.dt', autospec=True)
-        patchers.append(patcher)
-        mock_datetime = patcher.start()
-        mock_datetime.datetime.now.return_value = static_datetime
-        mock_datetime.datetime.side_effect = (
-            lambda *a, **kw: dt.datetime(*a, **kw)
-        )
-        mock_datetime.date.side_effect = (
-            lambda *a, **kw: dt.date(*a, **kw)
-        )
-        mock_datetime.time.side_effect = (
-            lambda *a, **kw: dt.time(*a, **kw)
-        )
+        for patcher in __patch_all_symbol_imports('sandpiper.', dt, 'test'):
+            patchers.append(patcher)
+            mock_datetime = patcher.start()
+
+            mock_datetime.datetime.now.return_value = static_datetime
+            mock_datetime.date.today.return_value = static_datetime.date()
+
+            mock_datetime.datetime.side_effect = (
+                lambda *a, **kw: dt.datetime(*a, **kw)
+            )
+            mock_datetime.date.side_effect = (
+                lambda *a, **kw: dt.date(*a, **kw)
+            )
+            mock_datetime.time.side_effect = (
+                lambda *a, **kw: dt.time(*a, **kw)
+            )
+
         return static_datetime
 
     yield f
