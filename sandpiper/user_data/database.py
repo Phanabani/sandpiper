@@ -39,7 +39,11 @@ class Database(metaclass=ABCMeta):
         """Awaits until the database is ready"""
         pass
 
-    # region Batch
+    # region Full user
+
+    @abstractmethod
+    async def create_user(self, user_id: int):
+        pass
 
     @abstractmethod
     async def delete_user(self, user_id: int):

@@ -191,7 +191,13 @@ class DatabaseSQLite(Database):
             setattr(user, f"privacy_{field_name}", new_privacy)
 
     # endregion
-    # region Batch
+    # region Full user
+
+    async def create_user(self, user_id: int):
+        logger.info(f"Creating user (user_id={user_id})")
+        async with self._session_maker() as session, session.begin():
+            user = User(user_id=user_id)
+            session.add(user)
 
     async def delete_user(self, user_id: int):
         logger.info(f"Deleting user (user_id={user_id})")
