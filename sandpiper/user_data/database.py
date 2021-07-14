@@ -128,8 +128,22 @@ class Database(metaclass=ABCMeta):
 
     @abstractmethod
     async def get_birthdays_range(
-            self, start: dt.date, end: dt.date
+            self, start: dt.date, end: dt.date,
+            only_if_notification_not_sent: bool = False
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
+        """
+        Get a list of (user_id, birthday) for all users with birthdays between
+        `start` and `end`, inclusive. If `start` is later than `end`, the check
+        will wrap around the new year (e.g. start=December, end=February will
+        get birthdays in December, January, and February).
+
+        :param start: the earliest date to filter for birthdays
+        :param end: the latest date to filter for birthdays
+        :param only_if_notification_not_sent: only select data for users with
+            birthday_notification_sent == False. This is to make birthday
+            notifications atomic.
+        :return: a list of (user_id, birthday)
+        """
         pass
 
     # endregion

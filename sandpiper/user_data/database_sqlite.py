@@ -309,7 +309,8 @@ class DatabaseSQLite(Database):
         return f
 
     async def get_birthdays_range(
-            self, start: dt.date, end: dt.date
+            self, start: dt.date, end: dt.date,
+            only_if_notification_not_sent: bool = False
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
         logger.info(
             f"Getting all birthdays between {start.day}-{start.month} and "
@@ -319,11 +320,14 @@ class DatabaseSQLite(Database):
             raise TypeError("start and end must be instances of datetime.date")
 
         async with self._session_maker() as session, session.begin():
-            birthdays_unfiltered = (await session.execute(
+            stmt = (
                 sa.select(User.user_id, User.birthday)
                 .where(User.birthday.isnot(None))
                 .where(User.privacy_birthday == PrivacyType.PUBLIC)
-            )).all()
+            )
+            if only_if_notification_not_sent:
+                stmt = stmt.where(User.birthday_notification_sent.is_(False))
+            birthdays_unfiltered = (await session.execute(stmt)).all()
 
         return list(filter(
             lambda r: self._birthday_range_predicate(start, end)(r[1]),
