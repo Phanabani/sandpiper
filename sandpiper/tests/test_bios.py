@@ -307,7 +307,7 @@ class TestShow:
     ):
         embeds = await invoke_cmd_get_embeds('age show')
         assert_info(embeds)
-        assert_regex(embeds[0].description, 'Age.+21')
+        assert_regex(embeds[0].description, 'Age.+20')
 
     async def test_timezone(self, invoke_as_greg, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('timezone show')
@@ -322,7 +322,7 @@ class TestShow:
         assert_regex(
             embeds[0].description,
             'Name.+Greg', 'Pronouns.+He/Him', 'Birthday.+2000-02-14',
-            'Age.+21', 'Timezone.+America/New_York'
+            'Age.+20', 'Timezone.+America/New_York'
         )
 
 
