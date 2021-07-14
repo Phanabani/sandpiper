@@ -166,6 +166,14 @@ class TestTimezone:
 
 class TestBirthdayNotificationSent:
 
+    @pytest.fixture()
+    def user_factory(self, database, new_id):
+        async def f(value: bool) -> int:
+            uid = new_id()
+            await database.set_birthday_notification_sent(uid, value)
+            return uid
+        return f
+
     async def test_get(self, database, user_id):
         assert (await database.get_birthday_notification_sent(user_id)) is None
 
@@ -177,6 +185,21 @@ class TestBirthdayNotificationSent:
         value = True
         await database.set_birthday_notification_sent(user_id, value)
         assert (await database.get_birthday_notification_sent(user_id)) is value
+
+    async def test_set_get_reset(self, database, user_factory):
+        uid1 = await user_factory(True)
+        uid2 = await user_factory(False)
+        uid3 = await user_factory(True)
+
+        assert (await database.get_birthday_notification_sent(uid1)) is True
+        assert (await database.get_birthday_notification_sent(uid2)) is False
+        assert (await database.get_birthday_notification_sent(uid3)) is True
+
+        await database.reset_all_birthday_notification_sent()
+
+        assert (await database.get_birthday_notification_sent(uid1)) is False
+        assert (await database.get_birthday_notification_sent(uid2)) is False
+        assert (await database.get_birthday_notification_sent(uid3)) is False
 
 
 class TestGuildBirthdayChannel:

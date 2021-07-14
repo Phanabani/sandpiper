@@ -231,6 +231,11 @@ class Database(metaclass=ABCMeta):
     ):
         pass
 
+    @abstractmethod
+    async def reset_all_birthday_notification_sent(self):
+        """Reset birthday_notification_sent to false for all users"""
+        pass
+
     # endregion
     # region Guild settings
 

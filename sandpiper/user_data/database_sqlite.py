@@ -394,6 +394,15 @@ class DatabaseSQLite(Database):
     ):
         await self._set_field('birthday_notification_sent', user_id, new_value)
 
+    async def reset_all_birthday_notification_sent(self):
+        logger.info(f"Resetting all birthday_notification_sent to false")
+        async with self._session_maker() as session, session.begin():
+            await session.execute(
+                sa.update(User)
+                .where(User.birthday_notification_sent.is_(True))
+                .values(birthday_notification_sent=False)
+            )
+
     # endregion
     # region Guilds
 
