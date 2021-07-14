@@ -65,6 +65,7 @@ class Birthdays(commands.Cog):
         self.message_templates_no_age = message_templates_no_age
         self.message_templates_with_age = message_templates_with_age
         self.tasks: dict[int, asyncio.Task] = {}
+        self.first_run = True
         self.daily_loop.start()
 
     async def _get_database(self) -> Database:
@@ -88,7 +89,16 @@ class Birthdays(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
+        # If this is the first run of the loop, it's possible some birthday
+        # notifs had been sent in a past Sandpiper runtime, so we will skip
+        # them in schedule_todays_birthdays. Otherwise, we can reset all
+        # birthday notif sent flags to False since it's a new day.
+        if not self.first_run:
+            db = await self._get_database()
+            await db.reset_all_birthday_notification_sent()
+
         await self.schedule_todays_birthdays()
+        self.first_run = False
 
     async def schedule_todays_birthdays(self):
         """
@@ -100,9 +110,15 @@ class Birthdays(commands.Cog):
         now = utc_now()
         today = now.date()
 
+        # Get all birthdays occurring today or tomorrow which haven't been
+        # marked as sent yet and schedule them (those occurring tomorrow will
+        # be filtered out)
+        # The marked as sent thing is used in case Sandpiper restarts mid-day
+        # so she can continue sending bday notifs properly without any repeats
         scheduled_count = 0
         for user_id, birthday in await db.get_birthdays_range(
-                today, today + dt.timedelta(days=1)
+                today, today + dt.timedelta(days=1),
+                only_if_notification_not_sent=True
         ):
             if await self.schedule_birthday(user_id, birthday, now=now):
                 scheduled_count += 1
@@ -174,7 +190,6 @@ class Birthdays(commands.Cog):
             f"Waiting to send birthday message (user={user_id} "
             f"seconds={delta.total_seconds()})"
         )
-
         await asyncio.sleep(delta.total_seconds())
 
         logger.info(
@@ -207,8 +222,9 @@ class Birthdays(commands.Cog):
             member: discord.Member = guild.get_member(user_id)
             if member is None:
                 logger.debug(
-                    f"User not found as a member in the guild, most likely "
-                    f"a rare race condition (user={user_id} guild={guild.id})"
+                    f"User not found as a member in the guild while trying to "
+                    f"send birthday message, this is most likely a rare race "
+                    f"condition (user={user_id} guild={guild.id})"
                 )
                 continue
 
@@ -233,6 +249,8 @@ class Birthdays(commands.Cog):
                 bday_msg_template, user_id=user_id, name=name, age=age
             )
             await bday_channel.send(bday_msg)
+
+        await db.set_birthday_notification_sent(user_id, True)
 
     async def get_past_upcoming_birthdays(
             self, past_birthdays_day_range: int = 7,
