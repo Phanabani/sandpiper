@@ -345,8 +345,8 @@ def __patch_all_symbol_imports(
         skip_substring: Optional[str] = None
 ):
     """
-    Iterate through every imported module (in sys.modules) that starts with
-    `module_search_prefix`, find imports of `target_symbol`, and yield a
+    Iterate through every visible module (in sys.modules) that starts with
+    `module_search_prefix` to find imports of `target_symbol` and yield a
     patcher for each import.
 
     This is helpful when a module is imported with an alias, or when a specific
@@ -355,6 +355,8 @@ def __patch_all_symbol_imports(
     Example:
 
     ::
+
+        import datetime
 
         patchers = []
         for patcher in __patch_all_symbol_imports('my_project.', datetime, 'test'):
@@ -365,11 +367,12 @@ def __patch_all_symbol_imports(
             patcher.stop()
 
     :param module_search_prefix: only search for imports in modules that begin
-        with this name
-    :param target_symbol: the symbol to search for imports of (may be a module)
+        with this string
+    :param target_symbol: the symbol to search for imports of (may be a module,
+        a function, or some other object)
     :param skip_substring: if not None, skip any module that contains this
         substring (e.g. 'test' to skip unit test modules)
-    :return: patchers for each import of the target module
+    :return: patchers for each import of the target symbol
     """
 
     # Iterate through all currently imported modules
@@ -381,6 +384,7 @@ def __patch_all_symbol_imports(
             # Iterate through this module's locals
             for local_name, local in m.__dict__.items():
                 if local is target_symbol:
+                    # Patch this symbol local to the module
                     yield mock.patch(
                         f'{m.__name__}.{local_name}', autospec=True
                     )
