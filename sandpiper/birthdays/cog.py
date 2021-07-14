@@ -57,13 +57,13 @@ def format_birthday_message(
 class Birthdays(commands.Cog):
 
     def __init__(
-            self, bot: commands.Bot, messages_no_age: list[str],
-            messages_age: list[str]
+            self, bot: commands.Bot, *, message_templates_no_age: list[str],
+            message_templates_with_age: list[str]
     ):
         """Send happy birthday messages to users."""
         self.bot = bot
-        self.messages_no_age = messages_no_age
-        self.messages_age = messages_age
+        self.message_templates_no_age = message_templates_no_age
+        self.message_templates_with_age = message_templates_with_age
         self.tasks: dict[int, asyncio.Task] = {}
         self.daily_loop.start()
 
@@ -83,8 +83,8 @@ class Birthdays(commands.Cog):
 
     def _get_random_message(self, age=False):
         if age:
-            return random.choice(self.messages_age)
-        return random.choice(self.messages_no_age)
+            return random.choice(self.message_templates_with_age)
+        return random.choice(self.message_templates_no_age)
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
