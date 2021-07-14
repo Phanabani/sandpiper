@@ -219,6 +219,19 @@ class Database(metaclass=ABCMeta):
         pass
 
     # endregion
+    # region Other user stuff
+
+    @abstractmethod
+    async def get_birthday_notification_sent(self, user_id: int) -> bool:
+        pass
+
+    @abstractmethod
+    async def set_birthday_notification_sent(
+            self, user_id: int, new_value: bool
+    ):
+        pass
+
+    # endregion
     # region Guild settings
 
     @abstractmethod

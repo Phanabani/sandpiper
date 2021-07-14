@@ -3,7 +3,7 @@ from contextlib import AbstractAsyncContextManager
 import datetime as dt
 import logging
 from pathlib import Path
-from typing import Annotated, Callable, Optional, Union, cast
+from typing import Annotated, Any, Callable, Optional, Union, cast
 
 import pytz
 import sqlalchemy as sa
@@ -149,7 +149,7 @@ class DatabaseSQLite(Database):
             session.add(guild)
             return guild
 
-    async def _get_field(self, field_name: str, user_id: int) -> Optional[str]:
+    async def _get_field(self, field_name: str, user_id: int) -> Optional[Any]:
         logger.info(f"Getting {field_name} (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
             return (await session.execute(
@@ -157,7 +157,7 @@ class DatabaseSQLite(Database):
                 .where(User.user_id == user_id)
             )).scalar()
 
-    async def _set_field(self, field_name: str, user_id: int, value: Optional[str]):
+    async def _set_field(self, field_name: str, user_id: int, value: Any):
         logger.info(
             f"Setting {field_name} (user_id={user_id}, "
             f"new_value={value})"
@@ -382,6 +382,17 @@ class DatabaseSQLite(Database):
                 .where(User.privacy_timezone == PrivacyType.PUBLIC)
             )).all()
         return [(uid, pytz.timezone(tz_name)) for uid, tz_name in result]
+
+    # endregion
+    # region Other user stuff
+
+    async def get_birthday_notification_sent(self, user_id: int) -> bool:
+        return await self._get_field('birthday_notification_sent', user_id)
+
+    async def set_birthday_notification_sent(
+            self, user_id: int, new_value: bool
+    ):
+        await self._set_field('birthday_notification_sent', user_id, new_value)
 
     # endregion
     # region Guilds

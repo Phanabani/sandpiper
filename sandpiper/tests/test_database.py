@@ -164,6 +164,21 @@ class TestTimezone:
         assert (await database.get_privacy_timezone(user_id)) is value
 
 
+class TestBirthdayNotificationSent:
+
+    async def test_get(self, database, user_id):
+        assert (await database.get_birthday_notification_sent(user_id)) is None
+
+    async def test_get_default(self, database, user_id):
+        await database.create_user(user_id)
+        assert (await database.get_birthday_notification_sent(user_id)) is False
+
+    async def test_set_get(self, database, user_id):
+        value = True
+        await database.set_birthday_notification_sent(user_id, value)
+        assert (await database.get_birthday_notification_sent(user_id)) is value
+
+
 class TestGuildBirthdayChannel:
 
     async def test_get(self, database, user_id):
