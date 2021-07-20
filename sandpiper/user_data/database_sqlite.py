@@ -3,7 +3,7 @@ from contextlib import AbstractAsyncContextManager
 import datetime as dt
 import logging
 from pathlib import Path
-from typing import Annotated, Callable, Optional, Union, cast
+from typing import Annotated, Any, Callable, Optional, Union, cast
 
 import pytz
 import sqlalchemy as sa
@@ -149,7 +149,7 @@ class DatabaseSQLite(Database):
             session.add(guild)
             return guild
 
-    async def _get_field(self, field_name: str, user_id: int) -> Optional[str]:
+    async def _get_field(self, field_name: str, user_id: int) -> Optional[Any]:
         logger.info(f"Getting {field_name} (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
             return (await session.execute(
@@ -157,7 +157,7 @@ class DatabaseSQLite(Database):
                 .where(User.user_id == user_id)
             )).scalar()
 
-    async def _set_field(self, field_name: str, user_id: int, value: Optional[str]):
+    async def _set_field(self, field_name: str, user_id: int, value: Any):
         logger.info(
             f"Setting {field_name} (user_id={user_id}, "
             f"new_value={value})"
@@ -191,7 +191,13 @@ class DatabaseSQLite(Database):
             setattr(user, f"privacy_{field_name}", new_privacy)
 
     # endregion
-    # region Batch
+    # region Full user
+
+    async def create_user(self, user_id: int):
+        logger.info(f"Creating user (user_id={user_id})")
+        async with self._session_maker() as session, session.begin():
+            user = User(user_id=user_id)
+            session.add(user)
 
     async def delete_user(self, user_id: int):
         logger.info(f"Deleting user (user_id={user_id})")
@@ -309,7 +315,8 @@ class DatabaseSQLite(Database):
         return f
 
     async def get_birthdays_range(
-            self, start: dt.date, end: dt.date
+            self, start: dt.date, end: dt.date,
+            only_if_notification_not_sent: bool = False
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
         logger.info(
             f"Getting all birthdays between {start.day}-{start.month} and "
@@ -319,11 +326,14 @@ class DatabaseSQLite(Database):
             raise TypeError("start and end must be instances of datetime.date")
 
         async with self._session_maker() as session, session.begin():
-            birthdays_unfiltered = (await session.execute(
+            stmt = (
                 sa.select(User.user_id, User.birthday)
                 .where(User.birthday.isnot(None))
                 .where(User.privacy_birthday == PrivacyType.PUBLIC)
-            )).all()
+            )
+            if only_if_notification_not_sent:
+                stmt = stmt.where(User.birthday_notification_sent.is_(False))
+            birthdays_unfiltered = (await session.execute(stmt)).all()
 
         return list(filter(
             lambda r: self._birthday_range_predicate(start, end)(r[1]),
@@ -372,6 +382,26 @@ class DatabaseSQLite(Database):
                 .where(User.privacy_timezone == PrivacyType.PUBLIC)
             )).all()
         return [(uid, pytz.timezone(tz_name)) for uid, tz_name in result]
+
+    # endregion
+    # region Other user stuff
+
+    async def get_birthday_notification_sent(self, user_id: int) -> bool:
+        return await self._get_field('birthday_notification_sent', user_id)
+
+    async def set_birthday_notification_sent(
+            self, user_id: int, new_value: bool
+    ):
+        await self._set_field('birthday_notification_sent', user_id, new_value)
+
+    async def reset_all_birthday_notification_sent(self):
+        logger.info(f"Resetting all birthday_notification_sent to false")
+        async with self._session_maker() as session, session.begin():
+            await session.execute(
+                sa.update(User)
+                .where(User.birthday_notification_sent.is_(True))
+                .values(birthday_notification_sent=False)
+            )
 
     # endregion
     # region Guilds
