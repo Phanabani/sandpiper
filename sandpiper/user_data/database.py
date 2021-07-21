@@ -60,8 +60,12 @@ class Database(metaclass=ABCMeta):
     async def delete_user(self, user_id: int):
         pass
 
+    @abstractmethod
+    async def get_all_user_ids(self) -> list[int]:
+        pass
+
     # endregion
-    # region Name
+    # region Preferred name
 
     @abstractmethod
     async def get_preferred_name(self, user_id: int) -> Optional[str]:

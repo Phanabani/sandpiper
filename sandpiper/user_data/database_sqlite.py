@@ -236,6 +236,13 @@ class DatabaseSQLite(Database):
                 sa.delete(User).where(User.user_id == user_id)
             )
 
+    async def get_all_user_ids(self) -> list[int]:
+        logger.info(f"Getting all user IDs")
+        async with self._session_maker() as session, session.begin():
+            return (await session.execute(
+                sa.select(User.user_id)
+            )).scalars().all()
+
     # endregion
     # region Preferred name
 

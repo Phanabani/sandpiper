@@ -41,6 +41,46 @@ class TestSandpiper:
         assert (await database.get_sandpiper_version()) == value
 
 
+class TestFullUser:
+
+    @pytest.fixture()
+    def user_factory(self, database, new_id):
+        async def f() -> int:
+            uid = new_id()
+            await database.create_user(uid)
+            return uid
+        return f
+
+    async def test_create(self, database, user_factory):
+        uid = await user_factory()
+        users_in_db = await database.get_all_user_ids()
+        assert users_in_db == [uid]
+
+    async def test_delete(self, database, user_factory):
+        uid = await user_factory()
+        await database.delete_user(uid)
+        users_in_db = await database.get_all_user_ids()
+        assert users_in_db == []
+
+    async def test_create_multiple(self, database, user_factory):
+        uids = [await user_factory() for _ in range(5)]
+        users_in_db = await database.get_all_user_ids()
+        assert_count_equal(users_in_db, uids)
+
+    async def test_create_multiple_delete_one(self, database, user_factory):
+        uids = [await user_factory() for _ in range(5)]
+        await database.delete_user(uids[0])
+        users_in_db = await database.get_all_user_ids()
+        assert_count_equal(users_in_db, uids[1:])
+
+    async def test_create_multiple_delete_all(self, database, user_factory):
+        uids = [await user_factory() for _ in range(5)]
+        for uid in uids:
+            await database.delete_user(uid)
+        users_in_db = await database.get_all_user_ids()
+        assert users_in_db == []
+
+
 class TestPreferredName:
 
     async def test_get(self, database, user_id):
