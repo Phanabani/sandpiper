@@ -27,6 +27,12 @@ class UpgradeHandler(metaclass=ABCMeta):
         self.previous_version = previous_version
         self.current_version = current_version
 
+    def __str__(self):
+        return (
+            f"<UpgradeHandler class={self.__class__.__name__} "
+            f"version={self.version()}>"
+        )
+
     async def _get_database(self) -> Optional[Database]:
         user_data: UserData = self.bot.get_cog('UserData')
         if user_data is None:
@@ -55,7 +61,12 @@ async def do_upgrades(
 ):
     previous_version = VersionInfo.parse(previous_version or '0.0.0')
     current_version = VersionInfo.parse(current_version)
+    logger.info(
+        f"Beginning application upgrade from {previous_version} to "
+        f"{current_version}"
+    )
     if current_version <= previous_version:
+        logger.info("No upgrades need to be performed")
         return
 
     for handler_type in upgrade_handlers:
@@ -63,4 +74,5 @@ async def do_upgrades(
         handler_version = VersionInfo.parse(handler.version())
         if previous_version < handler_version <= current_version:
             # We have upgraded to or past this version; call its upgrade hook
+            logger.info(f"Calling upgrade handler {handler}")
             await handler.on_upgrade()
