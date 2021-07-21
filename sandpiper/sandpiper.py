@@ -62,6 +62,7 @@ class Sandpiper(commands.Bot):
         self.load_extension('sandpiper.bios')
         self.load_extension('sandpiper.birthdays')
         self.load_extension('sandpiper.conversion')
+        self.load_extension('sandpiper.upgrades')
 
     async def on_connect(self):
         logger.info('Client connected')
