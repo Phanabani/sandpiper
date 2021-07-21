@@ -3,7 +3,10 @@ import logging
 import discord
 
 from ..upgrades import UpgradeHandler
-from sandpiper.user_data import PrivacyType
+from sandpiper.common.discord import find_user_in_mutual_guilds
+from sandpiper.common.embeds import Embeds
+from sandpiper.common.misc import listify
+from sandpiper.user_data import Database, PrivacyType
 
 logger = logging.getLogger(__name__)
 
@@ -19,31 +22,99 @@ class Sandpiper_1_6_0(UpgradeHandler):
             return
 
         for user_id in await db.get_all_user_ids():
-            if (await db.get_privacy_age(user_id)) is PrivacyType.PUBLIC:
-                await self.age_is_public(user_id)
+            if (await db.get_birthday(user_id)) is not None:
+                await self.tell_about_birthday(user_id, db)
 
-    async def age_is_public(self, user_id: int):
+    async def tell_about_birthday(self, user_id: int, db: Database):
         logger.info(
-            f"User's age is public; switching it to private and notifying the "
-            f"user (user_id={user_id})"
+            f"User's birthday is set; telling them about the new feature "
+            f"(user_id={user_id})"
         )
-        db = await self._get_database()
-        await db.set_privacy_age(user_id, PrivacyType.PRIVATE)
 
         user: discord.User = self.bot.get_user(user_id)
         if user is None:
             logger.info(f"Can't find user {user_id} in any guild")
             return
 
-        await user.send(
-            "Hey! I've just updated with a birthday notification feature. "
-            "This means that if you've set your birthday to public, I will "
-            "announce your birthday when it comes to all the servers you and I "
-            "are both in!"
-            "\n\n"
-            "Additionally, if you've set your age to public, I will announce "
-            "your new age in the birthday message. I know this might be "
-            "uncomfortable, so I've set your age to private as a precaution. "
-            "If you want your age announced, you can simply type `privacy age "
-            "public` to make it public again."
+        # General info about the birthday announcements
+        mutual_guilds = listify([m.guild.name for m in find_user_in_mutual_guilds(
+            self.bot, self.bot.user.id, user_id
+        )], 2)
+        msg = [
+            f"Hey!! I'm a bot from {mutual_guilds}. I've just updated with a "
+            f"birthday notification feature. I can announce your birthday "
+            f"when it comes to all the servers you and I are both in!"
+        ]
+
+        # Tell them about how they can control their birthday announcement
+        bday_privacy = await db.get_privacy_birthday(user_id)
+        if bday_privacy is PrivacyType.PRIVATE:
+            msg.append(
+                "\n\nYour birthday is currently set to **private**, so I will "
+                "not announce it. If you want me to announce your birthday "
+                "when it comes, type `privacy birthday public`! c:"
+            )
+        elif bday_privacy is PrivacyType.PUBLIC:
+            msg.append(
+                "\n\nYour birthday is currently set to **public**, so I will "
+                "announce it! If you don't want me to announce your birthday "
+                "when it comes, type `privacy birthday private`. c:"
+            )
+
+        await Embeds.special(
+            user, 'Birthday announcements update 🥳', ''.join(msg)
         )
+
+        await self.tell_about_age(user_id, db)
+
+    async def tell_about_age(self, user_id: int, db: Database):
+        logger.info(f"Telling the user about age privacy (user_id={user_id})")
+
+        age_privacy = await db.get_privacy_age(user_id)
+
+        # Change their age to private as a courtesy, so they're not blindsided
+        # by their age in a notification if they haven't checked DMs or
+        # something
+        if age_privacy is PrivacyType.PUBLIC:
+            logger.info(
+                f"User's age is public; switching it to private "
+                f"(user_id={user_id})"
+            )
+            await db.set_privacy_age(user_id, PrivacyType.PRIVATE)
+
+        user: discord.User = self.bot.get_user(user_id)
+        if user is None:
+            logger.info(f"Can't find user {user_id} in any guild")
+            return
+
+        # General info about age in the announcement
+        msg = [
+            "I can also announce your new age in your birthday message "
+            "if your age privacy is set to public!"
+        ]
+
+        # Info about their privacy value
+        if age_privacy is PrivacyType.PUBLIC:
+            # Tell them we changed their privacy to private
+            msg.append(
+                "\n\nI know this might be uncomfortable, so I've changed your "
+                "age from public to **private** as a precaution. If you want "
+                "your age announced, you can type `privacy age public` to "
+                "make it public again."
+            )
+        elif age_privacy is PrivacyType.PRIVATE:
+            msg.append(
+                "\n\nYours is currently set to **private**, but if you want "
+                "to change that, type `privacy age public`."
+            )
+
+        # Their birthday doesn't include birth year, so tell them how to set it
+        if (await db.get_age(user_id)) is None:
+            msg.append(
+                "\n\nYou will also have to include your birth year in your "
+                "birthday (you currently only have the month and day stored). "
+                "To set your birthday with the year, type, for example, "
+                "`birthday set 1999-02-14`!"
+            )
+
+        await Embeds.special(user, 'Age in birthday announcement', ''.join(msg))
