@@ -30,6 +30,17 @@ class TestConnection:
         assert (await database.connected()) is False
 
 
+class TestSandpiper:
+
+    async def test_get_version(self, database):
+        assert (await database.get_sandpiper_version()) is None
+
+    async def test_set_get_version(self, database):
+        value = '1.6.0'
+        await database.set_sandpiper_version(value)
+        assert (await database.get_sandpiper_version()) == value
+
+
 class TestPreferredName:
 
     async def test_get(self, database, user_id):

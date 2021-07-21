@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from . import alembic_utils as alembic_utils
 from .database import *
 from .enums import PrivacyType
-from .models import Base, Guild, User
+from .models import Base, Guild, SandpiperMeta, User
 from sandpiper.common.time import TimezoneType
 
 logger = logging.getLogger(__name__)
@@ -128,6 +128,17 @@ class DatabaseSQLite(Database):
     # region Helper methods
 
     @staticmethod
+    async def _get_sandpiper_meta(session: AsyncSession) -> SandpiperMeta:
+        try:
+            return (await session.execute(
+                sa.select(SandpiperMeta).where(SandpiperMeta.id == 0)
+            )).scalar_one()
+        except NoResultFound:
+            sandpiper_meta = SandpiperMeta(id=0)
+            session.add(sandpiper_meta)
+            return sandpiper_meta
+
+    @staticmethod
     async def _get_user(session: AsyncSession, user_id: int) -> User:
         try:
             return (await session.execute(
@@ -189,6 +200,25 @@ class DatabaseSQLite(Database):
         async with self._session_maker() as session, session.begin():
             user = await self._get_user(session, user_id)
             setattr(user, f"privacy_{field_name}", new_privacy)
+
+    # endregion
+    # region Sandpiper meta
+
+    async def get_sandpiper_version(self) -> str:
+        logger.info(f"Getting Sandpiper version")
+        async with self._session_maker() as session, session.begin():
+            return (await session.execute(
+                sa.select(SandpiperMeta.version)
+                .where(SandpiperMeta.id == 0)
+            )).scalar()
+
+    async def set_sandpiper_version(self, new_version: str):
+        logger.info(
+            f"Setting Sandpiper version (new_value={new_version})"
+        )
+        async with self._session_maker() as session, session.begin():
+            sandpiper_meta = await self._get_sandpiper_meta(session)
+            sandpiper_meta.version = new_version
 
     # endregion
     # region Full user

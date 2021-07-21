@@ -39,6 +39,17 @@ class Database(metaclass=ABCMeta):
         """Awaits until the database is ready"""
         pass
 
+    # Sandpiper meta
+
+    @abstractmethod
+    async def get_sandpiper_version(self) -> str:
+        pass
+
+    @abstractmethod
+    async def set_sandpiper_version(self, new_version: str):
+        pass
+
+    # endregion
     # region Full user
 
     @abstractmethod
