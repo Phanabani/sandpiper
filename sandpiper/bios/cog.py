@@ -390,8 +390,9 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_name) > 64:
-            raise BadArgument(f"Name must be 64 characters or less "
-                              f"(yours: {len(new_name)}).")
+            raise BadArgument(
+                f"Name must be 64 characters or less (yours: {len(new_name)})."
+            )
         await db.set_preferred_name(user_id, new_name)
         await Embeds.success(ctx, "Preferred name set!")
 
@@ -451,8 +452,10 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_pronouns) > 64:
-            raise BadArgument(f"Pronouns must be 64 characters or less "
-                              f"(yours: {len(new_pronouns)}).")
+            raise BadArgument(
+                f"Pronouns must be 64 characters or less (yours: "
+                f"{len(new_pronouns)})."
+            )
         await db.set_pronouns(user_id, new_pronouns)
         await Embeds.success(ctx, 'Pronouns set!')
 
