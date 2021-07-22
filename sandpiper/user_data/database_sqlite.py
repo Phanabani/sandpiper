@@ -160,7 +160,9 @@ class DatabaseSQLite(Database):
             session.add(guild)
             return guild
 
-    async def _get_field(self, field_name: str, user_id: int) -> Optional[Any]:
+    async def _get_user_field(
+            self, field_name: str, user_id: int
+    ) -> Optional[Any]:
         logger.info(f"Getting {field_name} (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
             return (await session.execute(
@@ -168,7 +170,7 @@ class DatabaseSQLite(Database):
                 .where(User.user_id == user_id)
             )).scalar()
 
-    async def _set_field(self, field_name: str, user_id: int, value: Any):
+    async def _set_user_field(self, field_name: str, user_id: int, value: Any):
         logger.info(
             f"Setting {field_name} (user_id={user_id}, "
             f"new_value={value})"
@@ -177,7 +179,7 @@ class DatabaseSQLite(Database):
             user = await self._get_user(session, user_id)
             setattr(user, field_name, value)
 
-    async def _get_privacy_field(
+    async def _get_user_privacy_field(
             self, field_name: str, user_id: int
     ) -> Optional[PrivacyType]:
         logger.info(
@@ -190,7 +192,7 @@ class DatabaseSQLite(Database):
             ).scalar()
             return PrivacyType(privacy) if privacy is not None else None
 
-    async def _set_privacy_field(
+    async def _set_user_privacy_field(
             self, field_name: str, user_id: int, new_privacy: PrivacyType
     ):
         logger.info(
@@ -247,22 +249,26 @@ class DatabaseSQLite(Database):
     # region Preferred name
 
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
-        return await self._get_field('preferred_name', user_id)
+        return await self._get_user_field('preferred_name', user_id)
 
     async def set_preferred_name(
             self, user_id: int, new_preferred_name: Optional[str]
     ):
-        await self._set_field('preferred_name', user_id, new_preferred_name)
+        await self._set_user_field(
+            'preferred_name', user_id, new_preferred_name
+        )
 
     async def get_privacy_preferred_name(
             self, user_id: int
     ) -> Optional[PrivacyType]:
-        return await self._get_privacy_field('preferred_name', user_id)
+        return await self._get_user_privacy_field('preferred_name', user_id)
 
     async def set_privacy_preferred_name(
             self, user_id: int, new_privacy: PrivacyType
     ):
-        await self._set_privacy_field('preferred_name', user_id, new_privacy)
+        await self._set_user_privacy_field(
+            'preferred_name', user_id, new_privacy
+        )
 
     async def find_users_by_preferred_name(
             self, name: str
@@ -283,37 +289,37 @@ class DatabaseSQLite(Database):
     # region Pronouns
 
     async def get_pronouns(self, user_id: int) -> Optional[str]:
-        return await self._get_field('pronouns', user_id)
+        return await self._get_user_field('pronouns', user_id)
 
     async def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
-        await self._set_field('pronouns', user_id, new_pronouns)
+        await self._set_user_field('pronouns', user_id, new_pronouns)
 
     async def get_privacy_pronouns(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_privacy_field('pronouns', user_id)
+        return await self._get_user_privacy_field('pronouns', user_id)
 
     async def set_privacy_pronouns(
             self, user_id: int, new_privacy: PrivacyType
     ):
-        await self._set_privacy_field('pronouns', user_id, new_privacy)
+        await self._set_user_privacy_field('pronouns', user_id, new_privacy)
 
     # endregion
     # region Birthday
 
     async def get_birthday(self, user_id: int) -> Optional[dt.date]:
-        return await self._get_field('birthday', user_id)
+        return await self._get_user_field('birthday', user_id)
 
     async def set_birthday(
             self, user_id: int, new_birthday: Optional[dt.date]
     ):
-        await self._set_field('birthday', user_id, new_birthday)
+        await self._set_user_field('birthday', user_id, new_birthday)
 
     async def get_privacy_birthday(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_privacy_field('birthday', user_id)
+        return await self._get_user_privacy_field('birthday', user_id)
 
     async def set_privacy_birthday(
             self, user_id: int, new_privacy: PrivacyType
     ):
-        await self._set_privacy_field('birthday', user_id, new_privacy)
+        await self._set_user_privacy_field('birthday', user_id, new_privacy)
 
     @staticmethod
     def _birthday_range_predicate(start: dt.date, end: dt.date):
@@ -381,16 +387,16 @@ class DatabaseSQLite(Database):
     # region Age
 
     async def get_privacy_age(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_privacy_field('age', user_id)
+        return await self._get_user_privacy_field('age', user_id)
 
     async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
-        await self._set_privacy_field('age', user_id, new_privacy)
+        await self._set_user_privacy_field('age', user_id, new_privacy)
 
     # endregion
     # region Timezone
 
     async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
-        tz_name = await self._get_field('timezone', user_id)
+        tz_name = await self._get_user_field('timezone', user_id)
         if tz_name:
             return pytz.timezone(tz_name)
         return None
@@ -400,15 +406,15 @@ class DatabaseSQLite(Database):
     ):
         if new_timezone:
             new_timezone = new_timezone.zone
-        await self._set_field('timezone', user_id, new_timezone)
+        await self._set_user_field('timezone', user_id, new_timezone)
 
     async def get_privacy_timezone(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_privacy_field('timezone', user_id)
+        return await self._get_user_privacy_field('timezone', user_id)
 
     async def set_privacy_timezone(
             self, user_id: int, new_privacy: PrivacyType
     ):
-        await self._set_privacy_field('timezone', user_id, new_privacy)
+        await self._set_user_privacy_field('timezone', user_id, new_privacy)
 
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
         logger.info(f"Getting all user timezones")
@@ -424,12 +430,14 @@ class DatabaseSQLite(Database):
     # region Other user stuff
 
     async def get_birthday_notification_sent(self, user_id: int) -> bool:
-        return await self._get_field('birthday_notification_sent', user_id)
+        return await self._get_user_field('birthday_notification_sent', user_id)
 
     async def set_birthday_notification_sent(
             self, user_id: int, new_value: bool
     ):
-        await self._set_field('birthday_notification_sent', user_id, new_value)
+        await self._set_user_field(
+            'birthday_notification_sent', user_id, new_value
+        )
 
     async def reset_all_birthday_notification_sent(self):
         logger.info(f"Resetting all birthday_notification_sent to false")
