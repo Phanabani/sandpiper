@@ -110,11 +110,12 @@ class Sandpiper_1_6_0(UpgradeHandler):
 
         # Their birthday doesn't include birth year, so tell them how to set it
         if (await db.get_age(user_id)) is None:
+            bday = await db.get_birthday(user_id)
             msg.append(
-                "\n\nYou will also have to include your birth year in your "
-                "birthday (you currently only have the month and day stored). "
-                "To set your birthday with the year, type, for example, "
-                "`birthday set 1999-02-14`!"
+                f"\n\nYou will also have to include your birth year in your "
+                f"birthday (you currently only have the month and day stored). "
+                f"To set your birthday with the year, type "
+                f"`birthday set {bday.strftime('YYYY-%m-%d')}`!"
             )
 
         await Embeds.special(user, 'Age in birthday announcement', ''.join(msg))
