@@ -139,12 +139,16 @@ class DatabaseSQLite(Database):
             return sandpiper_meta
 
     @staticmethod
-    async def _get_user(session: AsyncSession, user_id: int) -> User:
+    async def _get_user(
+            session: AsyncSession, user_id: int, create_if_missing=True
+    ) -> Optional[User]:
         try:
             return (await session.execute(
                 sa.select(User).where(User.user_id == user_id)
             )).scalar_one()
         except NoResultFound:
+            if not create_if_missing:
+                return None
             user = User(user_id=user_id)
             session.add(user)
             return user
@@ -175,11 +179,19 @@ class DatabaseSQLite(Database):
 
     async def _set_user_field(self, field_name: str, user_id: int, value: Any):
         logger.info(
-            f"Setting {field_name} (user_id={user_id}, "
-            f"new_value={value})"
+            f"Setting {field_name} (user_id={user_id}, new_value={value})"
         )
         async with self._session_maker() as session, session.begin():
-            user = await self._get_user(session, user_id)
+            if value is None:
+                # When using the delete command, it sends None. We don't want
+                # to create a new user if they're just trying to delete data
+                user = await self._get_user(
+                    session, user_id, create_if_missing=False
+                )
+                if user is None:
+                    raise UserNotInDatabase
+            else:
+                user = await self._get_user(session, user_id)
             setattr(user, field_name, value)
 
     async def _get_user_privacy_field(
