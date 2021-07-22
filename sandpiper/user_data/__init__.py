@@ -5,14 +5,14 @@ from typing import Optional
 from discord.ext.commands import Bot
 
 from .cog import UserData, DatabaseUnavailable
-from .database import Database, DatabaseError
+from .database import *
 from .database_sqlite import DatabaseSQLite
 from .enums import PrivacyType
 from .pronouns import Pronouns, common_pronouns
 
 __all__ = [
     'UserData', 'DatabaseUnavailable',
-    'Database', 'DatabaseError',
+    'Database', 'DatabaseError', 'UserNotInDatabase',
     'DatabaseSQLite',
     'PrivacyType',
     'Pronouns', 'common_pronouns'

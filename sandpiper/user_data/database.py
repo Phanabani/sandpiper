@@ -8,15 +8,20 @@ from .enums import PrivacyType
 from .pronouns import Pronouns
 from sandpiper.common.time import TimezoneType, utc_now
 
-__all__ = (
+__all__ = [
     'DEFAULT_PRIVACY',
-    'Database', 'DatabaseError',
-)
+    'DatabaseError', 'UserNotInDatabase',
+    'Database',
+]
 
 DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
 
 class DatabaseError(Exception):
+    pass
+
+
+class UserNotInDatabase(DatabaseError):
     pass
 
 

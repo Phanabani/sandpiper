@@ -134,8 +134,18 @@ class Bios(commands.Cog):
         if isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, DatabaseUnavailable):
                 await Embeds.error(ctx, str(DatabaseUnavailable))
+
+            elif isinstance(error.original, UserNotInDatabase):
+                # This user has no row in the database
+                await Embeds.info(
+                    ctx,
+                    "You have no data stored with me. Use the `help` command "
+                    "to see all available commands!"
+                )
+
             elif isinstance(error.original, DatabaseError):
                 await Embeds.error(ctx, "Error during database operation.")
+
             else:
                 logger.error(
                     f'Unexpected error in "{ctx.command}" ('

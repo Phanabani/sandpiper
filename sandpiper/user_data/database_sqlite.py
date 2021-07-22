@@ -165,10 +165,13 @@ class DatabaseSQLite(Database):
     ) -> Optional[Any]:
         logger.info(f"Getting {field_name} (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
-            return (await session.execute(
-                sa.select(getattr(User, field_name))
-                .where(User.user_id == user_id)
-            )).scalar()
+            try:
+                return (await session.execute(
+                    sa.select(getattr(User, field_name))
+                    .where(User.user_id == user_id)
+                )).scalar_one()
+            except NoResultFound:
+                raise UserNotInDatabase
 
     async def _set_user_field(self, field_name: str, user_id: int, value: Any):
         logger.info(
