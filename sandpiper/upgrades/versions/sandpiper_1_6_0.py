@@ -41,9 +41,9 @@ class Sandpiper_1_6_0(UpgradeHandler):
             self.bot, self.bot.user.id, user_id
         )], 2)
         msg = [
-            f"Hey!! I'm a bot from {mutual_guilds}. I've just updated with a "
-            f"birthday notification feature. I can announce your birthday "
-            f"when it comes to all the servers you and I are both in!"
+            f"Hey!! I'm a bot from {mutual_guilds}. I've just gotten a "
+            f"birthday announcement feature. I can announce your birthday "
+            f"when it arrives to all the servers you and I are both in!"
         ]
 
         # Tell them about how they can control their birthday announcement
@@ -60,6 +60,13 @@ class Sandpiper_1_6_0(UpgradeHandler):
                 "announce it! If you don't want me to announce your birthday "
                 "when it comes, type `privacy birthday private`. c:"
             )
+
+        msg.append(
+            "\n\nYou can use `bio show` to see all your data stored with me "
+            "and `help` to see all available commands. And if you have no idea "
+            "who I am, feel free to use `bio delete` to delete all your data "
+            "and be on your way!"
+        )
 
         await Embeds.special(
             user, 'Birthday announcements update 🥳', ''.join(msg)
