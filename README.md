@@ -1,7 +1,7 @@
 # Sandpiper
 
-[![release](https://img.shields.io/github/v/release/hawkpath/sandpiper)](https://github.com/Hawkpath/sandpiper/releases)
-[![license](https://img.shields.io/github/license/hawkpath/sandpiper)](LICENSE)
+[![release](https://img.shields.io/github/v/release/phanabani/sandpiper)](https://github.com/phanabani/sandpiper/releases)
+[![license](https://img.shields.io/github/license/phanabani/sandpiper)](LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 Sandpiper is a Discord bot that makes it easier to communicate with friends
@@ -35,7 +35,7 @@ Her current features include:
 To get started, clone the repo.
 
 ```shell script
-git clone https://github.com/hawkpath/sandpiper.git
+git clone https://github.com/phanabani/sandpiper.git
 cd sandpiper
 ```
 
@@ -158,7 +158,7 @@ Lastly, you can do math in conversions, too! `{2.3 ft + 5 in}`
 > my two favorite songs are **{5min+27s}** and **{4min+34s}**. that's a total
 > time of **{5min+27s + 4min+34s > s}** seconds
 
-> hey sandpiper what's {30 * 7}?
+> hey sandpiper what's **{30 * 7}**?
 
 ### Time conversion
 
@@ -227,7 +227,7 @@ for more info about managing your privacy.
 
 Command | Description | Example
 ------- | ----------- | -------
-`name set <new_name>` | Set your preferred name (max 64 characters). | `name set Hawk`
+`name set <new_name>` | Set your preferred name (max 64 characters). | `name set Phana`
 `pronouns set <new_pronouns>` | Set your pronouns (max 64 characters). | `pronouns set She/Her`
 `birthday set <new_birthday>` | Set your birthday in one of the following formats: `1997-08-27`, `8 August 1997`, `Aug 8 1997`, `August 8`, `8 Aug`. You may omit your birth year with the month-name format (age will not be calculated). | `birthday set 1997-08-27`
 `timezone set <new_timezone>` | Set your timezone. Don't worry about formatting. Typing the name of the nearest major city should be good enough, but you can also try your state/country if that doesn't work. If you're confused, use this website to find your full timezone name: http://kevalbhatt.github.io/timezone-picker | `timezone set new york`
@@ -330,4 +330,4 @@ These Discord bots inspired the development of Sandpiper:
 
 ## License
 
-[MIT © Hawkpath.](LICENSE)
+[MIT © Phanabani.](LICENSE)

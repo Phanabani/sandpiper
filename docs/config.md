@@ -1,7 +1,7 @@
 # Config
 
 Sandpiper can be configured with a JSON file at `sandpiper/config.json`.
-[sandpiper/config_example.json](sandpiper/config_example.json) contains
+[sandpiper/config_example.json](../sandpiper/config_example.json) contains
 default values and can be used as a template. `bot_token` is the only required
 field.
 
