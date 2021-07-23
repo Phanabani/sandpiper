@@ -56,6 +56,9 @@ class SimpleEmbed:
         self.join_str = join
 
     def append(self, msg: str):
+        """
+        Add another string to the embed's message.
+        """
         if not isinstance(msg, str):
             raise TypeError("msg must be of type str")
         self.message_parts.append(msg)
