@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 import discord
 from discord.ext import commands
@@ -8,7 +8,7 @@ from sandpiper.common.misc import join
 from sandpiper.user_data import Database, PrivacyType
 
 __all__ = [
-    'BirthdayExplanations',
+    'PrivacyExplanation', 'BirthdayExplanations',
     'info_str', 'user_info_str', 'user_names_str',
 ]
 
@@ -16,6 +16,19 @@ privacy_emojis = {
     PrivacyType.PRIVATE: '⛔',
     PrivacyType.PUBLIC: '✅'
 }
+
+
+class PrivacyExplanation:
+
+    @staticmethod
+    def get(friendly_name: str, privacy_name: Optional[str] = None):
+        if privacy_name is None:
+            privacy_name = friendly_name
+        return (
+            f"If you want me to be able to use your {friendly_name} in other "
+            f"features like birthday announcements, set your {friendly_name} "
+            f"privacy to public: `privacy {privacy_name} public`"
+        )
 
 
 class BirthdayExplanations:

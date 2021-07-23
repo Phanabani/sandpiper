@@ -351,14 +351,12 @@ class Bios(commands.Cog):
                 f"Name must be 64 characters or less (yours: {len(new_name)})."
             )
         await db.set_preferred_name(user_id, new_name)
-        await SuccessEmbed("Preferred name set!").send(ctx)
+        embed = SuccessEmbed("Preferred name set!", join='\n\n')
 
-        if await db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
-            await WarningEmbed(
-                "Your preferred name is set to private. If you want others to "
-                "be able to see it through Sandpiper, set it to public with "
-                "the command `privacy name public`."
-            ).send(ctx)
+        if await db.get_privacy_preferred_name(user_id) is PrivacyType.PRIVATE:
+            embed.append(PrivacyExplanation.get('name'))
+
+        await embed.send(ctx)
 
     @auto_order
     @name.command(
@@ -413,14 +411,12 @@ class Bios(commands.Cog):
                 f"{len(new_pronouns)})."
             )
         await db.set_pronouns(user_id, new_pronouns)
-        await SuccessEmbed('Pronouns set!').send(ctx)
+        embed = SuccessEmbed('Pronouns set!', join='\n\n')
 
         if await db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
-            await WarningEmbed(
-                "Your pronouns are set to private. If you want others to be "
-                "able to see them through Sandpiper, set them to public with "
-                "the command `privacy pronouns public`."
-            ).send(ctx)
+            embed.append(PrivacyExplanation.get('pronouns'))
+
+        await embed.send(ctx)
 
     @auto_order
     @pronouns.command(
@@ -640,28 +636,27 @@ class Bios(commands.Cog):
                 "[timezone picker](http://kevalbhatt.github.io/timezone-picker/)."
             )
 
-        if tz_matches.best_match:
-            # Display best match with other possible matches
-            await db.set_timezone(user_id, tz_matches.best_match)
-            await SuccessEmbed([
-                f"Timezone set to **{tz_matches.best_match}**!",
-                tz_matches.matches[1:] and "\nOther possible matches:",
-                '\n'.join([f'- {name}' for name, _ in tz_matches.matches[1:]])
-            ]).send(ctx)
-        else:
+        if not tz_matches.best_match:
             # No best match; display other possible matches
             await ErrorEmbed([
                 "Couldn't find a good match for the timezone you entered.",
                 "\nPossible matches:",
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
             ]).send(ctx)
+            return
+
+        # Display best match with other possible matches
+        await db.set_timezone(user_id, tz_matches.best_match)
+        embed = SuccessEmbed([
+            f"Timezone set to **{tz_matches.best_match}**!",
+            len(tz_matches.matches) > 1 and "\nOther possible matches:",
+            *[f'- {name}' for name, _ in tz_matches.matches[1:]]
+        ])
 
         if await db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
-            await WarningEmbed(
-                "Your timezone is set to private. If you want others to be "
-                "able to see it through Sandpiper, set it to public with "
-                "the command `privacy timezone public`."
-            ).send(ctx)
+            embed.append('\n' + PrivacyExplanation.get('timezone'))
+
+        await embed.send(ctx)
 
     @auto_order
     @timezone.command(
