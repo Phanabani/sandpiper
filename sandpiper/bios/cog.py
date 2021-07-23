@@ -1,92 +1,20 @@
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 import discord
-import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
+import discord.ext.commands as commands
 
+from .strings import *
 from sandpiper.birthdays import Birthdays
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
-from sandpiper.common.misc import join
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.user_data import *
 
 __all__ = ['Bios']
 
 logger = logging.getLogger('sandpiper.bios')
-
-privacy_emojis = {
-    PrivacyType.PRIVATE: '⛔',
-    PrivacyType.PUBLIC: '✅'
-}
-
-
-def info_str(field_name: str, value: Any):
-    return f"**{field_name}** • {value}"
-
-
-def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
-    privacy_emoji = privacy_emojis[privacy]
-    privacy = privacy.name.capitalize()
-    return f"{privacy_emoji} `{privacy:7}` | {info_str(field_name, value)}"
-
-
-async def user_names_str(
-        ctx: commands.Context, db: Database, user_id: int,
-        *, preferred_name: str = None, username: str = None,
-        display_name: str = None
-):
-    """
-    Create a string with a user's names (preferred name, Discord username,
-    guild display names). You can supply ``preferred_name``, ``username``,
-    or ``display_name`` to optimize the number of operations this function
-    has to perform.
-    """
-
-    # Get pronouns
-    privacy_pronouns = await db.get_privacy_pronouns(user_id)
-    if privacy_pronouns == PrivacyType.PUBLIC:
-        pronouns = await db.get_pronouns(user_id)
-    else:
-        pronouns = None
-
-    # Get preferred name
-    if preferred_name is None:
-        privacy_preferred_name = await db.get_privacy_preferred_name(user_id)
-        if privacy_preferred_name == PrivacyType.PUBLIC:
-            preferred_name = await db.get_preferred_name(user_id)
-            if preferred_name is None:
-                preferred_name = '`No preferred name`'
-        else:
-            preferred_name = '`No preferred name`'
-
-    # Get discord username and discriminator
-    if username is None:
-        user: discord.User = ctx.bot.get_user(user_id)
-        if user is not None:
-            username = f'{user.name}#{user.discriminator}'
-        else:
-            username = '`User not found`'
-
-    if ctx.guild is None:
-        # Find the user's nicknames on servers they share with the executor
-        # of the whois command
-        members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
-        display_names = ', '.join(m.display_name for m in members)
-    else:
-        if display_name is None:
-            # Find the user's nickname in the current guild ONLY
-            display_names = ctx.guild.get_member(user_id).display_name
-        else:
-            # Use the passed-in display name
-            display_names = display_name
-
-    return join(
-        join(preferred_name, pronouns and f'({pronouns})', sep=' '),
-        username, display_names,
-        sep=' • '
-    )
 
 
 def maybe_dm_only():
@@ -262,7 +190,8 @@ class Bios(commands.Cog):
         example="privacy all public"
     )
     async def privacy_all(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
@@ -283,7 +212,8 @@ class Bios(commands.Cog):
         example="privacy name public"
     )
     async def privacy_name(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
@@ -299,7 +229,8 @@ class Bios(commands.Cog):
         example="privacy pronouns public"
     )
     async def privacy_pronouns(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_pronouns(user_id, new_privacy)
@@ -315,11 +246,26 @@ class Bios(commands.Cog):
         example="privacy birthday public"
     )
     async def privacy_birthday(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_birthday(user_id, new_privacy)
-        await SuccessEmbed("Birthday privacy set!").send(ctx)
+        embed = SuccessEmbed("Birthday privacy set!", join='\n\n')
+
+        # Tell them how their privacy affects their birthday announcement
+        if new_privacy is PrivacyType.PRIVATE:
+            embed.append(BirthdayExplanations.birthday_is_private)
+        if new_privacy is PrivacyType.PUBLIC:
+            embed.append(BirthdayExplanations.birthday_is_public)
+
+            age_privacy = await db.get_privacy_age(user_id)
+            if age_privacy is PrivacyType.PRIVATE:
+                embed.append(BirthdayExplanations.age_is_private)
+            if age_privacy is PrivacyType.PUBLIC:
+                embed.append(BirthdayExplanations.age_is_public)
+
+        await embed.send(ctx)
 
     @auto_order
     @privacy.command(
@@ -331,11 +277,22 @@ class Bios(commands.Cog):
         example="privacy age public"
     )
     async def privacy_age(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_age(user_id, new_privacy)
-        await SuccessEmbed("Age privacy set!").send(ctx)
+        embed = SuccessEmbed("Age privacy set!", join='\n\n')
+
+        # Tell them how their privacy affects their birthday announcement
+        bday_privacy = await db.get_privacy_birthday(user_id)
+        if bday_privacy is PrivacyType.PUBLIC:
+            if new_privacy is PrivacyType.PRIVATE:
+                embed.append(BirthdayExplanations.age_is_private)
+            if new_privacy is PrivacyType.PUBLIC:
+                embed.append(BirthdayExplanations.age_is_public)
+
+        await embed.send(ctx)
 
     @auto_order
     @privacy.command(
@@ -347,7 +304,8 @@ class Bios(commands.Cog):
         example="privacy timezone public"
     )
     async def privacy_timezone(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_timezone(user_id, new_privacy)
@@ -521,21 +479,30 @@ class Bios(commands.Cog):
         )
     )
     @maybe_dm_only()
-    async def birthday_set(self, ctx: commands.Context, *,
-                           new_birthday: date_handler):
+    async def birthday_set(
+            self, ctx: commands.Context, *, new_birthday: date_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, new_birthday)
-        await SuccessEmbed("Birthday set!").send(ctx)
 
-        if await db.get_privacy_birthday(user_id) == PrivacyType.PRIVATE:
-            await WarningEmbed(
-                "Your birthday is set to private. If you want others to be "
-                "able to see it through Sandpiper, set it to public with "
-                "the command `privacy birthday public`. If you want others to "
-                "know your age but not your birthday, you may set that to "
-                "public with the command `privacy age public`."
-            ).send(ctx)
+        embed = SuccessEmbed("Birthday set!", join='\n\n')
+
+        # Tell them how their privacy affects their birthday announcement
+        bday_privacy = await db.get_privacy_birthday(user_id)
+        if bday_privacy is PrivacyType.PRIVATE:
+            embed.append(BirthdayExplanations.birthday_is_private_soft_suggest)
+
+        elif bday_privacy is PrivacyType.PUBLIC:
+            embed.append(BirthdayExplanations.birthday_is_public)
+
+            age_privacy = await db.get_privacy_age(user_id)
+            if age_privacy is PrivacyType.PRIVATE:
+                embed.append(BirthdayExplanations.age_is_private)
+            if age_privacy is PrivacyType.PUBLIC:
+                embed.append(BirthdayExplanations.age_is_public)
+
+        await embed.send(ctx)
 
     @auto_order
     @birthday.command(
