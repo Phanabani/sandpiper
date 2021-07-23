@@ -10,8 +10,7 @@ import pytz
 from ._helpers import *
 from ._discord_helpers import *
 from sandpiper.bios import Bios
-from sandpiper.user_data import DatabaseSQLite, UserData
-from sandpiper.user_data.enums import PrivacyType
+from sandpiper.user_data import *
 
 pytestmark = pytest.mark.asyncio
 
@@ -494,11 +493,21 @@ class TestDelete:
         embeds = await invoke_cmd_get_embeds('bio delete')
         assert_success(embeds)
         uid = message.author.id
-        assert await database.get_preferred_name(uid) is None
-        assert await database.get_pronouns(uid) is None
-        assert await database.get_birthday(uid) is None
-        assert await database.get_age(uid) is None
-        assert await database.get_timezone(uid) is None
+
+        with pytest.raises(UserNotInDatabase):
+            await database.get_preferred_name(uid)
+
+        with pytest.raises(UserNotInDatabase):
+            await database.get_pronouns(uid)
+
+        with pytest.raises(UserNotInDatabase):
+            await database.get_birthday(uid)
+
+        with pytest.raises(UserNotInDatabase):
+            await database.get_age(uid)
+
+        with pytest.raises(UserNotInDatabase):
+            await database.get_timezone(uid)
 
 
 class TestWhois:
