@@ -6,7 +6,7 @@ from typing import NoReturn
 import discord
 import discord.ext.commands as commands
 
-from sandpiper.common.embeds import Embeds
+from sandpiper.common.embeds import *
 from sandpiper.common.IANA import get_country_flag_emoji_from_timezone
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
@@ -79,9 +79,9 @@ class Conversion(commands.Cog):
 
         if runtime_msgs.exceptions:
             # Send embed with any errors that happened during conversion
-            await Embeds.error(
-                msg.channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
-            )
+            await ErrorEmbed(
+                [str(e) for e in runtime_msgs.exceptions], join='\n'
+            ).send(msg.channel)
             return failed
 
         if converted_times:
@@ -140,9 +140,9 @@ class Conversion(commands.Cog):
 
         if runtime_msgs.exceptions:
             # Send embed with any errors that happened during conversion
-            await Embeds.error(
-                channel, '\n'.join(str(e) for e in runtime_msgs.exceptions)
-            )
+            await ErrorEmbed(
+                [str(e) for e in runtime_msgs.exceptions], join='\n'
+            ).send(channel)
 
         if conversions:
             await channel.send('\n'.join(conversions))

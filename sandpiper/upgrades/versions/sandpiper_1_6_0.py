@@ -4,7 +4,7 @@ import discord
 
 from ..upgrades import UpgradeHandler
 from sandpiper.common.discord import find_user_in_mutual_guilds
-from sandpiper.common.embeds import Embeds
+from sandpiper.common.embeds import *
 from sandpiper.common.misc import listify
 from sandpiper.user_data import Database, PrivacyType
 
@@ -40,37 +40,38 @@ class Sandpiper_1_6_0(UpgradeHandler):
         mutual_guilds = listify([m.guild.name for m in find_user_in_mutual_guilds(
             self.bot, self.bot.user.id, user_id
         )], 2)
-        msg = [
+        embed = SpecialEmbed(
+            title='Birthday announcements update 🥳', join='\n\n'
+        )
+        embed.append(
             f"Hey!! I'm a bot from {mutual_guilds}. I've just gotten a "
             f"birthday announcement feature. I can announce your birthday "
             f"when it arrives to all the servers you and I are both in!"
-        ]
+        )
 
         # Tell them about how they can control their birthday announcement
         bday_privacy = await db.get_privacy_birthday(user_id)
         if bday_privacy is PrivacyType.PRIVATE:
-            msg.append(
-                "\n\nYour birthday is currently set to **private**, so I will "
+            embed.append(
+                "Your birthday is currently set to **private**, so I will "
                 "not announce it. If you want me to announce your birthday "
                 "when it comes, type `privacy birthday public`! c:"
             )
         elif bday_privacy is PrivacyType.PUBLIC:
-            msg.append(
-                "\n\nYour birthday is currently set to **public**, so I will "
+            embed.append(
+                "Your birthday is currently set to **public**, so I will "
                 "announce it! If you don't want me to announce your birthday "
                 "when it comes, type `privacy birthday private`. c:"
             )
 
-        msg.append(
-            "\n\nYou can use `bio show` to see all your data stored with me "
+        embed.append(
+            "You can use `bio show` to see all your data stored with me "
             "and `help` to see all available commands. And if you have no idea "
             "who I am, feel free to use `bio delete` to delete all your data "
             "and be on your way!"
         )
 
-        await Embeds.special(
-            user, 'Birthday announcements update 🥳', ''.join(msg)
-        )
+        await embed.send(user)
 
         await self.tell_about_age(user_id, db)
 
@@ -95,34 +96,35 @@ class Sandpiper_1_6_0(UpgradeHandler):
             return
 
         # General info about age in the announcement
-        msg = [
+        embed = SpecialEmbed(title='Age in birthday announcement', join='\n\n')
+        embed.append(
             "I can also announce your new age in your birthday message "
             "if your age privacy is set to public!"
-        ]
+        )
 
         # Info about their privacy value
         if age_privacy is PrivacyType.PUBLIC:
             # Tell them we changed their privacy to private
-            msg.append(
-                "\n\nI know this might be uncomfortable, so I've changed your "
+            embed.append(
+                "I know this might be uncomfortable, so I've changed your "
                 "age from public to **private** as a precaution. If you want "
                 "your age announced, you can type `privacy age public` to "
                 "make it public again."
             )
         elif age_privacy is PrivacyType.PRIVATE:
-            msg.append(
-                "\n\nYours is currently set to **private**, but if you want "
+            embed.append(
+                "Yours is currently set to **private**, but if you want "
                 "to change that, type `privacy age public`."
             )
 
         # Their birthday doesn't include birth year, so tell them how to set it
         if (await db.get_age(user_id)) is None:
             bday = await db.get_birthday(user_id)
-            msg.append(
-                f"\n\nYou will also have to include your birth year in your "
+            embed.append(
+                f"You will also have to include your birth year in your "
                 f"birthday (you currently only have the month and day stored). "
                 f"To set your birthday with the year, type "
                 f"`birthday set {bday.strftime('YYYY-%m-%d')}`!"
             )
 
-        await Embeds.special(user, 'Age in birthday announcement', ''.join(msg))
+        await embed.send(user)
