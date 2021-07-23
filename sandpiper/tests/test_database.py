@@ -6,9 +6,7 @@ import pytz
 
 from ._helpers import *
 from sandpiper.common.time import TimezoneType
-from sandpiper.user_data import DatabaseSQLite
-from sandpiper.user_data.enums import PrivacyType
-from ..user_data.pronouns import Pronouns
+from sandpiper.user_data import *
 
 pytestmark = pytest.mark.asyncio
 
@@ -84,7 +82,12 @@ class TestFullUser:
 class TestPreferredName:
 
     async def test_get(self, database, user_id):
+        await database.create_user(user_id)
         assert (await database.get_preferred_name(user_id)) is None
+
+    async def test_get_no_user(self, database, user_id):
+        with pytest.raises(UserNotInDatabase):
+            await database.get_preferred_name(user_id)
 
     async def test_set_get(self, database, user_id):
         value = 'Greg'
@@ -103,7 +106,12 @@ class TestPreferredName:
 class TestPronouns:
 
     async def test_get(self, database, user_id):
+        await database.create_user(user_id)
         assert (await database.get_pronouns(user_id)) is None
+
+    async def test_get_no_user(self, database, user_id):
+        with pytest.raises(UserNotInDatabase):
+            await database.get_pronouns(user_id)
 
     async def test_set_get(self, database, user_id):
         value = 'She/Her'
@@ -119,8 +127,12 @@ class TestPronouns:
         assert (await database.get_privacy_pronouns(user_id)) is value
 
     async def test_get_parsed(self, database, user_id):
-        parsed_pronouns = (await database.get_pronouns_parsed(user_id))
-        assert parsed_pronouns == []
+        await database.create_user(user_id)
+        assert (await database.get_pronouns_parsed(user_id)) == []
+
+    async def test_get_parsed_no_user(self, database, user_id):
+        with pytest.raises(UserNotInDatabase):
+            await database.get_pronouns_parsed(user_id)
 
     async def test_set_get_parsed(self, database, user_id):
         value = 'She/they'
@@ -135,7 +147,12 @@ class TestPronouns:
 class TestBirthday:
 
     async def test_get(self, database, user_id):
+        await database.create_user(user_id)
         assert (await database.get_birthday(user_id)) is None
+
+    async def test_get_no_user(self, database, user_id):
+        with pytest.raises(UserNotInDatabase):
+            await database.get_birthday(user_id)
 
     async def test_set_get(self, database, user_id):
         value = dt.date(2000, 2, 14)
@@ -199,7 +216,12 @@ class TestCalculateAge:
 class TestTimezone:
 
     async def test_get(self, database, user_id):
+        await database.create_user(user_id)
         assert (await database.get_timezone(user_id)) is None
+
+    async def test_get_no_user(self, database, user_id):
+        with pytest.raises(UserNotInDatabase):
+            await database.get_timezone(user_id)
 
     async def test_set_get(self, database, user_id):
         value = pytz.timezone('America/New_York')
@@ -226,7 +248,12 @@ class TestBirthdayNotificationSent:
         return f
 
     async def test_get(self, database, user_id):
-        assert (await database.get_birthday_notification_sent(user_id)) is None
+        await database.create_user(user_id)
+        assert (await database.get_birthday_notification_sent(user_id)) is False
+
+    async def test_get_no_user(self, database, user_id):
+        with pytest.raises(UserNotInDatabase):
+            await database.get_birthday_notification_sent(user_id)
 
     async def test_get_default(self, database, user_id):
         await database.create_user(user_id)
@@ -336,6 +363,7 @@ class TestGetBirthdaysRange:
                 privacy: PrivacyType = PrivacyType.PUBLIC
         ) -> int:
             uid = new_id()
+            await database.create_user(uid)
             await database.set_birthday(uid, birthday)
             await database.set_privacy_birthday(uid, privacy)
             return uid
