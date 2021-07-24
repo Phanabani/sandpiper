@@ -336,10 +336,16 @@ class TestPrivacy:
     async def test_all_public(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy all public')
         await self._assert_all(embeds, message, database, PrivacyType.PUBLIC)
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_public in desc
+        assert BirthdayExplanations.age_is_public in desc
 
     async def test_all_private(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy all private')
         await self._assert_all(embeds, message, database, PrivacyType.PRIVATE)
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_private in desc
+        assert BirthdayExplanations.age_is_private not in desc
 
     async def test_all_cycle(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy all private')
