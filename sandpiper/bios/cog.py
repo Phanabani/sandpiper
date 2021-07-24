@@ -199,7 +199,15 @@ class Bios(commands.Cog):
         await db.set_privacy_birthday(user_id, new_privacy)
         await db.set_privacy_age(user_id, new_privacy)
         await db.set_privacy_timezone(user_id, new_privacy)
-        await SuccessEmbed("All privacies set!").send(ctx)
+
+        embed = SuccessEmbed("All privacies set!", join='\n\n')
+        if new_privacy is PrivacyType.PUBLIC:
+            embed.append(BirthdayExplanations.birthday_is_public)
+            embed.append(BirthdayExplanations.age_is_public)
+        elif new_privacy is PrivacyType.PRIVATE:
+            embed.append(BirthdayExplanations.birthday_is_private)
+
+        await embed.send(ctx)
 
     @auto_order
     @privacy.command(
