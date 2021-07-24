@@ -176,8 +176,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_birthday, PrivacyType.PRIVATE
         )
         # Tell them their birthday will not be announced, and say nothing about age
-        assert BirthdayExplanations.birthday_is_private in embeds[0].description
-        assert BirthdayExplanations.age_is_private not in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_private in desc
+        assert BirthdayExplanations.age_is_private not in desc
 
     async def test_birthday_private_age_public(
             self, database, message, invoke_cmd_get_embeds
@@ -188,8 +189,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_birthday, PrivacyType.PRIVATE
         )
         # Tell them their birthday will not be announced, and say nothing about age
-        assert BirthdayExplanations.birthday_is_private in embeds[0].description
-        assert BirthdayExplanations.age_is_public not in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_private in desc
+        assert BirthdayExplanations.age_is_public not in desc
 
     async def test_birthday_public_age_private(
             self, database, message, invoke_cmd_get_embeds
@@ -199,8 +201,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_birthday, PrivacyType.PUBLIC
         )
         # Tell them their birthday will be announced and that their age will not
-        assert BirthdayExplanations.birthday_is_public in embeds[0].description
-        assert BirthdayExplanations.age_is_private in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_public in desc
+        assert BirthdayExplanations.age_is_private in desc
 
     async def test_birthday_public_age_public(
             self, database, message, invoke_cmd_get_embeds
@@ -211,8 +214,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_birthday, PrivacyType.PUBLIC
         )
         # Tell them that their birthday and age will be announced
-        assert BirthdayExplanations.birthday_is_public in embeds[0].description
-        assert BirthdayExplanations.age_is_public in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_public in desc
+        assert BirthdayExplanations.age_is_public in desc
 
     async def test_birthday_cycle(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy birthday private')
@@ -241,8 +245,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_age, PrivacyType.PRIVATE
         )
         # Don't say anything since their birthday is private
-        assert BirthdayExplanations.age_is_private not in embeds[0].description
-        assert BirthdayExplanations.birthday_is_private not in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.age_is_private not in desc
+        assert BirthdayExplanations.birthday_is_private not in desc
 
     async def test_age_private_birthday_public(
             self, database, message, invoke_cmd_get_embeds
@@ -253,8 +258,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_age, PrivacyType.PRIVATE
         )
         # Tell them their age will not be shown
-        assert BirthdayExplanations.age_is_private in embeds[0].description
-        assert BirthdayExplanations.birthday_is_public not in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.age_is_private in desc
+        assert BirthdayExplanations.birthday_is_public not in desc
 
     async def test_age_public_birthday_private(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy age public')
@@ -262,8 +268,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_age, PrivacyType.PUBLIC
         )
         # Don't say anything since their birthday is private
-        assert BirthdayExplanations.age_is_public not in embeds[0].description
-        assert BirthdayExplanations.birthday_is_private not in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.age_is_public not in desc
+        assert BirthdayExplanations.birthday_is_private not in desc
 
     async def test_age_public_birthday_public(self, database, message, invoke_cmd_get_embeds):
         await database.set_privacy_birthday(message.author.id, PrivacyType.PUBLIC)
@@ -272,8 +279,9 @@ class TestPrivacy:
             embeds, message, database.get_privacy_age, PrivacyType.PUBLIC
         )
         # Tell them their age will be shown
-        assert BirthdayExplanations.age_is_public in embeds[0].description
-        assert BirthdayExplanations.birthday_is_public not in embeds[0].description
+        desc = embeds[0].description
+        assert BirthdayExplanations.age_is_public in desc
+        assert BirthdayExplanations.birthday_is_public not in desc
 
     async def test_age_cycle(self, database, message, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('privacy age private')
@@ -462,6 +470,20 @@ class TestSet:
     # endregion
     # region Birthday
 
+    async def test_birthday_private_age_private(
+            self, database, message, invoke_cmd_get_embeds
+    ):
+        await database.set_privacy_age(message.author.id, PrivacyType.PUBLIC)
+        embeds = await invoke_cmd_get_embeds(f'birthday set 2000-02-14')
+        await self._assert_private(
+            embeds, message, database.get_birthday, dt.date(2000, 2, 14),
+            'birthday'
+        )
+        # Soft suggest changing birthday to public and say nothing about age
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_private_soft_suggest in desc
+        assert BirthdayExplanations.age_is_private not in desc
+
     async def test_birthday_private_age_public(
             self, database, message, invoke_cmd_get_embeds
     ):
@@ -471,10 +493,10 @@ class TestSet:
             embeds, message, database.get_birthday, dt.date(2000, 2, 14),
             'birthday'
         )
-        assert_success(
-            embeds, BirthdayExplanations.birthday_is_private_soft_suggest
-        )
-        assert "your age" not in embeds[0].description
+        # Soft suggest changing birthday to public and say nothing about age
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_private_soft_suggest in desc
+        assert BirthdayExplanations.age_is_public not in desc
 
     async def test_birthday_public_age_private(
             self, database, message, invoke_cmd_get_embeds
@@ -484,11 +506,10 @@ class TestSet:
         await self._assert_public(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14)
         )
-        assert_success(
-            embeds,
-            BirthdayExplanations.birthday_is_public,
-            BirthdayExplanations.age_is_private
-        )
+        # Tell them their birthday will be announced and not their age
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_public in desc
+        assert BirthdayExplanations.age_is_private in desc
 
     async def test_birthday_public_age_public(
             self, database, message, invoke_cmd_get_embeds
@@ -499,11 +520,10 @@ class TestSet:
         await self._assert_public(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14)
         )
-        assert_success(
-            embeds,
-            BirthdayExplanations.birthday_is_public,
-            BirthdayExplanations.age_is_public
-        )
+        # Tell them their birthday and age will be announced
+        desc = embeds[0].description
+        assert BirthdayExplanations.birthday_is_public in desc
+        assert BirthdayExplanations.age_is_public in desc
 
     # endregion
     # region Age
