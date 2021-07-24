@@ -66,9 +66,62 @@ def make_user(new_id, users, users_map):
             spec=discord.User, id=id_, name=name, discriminator=discriminator,
             **kwargs
         )
+
         users.append(user)
         users_map[id_] = user
         return user
+
+    return f
+
+
+@pytest.fixture()
+def channels() -> list[discord.TextChannel]:
+    return []
+
+
+@pytest.fixture()
+def channels_map() -> dict[int, discord.TextChannel]:
+    return {}
+
+
+@pytest.fixture()
+def make_channel(new_id, channels, channels_map):
+    def f(
+            guild: discord.Guild, id_: Optional[int] = None,
+            name: Optional[str] = None, **kwargs
+    ) -> discord.TextChannel:
+        """
+        Add a mock text channel to the client. You can access text channels
+        through the id->channel dict `self.bot.channels_map`.
+
+        :param guild: the guild to add this text channel to
+        :param id_: the ID for this text channel. Must be unique for each test.
+        :param name: an optional name for this text channel
+        :param kwargs: extra kwargs to add to the text channel
+        :return: the new TextChannel mock
+        """
+
+        if id_ is None:
+            id_ = new_id()
+        if id_ in channels_map:
+            raise ValueError(f"Channel with id={id_} already exists")
+        if name is None:
+            name = 'a-channel'
+
+        channel = MagicMock_(
+            spec=discord.TextChannel, id=id_, name=name, **kwargs
+        )
+
+        # Add the channel to the guild
+        channel.guild = guild
+        guild.channels.append(channel)
+        guild.text_channels.append(channel)
+        # noinspection PyUnresolvedReferences
+        guild._channels_map[id_] = channel
+
+        channels.append(channel)
+        channels_map[id_] = channel
+        return channel
 
     return f
 
@@ -93,7 +146,7 @@ def make_guild(new_id, guilds, guilds_map):
         `self.bot.guilds` or the id->guild dict `self.bot.guilds_map`.
 
         :param id_: the ID for this guild. Must be unique for each test.
-        :param name: an optional username for this guild
+        :param name: an optional name for this guild
         :param kwargs: extra kwargs to add to the guild
         :return: the new Guild mock
         """
@@ -107,11 +160,13 @@ def make_guild(new_id, guilds, guilds_map):
 
         guild = MagicMock_(spec=discord.Guild, id=id_, name=name, **kwargs)
 
-        members = []
-        members_map = {}
-        guild.members = members
-        guild._members_map = members_map
-        guild.get_member.side_effect = lambda id: members_map.get(id, None)
+        guild.members = []
+        guild._members_map = members_map = {}
+        guild.get_member.side_effect = lambda id: guild._members_map.get(id, None)
+
+        guild.channels = []
+        guild._channels_map = channels_map = {}
+        guild.get_channel.side_effect = lambda id: guild._channels_map.get(id, None)
 
         guilds.append(guild)
         guilds_map[id_] = guild
@@ -144,8 +199,9 @@ def add_user_to_guild(users_map, guilds_map):
         guild = guilds_map[guild_id]
         # noinspection PyUnresolvedReferences
         if user_id in guild._members_map:
-            raise ValueError(f"Member with id={user_id} already exists in "
-                             f"this guild")
+            raise ValueError(
+                f"Member with id={user_id} already exists in this guild"
+            )
         user = users_map[user_id]
         member = MagicMock_(
             spec=discord.Member,
@@ -171,7 +227,9 @@ def message() -> discord.Message:
 
 # noinspection PyPropertyAccess
 @pytest.fixture()
-async def bot(users, users_map, guilds, guilds_map) -> commands.Bot:
+async def bot(
+        users, users_map, channels, channels_map, guilds, guilds_map
+) -> commands.Bot:
     patchers = []
 
     # Patch in some mocks for bot attributes that tests may need to work
@@ -205,6 +263,11 @@ async def bot(users, users_map, guilds, guilds_map) -> commands.Bot:
     patcher = mock.patch.object(bot, 'get_user')
     get_user = patcher.start()
     get_user.side_effect = lambda id: users_map.get(id, None)
+    patchers.append(patcher)
+
+    patcher = mock.patch.object(bot, 'get_channel')
+    get_channel = patcher.start()
+    get_channel.side_effect = lambda id: channels_map.get(id, None)
     patchers.append(patcher)
 
     patcher = mock.patch.object(bot, 'get_guild')
