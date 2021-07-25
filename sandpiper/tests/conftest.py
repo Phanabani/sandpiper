@@ -439,6 +439,9 @@ def patch_datetime():
             mock_datetime.time.side_effect = (
                 lambda *a, **kw: dt.time(*a, **kw)
             )
+            mock_datetime.timedelta.side_effect = (
+                lambda *a, **kw: dt.timedelta(*a, **kw)
+            )
 
         return static_datetime
 
