@@ -426,18 +426,12 @@ def patch_datetime() -> list[mock.MagicMock]:
         mock_datetime = patcher.start()
         dt_mocks.append(mock_datetime)
 
-        mock_datetime.datetime.side_effect = (
-            lambda *a, **kw: dt.datetime(*a, **kw)
-        )
-        mock_datetime.date.side_effect = (
-            lambda *a, **kw: dt.date(*a, **kw)
-        )
-        mock_datetime.time.side_effect = (
-            lambda *a, **kw: dt.time(*a, **kw)
-        )
-        mock_datetime.timedelta.side_effect = (
-            lambda *a, **kw: dt.timedelta(*a, **kw)
-        )
+        mock_datetime.datetime = mock.MagicMock(
+            spec=dt.datetime, wraps=dt.datetime)
+        mock_datetime.date = mock.MagicMock(spec=dt.date, wraps=dt.date)
+        mock_datetime.time = mock.MagicMock(spec=dt.time, wraps=dt.time)
+        mock_datetime.timedelta = mock.MagicMock(
+            spec=dt.timedelta, wraps=dt.timedelta)
 
     yield dt_mocks
 

@@ -10,8 +10,10 @@ __all__ = [
     'assert_one_if_list',
     'assert_count_equal',
     'patch_all_symbol_imports',
+    'isinstance_mock_supported'
 ]
 
+import pytest
 
 V = TypeVar('V')
 
@@ -122,3 +124,15 @@ def patch_all_symbol_imports(
                 ))
 
     return patchers
+
+
+def isinstance_mock_supported(__obj, __class_or_tuple):
+    if isinstance(__class_or_tuple, mock.Mock):
+        try:
+            return isinstance(__obj, __class_or_tuple._mock_wraps)
+        except AttributeError:
+            pytest.fail(
+                "Mock object needs to use the wrap parameter so the original "
+                "type can be accessed for isinstance testing"
+            )
+    return isinstance(__obj, __class_or_tuple)
