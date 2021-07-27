@@ -100,6 +100,10 @@ class Birthdays(commands.Cog):
         await self.schedule_todays_birthdays()
         self.first_run = False
 
+    @daily_loop.error
+    async def daily_loop_error(self, exc: Exception):
+        logger.error("Unhandled exception in daily_loop task", exc_info=exc)
+
     async def schedule_todays_birthdays(self):
         """
         Gets all birthdays occurring either today or tomorrow and then tries
