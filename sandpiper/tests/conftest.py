@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from typing import Optional
 import unittest.mock as mock
 
@@ -243,6 +244,11 @@ async def bot(
     # with invocation
     bot = commands.Bot(command_prefix='')
 
+    # I don't need the extreme verbosity of this right now, but for some reason
+    # when I set it to False, it shows errors that don't get shown if the
+    # method is never called at all...
+    bot.loop.set_debug(False)
+
     # This function checks if message author is the self bot and skips
     # context creation (meaning we won't get command invocation), so
     # we will bypass it
@@ -449,6 +455,34 @@ def patch_datetime_now(patch_datetime):
         return static_datetime
 
     return f
+
+
+@pytest.fixture(autouse=True)
+def fail_on_log_error(caplog):
+    caplog.set_level(logging.ERROR)
+    yield
+
+    i = 0
+    exc_texts = []
+    records = caplog.get_records('setup') + caplog.get_records('call')
+    for r in records:
+        if not r.levelno == logging.ERROR:
+            continue
+        if r.exc_text:
+            exc_texts.append(f"[Error {i}]\n{r.message}\n{r.exc_text}")
+        else:
+            exc_texts.append(
+                f"[Error {i}]\n{r.message}\n"
+                f"(No traceback, but here's the logging location)\n"
+                f"  File \"{r.pathname}\", line {r.lineno}"
+            )
+        i += 1
+
+    if exc_texts:
+        exc_texts = '\n\n'.join(exc_texts)
+        pytest.fail(
+            f"Errors logged during testing:\n{exc_texts}", pytrace=False
+        )
 
 
 # endregion
