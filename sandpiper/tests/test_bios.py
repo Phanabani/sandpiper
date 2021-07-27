@@ -363,9 +363,9 @@ class TestShow:
 
     @pytest.fixture()
     def june_1st_2020_932_am(
-            self, patch_localzone_utc, patch_datetime
+            self, patch_localzone_utc, patch_datetime_now
     ) -> dt.datetime:
-        yield patch_datetime(dt.datetime(2020, 6, 1, 9, 32))
+        yield patch_datetime_now(dt.datetime(2020, 6, 1, 9, 32))
 
     async def test_name(self, invoke_as_greg, invoke_cmd_get_embeds):
         embeds = await invoke_cmd_get_embeds('name show')

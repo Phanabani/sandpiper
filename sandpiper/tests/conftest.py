@@ -418,37 +418,43 @@ def patch_localzone_utc() -> pytz.UTC:
 
 
 @pytest.fixture()
-def patch_datetime():
-    patchers = []
+def patch_datetime() -> list[mock.MagicMock]:
+    patchers = patch_all_symbol_imports(dt, 'sandpiper.', 'test')
+    dt_mocks = []
 
-    def f(static_datetime: dt.datetime) -> dt.datetime:
-        # Patch datetime to use a static datetime
-        for patcher in patch_all_symbol_imports(dt, 'sandpiper.', 'test'):
-            patchers.append(patcher)
-            mock_datetime = patcher.start()
+    for patcher in patchers:
+        mock_datetime = patcher.start()
+        dt_mocks.append(mock_datetime)
 
-            mock_datetime.datetime.now.return_value = static_datetime
-            mock_datetime.date.today.return_value = static_datetime.date()
+        mock_datetime.datetime.side_effect = (
+            lambda *a, **kw: dt.datetime(*a, **kw)
+        )
+        mock_datetime.date.side_effect = (
+            lambda *a, **kw: dt.date(*a, **kw)
+        )
+        mock_datetime.time.side_effect = (
+            lambda *a, **kw: dt.time(*a, **kw)
+        )
+        mock_datetime.timedelta.side_effect = (
+            lambda *a, **kw: dt.timedelta(*a, **kw)
+        )
 
-            mock_datetime.datetime.side_effect = (
-                lambda *a, **kw: dt.datetime(*a, **kw)
-            )
-            mock_datetime.date.side_effect = (
-                lambda *a, **kw: dt.date(*a, **kw)
-            )
-            mock_datetime.time.side_effect = (
-                lambda *a, **kw: dt.time(*a, **kw)
-            )
-            mock_datetime.timedelta.side_effect = (
-                lambda *a, **kw: dt.timedelta(*a, **kw)
-            )
-
-        return static_datetime
-
-    yield f
+    yield dt_mocks
 
     for patcher in patchers:
         patcher.stop()
+
+
+@pytest.fixture()
+def patch_datetime_now(patch_datetime):
+
+    def f(static_datetime: dt.datetime) -> dt.datetime:
+        for dt_mock in patch_datetime:
+            dt_mock.datetime.now.return_value = static_datetime
+            dt_mock.date.today.return_value = static_datetime.date()
+        return static_datetime
+
+    return f
 
 
 # endregion
