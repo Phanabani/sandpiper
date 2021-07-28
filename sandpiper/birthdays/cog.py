@@ -175,7 +175,7 @@ class Birthdays(commands.Cog):
         # within 24 hours from now
         # TODO I'm worried that it could be possible we lose a birthday
         #   in a race condition here...
-        if dt.timedelta(0) < midnight_delta <= dt.timedelta(hours=24):
+        if dt.timedelta(0) <= midnight_delta < dt.timedelta(hours=24):
             self.tasks[user_id] = self.bot.loop.create_task(
                 self.send_birthday_message(user_id, midnight_delta)
             )
