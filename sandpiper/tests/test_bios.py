@@ -10,8 +10,8 @@ import pytz
 from ._helpers import *
 from ._discord_helpers import *
 from sandpiper.bios import Bios
+from sandpiper.bios.strings import BirthdayExplanations
 from sandpiper.user_data import *
-from ..bios.strings import BirthdayExplanations
 
 pytestmark = pytest.mark.asyncio
 
