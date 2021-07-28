@@ -3,7 +3,7 @@ from unittest import mock as mock
 
 import discord
 
-from sandpiper.tests._helpers import assert_in, assert_one_if_list
+from ._helpers import assert_in, assert_one_if_list
 
 __all__ = [
     'MagicMock_',

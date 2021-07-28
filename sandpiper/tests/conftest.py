@@ -8,9 +8,9 @@ import discord.ext.commands as commands
 import pytest
 import pytz
 
+from .helpers._discord_helpers import *
+from .helpers._helpers import patch_all_symbol_imports
 from sandpiper.user_data import DatabaseSQLite
-from ._helpers import patch_all_symbol_imports
-from ._discord_helpers import *
 
 
 # region Discord arrange fixtures
