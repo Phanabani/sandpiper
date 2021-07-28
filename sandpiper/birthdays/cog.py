@@ -120,10 +120,11 @@ class Birthdays(commands.Cog):
         # The marked as sent thing is used in case Sandpiper restarts mid-day
         # so she can continue sending bday notifs properly without any repeats
         scheduled_count = 0
-        for user_id, birthday in await db.get_birthdays_range(
-                today, today + dt.timedelta(days=1),
-                only_if_notification_not_sent=True
-        ):
+        birthdays_today_tomorrow = await db.get_birthdays_range(
+            today, today + dt.timedelta(days=1),
+            only_if_notification_not_sent=True
+        )
+        for user_id, birthday in birthdays_today_tomorrow:
             if await self.schedule_birthday(user_id, birthday, now=now):
                 scheduled_count += 1
         logger.info(f"{scheduled_count} birthdays scheduled for today")
