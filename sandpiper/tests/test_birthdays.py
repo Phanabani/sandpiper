@@ -9,8 +9,8 @@ from discord.ext import commands
 import pytest
 import pytz
 
-from .helpers._helpers import *
-from .helpers._discord_helpers import *
+from .helpers.discord import *
+from .helpers.misc import *
 from sandpiper.birthdays import Birthdays
 from sandpiper.common.time import TimezoneType
 from sandpiper.user_data import PrivacyType, UserData
