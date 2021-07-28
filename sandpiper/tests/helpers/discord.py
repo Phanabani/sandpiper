@@ -1,12 +1,11 @@
-from typing import NoReturn, Optional, Union
-from unittest import mock as mock
+from typing import NoReturn, Union
+from unittest import mock
 
 import discord
 
 from .misc import assert_in, assert_one_if_list
 
 __all__ = [
-    'MagicMock_',
     'get_contents', 'get_embeds',
     'assert_success', 'assert_warning', 'assert_error', 'assert_info',
     'assert_no_reply'
@@ -15,22 +14,7 @@ __all__ = [
 # region Misc helper functions
 
 
-# noinspection PyPep8Naming
-class MagicMock_(mock.MagicMock):
-    """
-    Identical to MagicMock, but the ``name`` kwarg will be parsed as a regular
-    kwarg (assigned to the mock as an attribute).
-    """
-
-    def __init__(self, *args, _name_: Optional[str] = None, **kwargs):
-        if _name_ is None:
-            _name_ = ''
-        name_attr = kwargs.pop('name', None)
-        super().__init__(*args, name=_name_, **kwargs)
-        self.name = name_attr
-
-
-def get_contents(mock_: MagicMock_) -> list[str]:
+def get_contents(mock_: mock.Mock) -> list[str]:
     """
     :param mock_: a mock ``send`` method
     :return: a list of each message's contents
@@ -42,7 +26,7 @@ def get_contents(mock_: MagicMock_) -> list[str]:
     ]
 
 
-def get_embeds(mock_: MagicMock_) -> list[discord.Embed]:
+def get_embeds(mock_: mock.Mock) -> list[discord.Embed]:
     """
     :param mock_: a mock ``send`` method
     :return: a list of embeds sent in each message

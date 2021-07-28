@@ -1,7 +1,6 @@
 import asyncio
 import datetime as dt
-import logging
-from typing import Optional, Union
+from typing import Optional
 from unittest import mock
 
 import discord
@@ -11,6 +10,7 @@ import pytz
 
 from .helpers.discord import *
 from .helpers.misc import *
+from .helpers.mocking import *
 from sandpiper.birthdays import Birthdays
 from sandpiper.common.time import TimezoneType
 from sandpiper.user_data import PrivacyType, UserData

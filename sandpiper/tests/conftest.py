@@ -9,9 +9,8 @@ import pytest
 import pytz
 
 from .helpers.discord import *
-from .helpers.misc import patch_all_symbol_imports
+from .helpers.mocking import MagicMock_, patch_all_symbol_imports
 from sandpiper.user_data import DatabaseSQLite
-
 
 # region Discord arrange fixtures
 
