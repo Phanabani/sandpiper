@@ -228,7 +228,8 @@ def message() -> discord.Message:
 # noinspection PyPropertyAccess
 @pytest.fixture()
 async def bot(
-        users, users_map, channels, channels_map, guilds, guilds_map
+        users, users_map, channels, channels_map, guilds, guilds_map,
+        new_id
 ) -> commands.Bot:
     patchers = []
 
@@ -262,7 +263,7 @@ async def bot(
     # we need to patch it in.
     patcher = mock.patch.object(bot, '_connection')
     connection_mock = patcher.start()
-    connection_mock.user.id = 0
+    connection_mock.user.id = new_id()
     patchers.append(patcher)
 
     patcher = mock.patch.object(bot, 'get_user')
