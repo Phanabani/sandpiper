@@ -36,7 +36,7 @@ def users_map() -> dict[int, discord.User]:
 
 
 @pytest.fixture()
-def make_user(new_id, users, users_map):
+def make_user(bot, guilds, new_id, users, users_map):
     def f(
             id_: Optional[int] = None, name: Optional[str] = None,
             discriminator: Optional[int] = None, **kwargs
@@ -66,6 +66,21 @@ def make_user(new_id, users, users_map):
             spec=discord.User, id=id_, name=name, discriminator=discriminator,
             **kwargs
         )
+
+        def get_mutual_guilds():
+            mutual_guilds = []
+            for guild in guilds:
+                if (guild.get_member(bot.user.id) is not None
+                        and guild.get_member(id_) is not None):
+                    # Both the bot and the user are in this guild
+                    mutual_guilds.append(guild)
+            return mutual_guilds
+
+        mutual_guilds = mock.PropertyMock()
+        mutual_guilds.side_effect = get_mutual_guilds
+        # This is how property mocks must be attached:
+        # https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
+        type(user).mutual_guilds = mutual_guilds
 
         users.append(user)
         users_map[id_] = user
