@@ -68,11 +68,30 @@ class Birthdays(commands.Cog):
         self.first_run = True
         self.daily_loop.start()
 
+    def _create_birthday_task(self, user_id: int, midnight_delta: dt.timedelta):
+        self.tasks[user_id] = task = self.bot.loop.create_task(
+            self.send_birthday_message(user_id, midnight_delta)
+        )
+        task.add_done_callback(self._handle_task_exception)
+
     async def _get_database(self) -> Database:
         user_data: Optional[UserData] = self.bot.get_cog('UserData')
         if user_data is None:
             raise RuntimeError('UserData cog is not loaded.')
         return await user_data.get_database()
+
+    def _get_random_message(self, age=False):
+        if age:
+            return random.choice(self.message_templates_with_age)
+        return random.choice(self.message_templates_no_age)
+
+    def _handle_task_exception(self, task: asyncio.Task) -> None:
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            pass  # Task cancellation should not be logged as an error.
+        except Exception as e:
+            logging.error(f"Exception raised by task {task}", exc_info=e)
 
     async def _try_cancel_task(self, user_id):
         if user_id in self.tasks:
@@ -81,11 +100,6 @@ class Birthdays(commands.Cog):
             )
             self.tasks[user_id].cancel()
             del self.tasks[user_id]
-
-    def _get_random_message(self, age=False):
-        if age:
-            return random.choice(self.message_templates_with_age)
-        return random.choice(self.message_templates_no_age)
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
@@ -176,9 +190,7 @@ class Birthdays(commands.Cog):
         # TODO I'm worried that it could be possible we lose a birthday
         #   in a race condition here...
         if dt.timedelta(0) <= midnight_delta < dt.timedelta(hours=24):
-            self.tasks[user_id] = self.bot.loop.create_task(
-                self.send_birthday_message(user_id, midnight_delta)
-            )
+            self._create_birthday_task(user_id, midnight_delta)
             return True
         return False
 
