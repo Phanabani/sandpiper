@@ -80,7 +80,7 @@ def patch_database_isinstance():
 def patch_time(
         patch_datetime_now, patch_localzone_utc, patch_database_isinstance
 ) -> dt.datetime:
-    return patch_datetime_now(dt.datetime(2020, 2, 14, 0, 0))
+    return patch_datetime_now(dt.datetime(2020, 2, 13, 23, 45))
 
 
 @pytest.fixture()
@@ -137,15 +137,21 @@ def user_factory(add_user_to_guild, database, make_user, new_id):
 class TestBirthdays:
 
     async def test_basic(
-            self, make_channel, make_guild, patch_asyncio_sleep,
-            run_daily_loop_once, user_factory
+            self, add_user_to_guild, bot, database, make_channel, make_guild,
+            patch_asyncio_sleep, patch_time, run_daily_loop_once, user_factory
     ):
         guild = make_guild()
         chan = make_channel(guild)
-        uid = await user_factory(
-            guild=guild, birthday=dt.date(2000, 2, 14),
+        user = await user_factory(
+            guild=guild,
+            birthday=dt.date(2000, 2, 14),
             timezone=pytz.timezone('UTC')
         )
+        add_user_to_guild(guild.id, bot.user.id, 'Bot')
+        await database.set_guild_birthday_channel(guild.id, chan.id)
         await run_daily_loop_once()
-        pass
-
+        delta = (dt.datetime(2020, 2, 14, 0, 0) - patch_time).total_seconds()
+        patch_asyncio_sleep.assert_called_with(delta)
+        chan.send.assert_called_once()
+        msg = chan.send.call_args.args[0]
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
