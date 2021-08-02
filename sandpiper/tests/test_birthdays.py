@@ -110,11 +110,13 @@ def user_factory(add_user_to_guild, database, make_user, new_id):
             p_birthday: PrivacyType = PrivacyType.PUBLIC,
             p_age: PrivacyType = PrivacyType.PUBLIC,
             p_timezone: PrivacyType = PrivacyType.PUBLIC,
-    ) -> int:
+    ) -> discord.User:
         uid = new_id()
 
-        make_user(uid)
+        user = make_user(uid)
         if guild is not None:
+            if display_name is None:
+                display_name = "Some member"
             add_user_to_guild(guild.id, uid, display_name)
 
         await database.create_user(uid)
@@ -128,7 +130,7 @@ def user_factory(add_user_to_guild, database, make_user, new_id):
         await database.set_privacy_age(uid, p_age)
         await database.set_privacy_timezone(uid, p_timezone)
 
-        return uid
+        return user
 
     return f
 
