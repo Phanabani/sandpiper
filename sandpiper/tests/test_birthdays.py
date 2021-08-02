@@ -88,7 +88,10 @@ def patch_time(
 def run_daily_loop_once(birthdays_cog):
     async def f():
         birthdays_cog.daily_loop.start()
+        # Wait for the birthday scheduling task to finish
         await birthdays_cog.daily_loop.get_task()
+        # Wait for the birthday sending task to finish
+        await asyncio.gather(*birthdays_cog.tasks.values())
     return f
 
 
