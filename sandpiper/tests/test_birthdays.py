@@ -61,7 +61,6 @@ def patch_asyncio_sleep(asyncio_sleep):
         if time == 0:
             # This is used to skip the current loop
             await asyncio_sleep(0)
-        print(f"Would've slept {time}ms")
 
     with mock.patch('asyncio.sleep') as mock_sleep:
         mock_sleep.side_effect = sleep
