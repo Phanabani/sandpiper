@@ -1,4 +1,5 @@
 import datetime as dt
+import functools
 import logging
 from typing import Optional
 import unittest.mock as mock
@@ -251,13 +252,19 @@ async def bot(
     # Patch in some mocks for bot attributes that tests may need to work
     # with (otherwise they're unsettable)
     for attr in ('users', 'guilds'):
-        patcher = mock.patch(f"discord.ext.commands.Bot.{attr}")
-        patcher.start()
-        patchers.append(patcher)
+        p = mock.patch(f"discord.ext.commands.Bot.{attr}")
+        patchers.append(p)
+        p.start()
 
     # Create a dummy bot that will never actually connect but will help
     # with invocation
     bot = commands.Bot(command_prefix='')
+
+    @functools.wraps(mock.patch.object)
+    def patch(attr, *, target=bot, **kwargs):
+        p = mock.patch.object(target, attr, **kwargs)
+        patchers.append(p)
+        return p.start()
 
     # I don't need the extreme verbosity of this right now, but for some reason
     # when I set it to False, it shows errors that don't get shown if the
@@ -267,42 +274,32 @@ async def bot(
     # This function checks if message author is the self bot and skips
     # context creation (meaning we won't get command invocation), so
     # we will bypass it
-    patcher = mock.patch.object(bot, '_skip_check', return_value=False)
-    patcher.start()
-    patchers.append(patcher)
+    patch('_skip_check', return_value=False)
 
     # This connection (discord.state.ConnectionState) object has a `user`
     # field which is accessed by the client's `user` property. The
     # _skip_check function is called with `client.user.id` which doesn't
     # exist (since we aren't connecting) and raises an AttributeError, so
     # we need to patch it in.
-    patcher = mock.patch.object(bot, '_connection')
-    connection_mock = patcher.start()
+    connection_mock = patch('_connection')
     connection_mock.user.id = new_id()
-    patchers.append(patcher)
 
-    patcher = mock.patch.object(bot, 'get_user')
-    get_user = patcher.start()
+    get_user = patch('get_user')
     get_user.side_effect = lambda id: users_map.get(id, None)
-    patchers.append(patcher)
 
-    patcher = mock.patch.object(bot, 'get_channel')
-    get_channel = patcher.start()
+    get_channel = patch('get_channel')
     get_channel.side_effect = lambda id: channels_map.get(id, None)
-    patchers.append(patcher)
 
-    patcher = mock.patch.object(bot, 'get_guild')
-    get_guild = patcher.start()
+    get_guild = patch('get_guild')
     get_guild.side_effect = lambda id: guilds_map.get(id, None)
-    patchers.append(patcher)
 
     bot.guilds = guilds
     bot.users = users
 
     yield bot
 
-    for patcher in patchers:
-        patcher.stop()
+    for p in patchers:
+        p.stop()
 
 
 # endregion
