@@ -8,7 +8,6 @@ from discord.ext import commands
 import pytest
 import pytz
 
-from .helpers.discord import *
 from .helpers.misc import *
 from .helpers.mocking import *
 from sandpiper.birthdays import Birthdays
@@ -46,26 +45,15 @@ def bot(bot, database) -> commands.Bot:
 
 
 @pytest.fixture()
-def hook_send_birthday_message(birthdays_cog, patch_datetime_now):
-    patchers = []
+async def main_channel(database, main_guild, make_channel):
+    channel = make_channel(main_guild, name='the-birthday-channel')
+    await database.set_guild_birthday_channel(main_guild.id, channel.id)
+    yield channel
 
-    def f(new_datetime: dt.datetime):
-        orig_fn = birthdays_cog.send_birthday_message
 
-        async def side_fx(*args, **kwargs):
-            patch_datetime_now(new_datetime)
-            await orig_fn(*args, **kwargs)
-
-        p = mock.patch.object(
-            birthdays_cog, 'send_birthday_message', side_effect=side_fx
-        )
-        patchers.append(p)
-        p.start()
-
-    yield f
-
-    for p in patchers:
-        p.stop()
+@pytest.fixture()
+def main_guild(make_guild):
+    return make_guild(name='Main Guild')
 
 
 @pytest.fixture()
@@ -99,11 +87,78 @@ def patch_database_isinstance():
         yield
 
 
+@pytest.fixture()
+def patch_send_birthday_message_hook(
+        birthdays_cog, patch_asyncio_sleep, patch_datetime_now
+):
+    """
+    Adds a hook to Birthdays.send_birthday_message. When it is called, the mock
+    datetime.now will be changed to a different datetime to simulate sleeping.
+    """
+    patchers = []
+
+    def f(new_datetime: dt.datetime):
+        # Save a reference to the original method
+        orig_fn = birthdays_cog.send_birthday_message
+
+        async def side_effect(*args, **kwargs):
+            """
+            Change the datetime.now, reset the asyncio.sleep mock (to make
+            testing args more reliable), and call the original method
+            """
+            patch_datetime_now(new_datetime)
+            patch_asyncio_sleep.reset_mock()
+            await orig_fn(*args, **kwargs)
+
+        p = mock.patch.object(
+            birthdays_cog, 'send_birthday_message', side_effect=side_effect
+        )
+        patchers.append(p)
+        p.start()
+
+    yield f
+
+    for p in patchers:
+        p.stop()
+
+
 @pytest.fixture(autouse=True)
 def patch_time(
-        patch_datetime_now, patch_localzone_utc, patch_database_isinstance
+        patch_datetime, patch_localzone_utc, patch_database_isinstance
 ) -> dt.datetime:
-    return patch_datetime_now(dt.datetime(2020, 2, 13, 23, 45))
+    pass
+
+
+@pytest.fixture()
+def run_birthdays_cog(
+        add_user_to_guild, bot, main_channel, main_guild,
+        patch_asyncio_sleep, patch_datetime_now,
+        patch_send_birthday_message_hook, run_daily_loop_once
+):
+    async def f(
+            user: discord.User, birthday: dt.date,
+            now_when_scheduling: dt.datetime, now_when_sending: dt.datetime
+    ) -> str:
+        # Add bot to main_guild
+        add_user_to_guild(main_guild.id, bot.user.id, 'Bot')
+        # Set datetime.now before scheduling
+        patch_datetime_now(now_when_scheduling)
+        # Add hook to change datetime.now when the message is about to be
+        # sent
+        patch_send_birthday_message_hook(now_when_sending)
+
+        await run_daily_loop_once()
+
+        # Assert send_birthday_message slept until the birthday midnight
+        time_delta = (now_when_sending - now_when_scheduling).total_seconds()
+        patch_asyncio_sleep.assert_called_with(time_delta)
+
+        # Ensure a message was sent to main_channel and return the message
+        # for further assertions
+        main_channel.send.assert_called_once()
+        return main_channel.send.call_args.args[0]
+
+    return f
 
 
 @pytest.fixture()
@@ -159,25 +214,16 @@ def user_factory(add_user_to_guild, database, make_user, new_id):
 
 class TestBirthdays:
 
-    async def test_basic(
-            self, add_user_to_guild, bot, database, make_channel, make_guild,
-            patch_asyncio_sleep, patch_time, run_daily_loop_once, user_factory,
-            hook_send_birthday_message
-    ):
-        guild = make_guild()
-        chan = make_channel(guild)
+    async def test_basic(self, main_guild, run_birthdays_cog, user_factory):
+        bday = dt.date(2000, 2, 14)
         user = await user_factory(
-            guild=guild,
-            birthday=dt.date(2000, 2, 14),
+            guild=main_guild,
+            birthday=bday,
             timezone=pytz.timezone('UTC')
         )
-        add_user_to_guild(guild.id, bot.user.id, 'Bot')
-        await database.set_guild_birthday_channel(guild.id, chan.id)
-        hook_send_birthday_message(dt.datetime(2020, 2, 14, 0, 0))
-
-        delta = (dt.datetime(2020, 2, 14, 0, 0) - patch_time).total_seconds()
-        await run_daily_loop_once()
-        patch_asyncio_sleep.assert_called_with(delta)
-        chan.send.assert_called_once()
-        msg = chan.send.call_args.args[0]
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=dt.datetime(2020, 2, 13, 23, 45),
+            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+        )
         assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
