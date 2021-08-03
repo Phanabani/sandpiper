@@ -63,10 +63,10 @@ def make_user(bot, guilds, new_id, users, users_map):
         if discriminator is None:
             discriminator = id_ % 10000
 
-        user = MagicMock_(
-            spec=discord.User, id=id_, name=name, discriminator=discriminator,
-            **kwargs
+        user = mock.create_autospec(
+            discord.User, id=id_, discriminator=discriminator, **kwargs
         )
+        user.name = name
 
         def get_mutual_guilds():
             mutual_guilds = []
@@ -124,9 +124,8 @@ def make_channel(new_id, channels, channels_map):
         if name is None:
             name = 'a-channel'
 
-        channel = MagicMock_(
-            spec=discord.TextChannel, id=id_, name=name, **kwargs
-        )
+        channel = mock.create_autospec(discord.TextChannel, id=id_, **kwargs)
+        channel.name = name
 
         # Add the channel to the guild
         channel.guild = guild
@@ -174,7 +173,8 @@ def make_guild(new_id, guilds, guilds_map):
         if name is None:
             name = 'A_Guild'
 
-        guild = MagicMock_(spec=discord.Guild, id=id_, name=name, **kwargs)
+        guild = mock.create_autospec(discord.Guild, id=id_, **kwargs)
+        guild.name = name
 
         guild.members = []
         guild._members_map = members_map = {}
