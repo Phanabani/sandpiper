@@ -46,6 +46,29 @@ def bot(bot, database) -> commands.Bot:
 
 
 @pytest.fixture()
+def hook_send_birthday_message(birthdays_cog, patch_datetime_now):
+    patchers = []
+
+    def f(new_datetime: dt.datetime):
+        orig_fn = birthdays_cog.send_birthday_message
+
+        async def side_fx(*args, **kwargs):
+            patch_datetime_now(new_datetime)
+            await orig_fn(*args, **kwargs)
+
+        p = mock.patch.object(
+            birthdays_cog, 'send_birthday_message', side_effect=side_fx
+        )
+        patchers.append(p)
+        p.start()
+
+    yield f
+
+    for p in patchers:
+        p.stop()
+
+
+@pytest.fixture()
 def message_templates_no_age() -> list[str]:
     return ["name={name} they={they} ping={ping}"]
 
@@ -138,7 +161,8 @@ class TestBirthdays:
 
     async def test_basic(
             self, add_user_to_guild, bot, database, make_channel, make_guild,
-            patch_asyncio_sleep, patch_time, run_daily_loop_once, user_factory
+            patch_asyncio_sleep, patch_time, run_daily_loop_once, user_factory,
+            hook_send_birthday_message
     ):
         guild = make_guild()
         chan = make_channel(guild)
@@ -149,8 +173,10 @@ class TestBirthdays:
         )
         add_user_to_guild(guild.id, bot.user.id, 'Bot')
         await database.set_guild_birthday_channel(guild.id, chan.id)
-        await run_daily_loop_once()
+        hook_send_birthday_message(dt.datetime(2020, 2, 14, 0, 0))
+
         delta = (dt.datetime(2020, 2, 14, 0, 0) - patch_time).total_seconds()
+        await run_daily_loop_once()
         patch_asyncio_sleep.assert_called_with(delta)
         chan.send.assert_called_once()
         msg = chan.send.call_args.args[0]
