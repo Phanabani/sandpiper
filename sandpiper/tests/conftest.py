@@ -1,7 +1,7 @@
 import datetime as dt
 import functools
 import logging
-from typing import Optional
+from typing import Optional, Type, TypeVar
 import unittest.mock as mock
 
 import discord
@@ -36,56 +36,92 @@ def users_map() -> dict[int, discord.User]:
     return {}
 
 
+T_BaseUserType = TypeVar('T_BaseUserType', bound=Type[discord.user.BaseUser])
+
+
+def __create_mock_user(
+        users: list[discord.User], users_map: dict[int, discord.User],
+        guilds: list[discord.Guild], client_user_id: int,
+        mock_spec: T_BaseUserType,
+        id: int, name: Optional[str] = None,
+        discriminator: Optional[int] = None,
+        **kwargs
+) -> T_BaseUserType:
+    """
+    Create a mock user and add it to the mapping structures.
+
+    :param users: a list of users to append this one to
+    :param users_map: a dict of id->user to add this one to
+    :param guilds: a list of guilds to iterate over for mutual_guilds
+    :param client_user_id: the ID of the client for use in mutual_guilds
+        matching
+    :param mock_spec: the Discord user type to mock
+    :param id: the ID for this user. Must be unique for each test.
+    :param name: an optional username for this user
+    :param discriminator: an optional discriminator for this user. Defaults
+        to the last 4 digits of the ID.
+    :param mock_spec: the class to spec for mock.create_autospec
+    :param kwargs: extra kwargs to add to the user
+    :return: the new User mock
+    """
+
+    if id is None:
+        raise ValueError("id must be specified")
+    if id in users_map:
+        raise ValueError(f"User with id={id} already exists")
+    if name is None:
+        name = 'A_User'
+    if discriminator is None:
+        discriminator = id % 10000
+
+    user = mock.create_autospec(
+        mock_spec, id=id, discriminator=discriminator, **kwargs
+    )
+    user.name = name
+
+    def get_mutual_guilds():
+        mutual_guilds = []
+        for guild in guilds:
+            if (guild.get_member(client_user_id) is not None
+                    and guild.get_member(id) is not None):
+                # Both the bot and the user are in this guild
+                mutual_guilds.append(guild)
+        return mutual_guilds
+
+    mutual_guilds = mock.PropertyMock()
+    mutual_guilds.side_effect = get_mutual_guilds
+    # This is how property mocks must be attached:
+    # https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
+    type(user).mutual_guilds = mutual_guilds
+
+    users.append(user)
+    users_map[id] = user
+    return user
+
+
 @pytest.fixture()
 def make_user(bot, guilds, new_id, users, users_map):
     def f(
-            id_: Optional[int] = None, name: Optional[str] = None,
+            id: Optional[int] = None, name: Optional[str] = None,
             discriminator: Optional[int] = None, **kwargs
-    ) -> discord.User:
+    ) -> T_BaseUserType:
         """
         Add a mock user to the client. You can access users through the list
         `self.bot.users` or the id->user dict `self.bot.users_map`.
 
-        :param id_: the ID for this user. Must be unique for each test.
+        :param id: the ID for this user. Must be unique for each test.
         :param name: an optional username for this user
         :param discriminator: an optional discriminator for this user. Defaults
             to the last 4 digits of the ID.
         :param kwargs: extra kwargs to add to the user
         :return: the new User mock
         """
-
-        if id_ is None:
-            id_ = new_id()
-        if id_ in users_map:
-            raise ValueError(f"User with id={id_} already exists")
-        if name is None:
-            name = 'A_User'
-        if discriminator is None:
-            discriminator = id_ % 10000
-
-        user = mock.create_autospec(
-            discord.User, id=id_, discriminator=discriminator, **kwargs
+        if id is None:
+            id = new_id()
+        return __create_mock_user(
+            users, users_map, guilds, bot.user.id, discord.User,
+            id=id, name=name, discriminator=discriminator
         )
-        user.name = name
-
-        def get_mutual_guilds():
-            mutual_guilds = []
-            for guild in guilds:
-                if (guild.get_member(bot.user.id) is not None
-                        and guild.get_member(id_) is not None):
-                    # Both the bot and the user are in this guild
-                    mutual_guilds.append(guild)
-            return mutual_guilds
-
-        mutual_guilds = mock.PropertyMock()
-        mutual_guilds.side_effect = get_mutual_guilds
-        # This is how property mocks must be attached:
-        # https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
-        type(user).mutual_guilds = mutual_guilds
-
-        users.append(user)
-        users_map[id_] = user
-        return user
 
     return f
 
@@ -282,7 +318,11 @@ async def bot(
     # exist (since we aren't connecting) and raises an AttributeError, so
     # we need to patch it in.
     connection_mock = patch('_connection')
-    connection_mock.user.id = new_id()
+    client_uid = new_id()
+    connection_mock.user = __create_mock_user(
+        users, users_map, guilds, client_uid, discord.ClientUser,
+        id=client_uid, name='Bot'
+    )
 
     get_user = patch('get_user')
     get_user.side_effect = lambda id: users_map.get(id, None)
