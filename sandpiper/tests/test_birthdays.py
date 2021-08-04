@@ -283,3 +283,128 @@ class TestBirthdayInFuture:
             now_when_sending=dt.datetime(2020, 2, 14, 0, 0),
             should_send=False
         )
+
+
+class TestBirthdayInPast:
+
+    async def test_1_minute_UTC(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        now = dt.datetime(2020, 2, 14, 0, 1)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('UTC')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=now,
+            now_when_sending=now,
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_23_hours_59_minutes_UTC(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        now = dt.datetime(2020, 2, 14, 23, 59)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('UTC')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=now,
+            now_when_sending=now,
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_24_hours_UTC(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        now = dt.datetime(2020, 2, 14, 23, 59)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('UTC')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=now,
+            now_when_sending=now,
+            should_send=False
+        )
+
+    async def test_23_hours_59_minutes_new_york(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        # 5 hours behind
+        now = dt.datetime(2020, 2, 15, 4, 59)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('America/New_York')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=now,
+            now_when_sending=now,
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_24_hours_new_york(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        # 5 hours behind
+        now = dt.datetime(2020, 2, 15, 5, 0)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('America/New_York')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=now,
+            now_when_sending=now,
+            should_send=False
+        )
+
+
+class TestTimezones:
+
+    async def test_new_york(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('America/New_York')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
+            now_when_sending=dt.datetime(2020, 2, 14, 5, 0)
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_dubai(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('Asia/Dubai')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
+            now_when_sending=dt.datetime(2020, 2, 13, 21, 0)
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
