@@ -137,8 +137,9 @@ def run_birthdays_cog(
 ):
     async def f(
             user: discord.User, birthday: dt.date,
-            now_when_scheduling: dt.datetime, now_when_sending: dt.datetime
-    ) -> str:
+            now_when_scheduling: dt.datetime, now_when_sending: dt.datetime,
+            should_send = True
+    ) -> Optional[str]:
         # Add bot to main_guild
         add_user_to_guild(main_guild.id, bot.user.id, 'Bot')
         # Set datetime.now before scheduling
@@ -149,14 +150,19 @@ def run_birthdays_cog(
 
         await run_daily_loop_once()
 
-        # Assert send_birthday_message slept until the birthday midnight
-        time_delta = (now_when_sending - now_when_scheduling).total_seconds()
-        patch_asyncio_sleep.assert_called_with(time_delta)
+        if should_send:
+            # Ensure a message was sent to main_channel
+            main_channel.send.assert_called_once()
 
-        # Ensure a message was sent to main_channel and return the message
-        # for further assertions
-        main_channel.send.assert_called_once()
-        return main_channel.send.call_args.args[0]
+            # Assert send_birthday_message slept until the birthday midnight
+            time_delta = (now_when_sending - now_when_scheduling).total_seconds()
+            patch_asyncio_sleep.assert_called_with(time_delta)
+
+            # Return the message for further assertions
+            return main_channel.send.call_args.args[0]
+
+        main_channel.send.assert_not_called()
+        return None
 
     return f
 
@@ -212,9 +218,27 @@ def user_factory(add_user_to_guild, database, make_user, new_id):
     return f
 
 
-class TestBirthdays:
+class TestBirthdayInFuture:
 
-    async def test_basic(self, main_guild, run_birthdays_cog, user_factory):
+    async def test_0_minutes(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('UTC')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
+            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_15_minutes(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
         bday = dt.date(2000, 2, 14)
         user = await user_factory(
             guild=main_guild,
@@ -227,3 +251,35 @@ class TestBirthdays:
             now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
         )
         assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_23_hours_59_minutes(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('UTC')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=dt.datetime(2020, 2, 13, 0, 1),
+            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+        )
+        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+
+    async def test_24_hours_should_not_send(
+            self, main_guild, run_birthdays_cog, user_factory
+    ):
+        bday = dt.date(2000, 2, 14)
+        user = await user_factory(
+            guild=main_guild,
+            birthday=bday,
+            timezone=pytz.timezone('UTC')
+        )
+        msg = await run_birthdays_cog(
+            user, bday,
+            now_when_scheduling=dt.datetime(2020, 2, 13, 0, 0),
+            now_when_sending=dt.datetime(2020, 2, 14, 0, 0),
+            should_send=False
+        )
