@@ -42,6 +42,4 @@ class User(Base):
         server_default=sa.text(str(DEFAULT_PRIVACY))
     )
 
-    birthday_notification_sent = Column(
-        sa.Boolean, nullable=False, server_default=sa.text('false')
-    )
+    last_birthday_notification = Column(sa.DateTime, nullable=True)
