@@ -65,7 +65,6 @@ class Birthdays(commands.Cog):
         self.message_templates_no_age = message_templates_no_age
         self.message_templates_with_age = message_templates_with_age
         self.tasks: dict[int, asyncio.Task] = {}
-        self.first_run = True
         self.daily_loop.start()
 
     def _create_birthday_task(self, user_id: int, midnight_delta: dt.timedelta):
@@ -103,16 +102,7 @@ class Birthdays(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
-        # If this is the first run of the loop, it's possible some birthday
-        # notifs had been sent in a past Sandpiper runtime, so we will skip
-        # them in schedule_todays_birthdays. Otherwise, we can reset all
-        # birthday notif sent flags to False since it's a new day.
-        if not self.first_run:
-            db = await self._get_database()
-            await db.reset_all_birthday_notification_sent()
-
         await self.schedule_todays_birthdays()
-        self.first_run = False
 
     @daily_loop.error
     async def daily_loop_error(self, exc: Exception):
@@ -128,15 +118,14 @@ class Birthdays(commands.Cog):
         now = utc_now()
         today = now.date()
 
-        # Get all birthdays occurring today or tomorrow which haven't been
-        # marked as sent yet and schedule them (those occurring tomorrow will
-        # be filtered out)
-        # The marked as sent thing is used in case Sandpiper restarts mid-day
-        # so she can continue sending bday notifs properly without any repeats
+        # Get all birthdays occurring yesterday, today, or tomorrow. This is
+        # necessary bc today's date will stretch across at least 2 days
+        # (relative to UTC, ahead or behind) when every timezone is taken into
+        # account
         scheduled_count = 0
         birthdays_today_tomorrow = await db.get_birthdays_range(
-            today, today + dt.timedelta(days=1),
-            only_if_notification_not_sent=True
+            today - dt.timedelta(days=1), today + dt.timedelta(days=1),
+            max_last_notification_time=now - dt.timedelta(hours=24)
         )
         for user_id, birthday in birthdays_today_tomorrow:
             if await self.schedule_birthday(user_id, birthday, now=now):
@@ -180,18 +169,27 @@ class Birthdays(commands.Cog):
 
         # Determine midnight in this person's timezone so we can
         # wish them happy birthday at the start of their day
-        midnight_local: dt.datetime = timezone.localize(
-            dt.datetime(today.year, birthday.month, birthday.day)
-        )
+        birthday_this_year = dt.datetime(today.year, birthday.month, birthday.day)
+        midnight_local: dt.datetime = timezone.localize(birthday_this_year)
         midnight_utc = midnight_local.astimezone(pytz.UTC)
         midnight_delta = midnight_utc - now
-        # Only schedule the birthday task if their localized midnight is
-        # within 24 hours from now
+
+        # Schedule the birthday task if their localized midnight is within the
+        # next 24 hours
         # TODO I'm worried that it could be possible we lose a birthday
         #   in a race condition here...
         if dt.timedelta(0) <= midnight_delta < dt.timedelta(hours=24):
             self._create_birthday_task(user_id, midnight_delta)
             return True
+
+        # Otherwise, if we missed their midnight, but it's still their birthday ,
+        # we can send immediately (negative delta will not sleep)
+        now_local: dt.datetime = now.astimezone(timezone)
+        if (midnight_delta < dt.timedelta(0)
+                and now_local.date() == birthday_this_year.date()):
+            self._create_birthday_task(user_id, midnight_delta)
+            return True
+
         return False
 
     async def send_birthday_message(self, user_id: int, delta: dt.timedelta):
@@ -267,7 +265,8 @@ class Birthdays(commands.Cog):
             )
             await bday_channel.send(bday_msg)
 
-        await db.set_birthday_notification_sent(user_id, True)
+        # Store the time we sent the notification
+        await db.set_last_birthday_notification(user_id, dt.datetime.now())
 
     async def get_past_upcoming_birthdays(
             self, past_birthdays_day_range: int = 7,
