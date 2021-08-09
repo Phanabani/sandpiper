@@ -333,26 +333,29 @@ class TestGetBirthdaysRange:
     def user_factory(self, database, new_id):
         async def f(
                 birthday: Optional[dt.date],
+                last_notif: dt.datetime = None,
+                *,
                 privacy: PrivacyType = PrivacyType.PUBLIC
-        ) -> int:
+        ) -> tuple[int, dt.date]:
             uid = new_id()
             await database.create_user(uid)
             await database.set_birthday(uid, birthday)
             await database.set_privacy_birthday(uid, privacy)
-            return uid
+            if last_notif is not None:
+                await database.set_last_birthday_notification(uid, last_notif)
+            return uid, birthday
         return f
 
     @pytest.fixture()
     async def birthdays(self, user_factory) -> list[tuple[int, dt.date]]:
-        dates = (
-            dt.date(2000, 3, 10),
-            dt.date(1992, 3, 15),
-            dt.date(2004, 4, 5),
-            dt.date(2000, 4, 30),
-            dt.date(1999, 5, 2),
-            dt.date(1998, 5, 27)
+        yield (
+            await user_factory(dt.date(2000, 3, 10)),
+            await user_factory(dt.date(1992, 3, 15)),
+            await user_factory(dt.date(2004, 4, 5)),
+            await user_factory(dt.date(2000, 4, 30)),
+            await user_factory(dt.date(1999, 5, 2)),
+            await user_factory(dt.date(1998, 5, 27))
         )
-        yield [(await user_factory(bday), bday) for bday in dates]
 
     async def test_no_results(self, database, birthdays):
         result = await database.get_birthdays_range(
@@ -420,6 +423,78 @@ class TestGetBirthdaysRange:
             dt.date(2021, 3, 1), dt.date(2021, 3, 31)
         )
         assert_count_equal(result, [birthdays[0], birthdays[1]])
+
+    @pytest.fixture
+    async def birthdays_with_last_notif(self, user_factory):
+        yield [
+            # UTC
+            await user_factory(
+                dt.date(2000, 1, 1), dt.datetime(2021, 1, 1, 0, 0)),
+            # UTC no last notif
+            await user_factory(dt.date(2000, 1, 2), None),
+            # New York (UTC-5)
+            await user_factory(
+                dt.date(2001, 2, 2), dt.datetime(2021, 2, 2, 5, 0)),
+            # Dubai (UTC+4)
+            await user_factory(
+                dt.date(2002, 2, 2), dt.datetime(2021, 2, 1, 20, 0))
+        ]
+
+    async def test_last_birthday_notification_basic(self, database, user_factory):
+        birthdays = [
+            await user_factory(dt.date(2000, 2, 14), dt.datetime(2020, 2, 14, 0, 0)),
+            await user_factory(dt.date(2000, 2, 14), dt.datetime(2021, 2, 14, 0, 0)),
+            await user_factory(dt.date(2000, 2, 14), dt.datetime(2021, 2, 14, 11, 0)),
+            await user_factory(dt.date(2000, 2, 15), dt.datetime(2021, 2, 15, 0, 0))
+        ]
+        start = dt.date(2021, 1, 1)
+        end = dt.date(2021, 12, 31)
+        # Sanity check -- should return all
+        assert_count_equal(
+            await database.get_birthdays_range(start, end), birthdays
+        )
+        # Main assertion
+        result = await database.get_birthdays_range(
+            start, end,
+            max_last_notification_time=dt.datetime(2021, 2, 14, 12, 0)
+        )
+        assert_count_equal(result, birthdays[:3])
+
+    async def test_last_birthday_notification_none(self, database, user_factory):
+        birthdays = [
+            await user_factory(dt.date(2000, 2, 14), None),
+            await user_factory(dt.date(2000, 2, 14), dt.datetime(2021, 2, 14, 0, 0)),
+            await user_factory(dt.date(2000, 2, 15), dt.datetime(2021, 2, 15, 0, 0))
+        ]
+        start = dt.date(2021, 1, 1)
+        end = dt.date(2021, 12, 31)
+        # Sanity check -- should return all
+        assert_count_equal(
+            await database.get_birthdays_range(start, end), birthdays
+        )
+        # Main assertion
+        result = await database.get_birthdays_range(
+            start, end,
+            max_last_notification_time=dt.datetime(2021, 2, 14, 12, 0)
+        )
+        assert_count_equal(result, birthdays[:2])
+
+    async def test_last_birthday_notification_inclusive(self, database, user_factory):
+        birthdays = [
+            await user_factory(dt.date(2000, 2, 14), dt.datetime(2021, 2, 14, 0, 0))
+        ]
+        start = dt.date(2021, 1, 1)
+        end = dt.date(2021, 12, 31)
+        # Sanity check -- should return all
+        assert_count_equal(
+            await database.get_birthdays_range(start, end), birthdays
+        )
+        # Main assertion
+        result = await database.get_birthdays_range(
+            start, end,
+            max_last_notification_time=dt.datetime(2021, 2, 14, 0, 0)
+        )
+        assert_count_equal(result, birthdays)
 
 
 class TestGetAllTimezones:

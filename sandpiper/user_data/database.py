@@ -153,7 +153,7 @@ class Database(metaclass=ABCMeta):
     @abstractmethod
     async def get_birthdays_range(
             self, start: dt.date, end: dt.date,
-            only_if_notification_not_sent: bool = False
+            max_last_notification_time: Optional[dt.date] = None
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
         """
         Get a list of (user_id, birthday) for all users with birthdays between
@@ -163,9 +163,12 @@ class Database(metaclass=ABCMeta):
 
         :param start: the earliest date to filter for birthdays
         :param end: the latest date to filter for birthdays
-        :param only_if_notification_not_sent: only select data for users with
-            birthday_notification_sent == False. This is to make birthday
-            notifications atomic.
+        :param max_last_notification_time: if not None, only select data for
+            users whose last birthday notification was at or before this
+            datetime. Set to 24 hours ago to make birthday notifications atomic
+            (sent once and only once). It can also be set to an earlier date to
+            throttle birthday notification abuse (someone consistently updating
+            their birthday to send a notification repeatedly).
         :return: a list of (user_id, birthday)
         """
         pass

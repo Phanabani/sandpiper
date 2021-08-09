@@ -374,7 +374,7 @@ class DatabaseSQLite(Database):
 
     async def get_birthdays_range(
             self, start: dt.date, end: dt.date,
-            only_if_notification_not_sent: bool = False
+            max_last_notification_time: Optional[dt.date] = None
     ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
         logger.info(
             f"Getting all birthdays between {start.day}-{start.month} and "
@@ -389,8 +389,11 @@ class DatabaseSQLite(Database):
                 .where(User.birthday.isnot(None))
                 .where(User.privacy_birthday == PrivacyType.PUBLIC)
             )
-            if only_if_notification_not_sent:
-                stmt = stmt.where(User.birthday_notification_sent.is_(False))
+            if max_last_notification_time is not None:
+                stmt = stmt.where(
+                    User.last_birthday_notification.is_(None)
+                    | (User.last_birthday_notification <= max_last_notification_time)
+                )
             birthdays_unfiltered = (await session.execute(stmt)).all()
 
         return list(filter(
