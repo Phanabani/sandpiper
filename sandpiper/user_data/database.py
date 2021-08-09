@@ -242,18 +242,13 @@ class Database(metaclass=ABCMeta):
     # region Other user stuff
 
     @abstractmethod
-    async def get_birthday_notification_sent(self, user_id: int) -> bool:
+    async def get_last_birthday_notification(self, user_id: int) -> dt.datetime:
         pass
 
     @abstractmethod
-    async def set_birthday_notification_sent(
-            self, user_id: int, new_value: bool
+    async def set_last_birthday_notification(
+            self, user_id: int, new_date: dt.datetime
     ):
-        pass
-
-    @abstractmethod
-    async def reset_all_birthday_notification_sent(self):
-        """Reset birthday_notification_sent to false for all users"""
         pass
 
     # endregion

@@ -444,24 +444,15 @@ class DatabaseSQLite(Database):
     # endregion
     # region Other user stuff
 
-    async def get_birthday_notification_sent(self, user_id: int) -> bool:
-        return await self._get_user_field('birthday_notification_sent', user_id)
+    async def get_last_birthday_notification(self, user_id: int) -> dt.datetime:
+        return await self._get_user_field('last_birthday_notification', user_id)
 
-    async def set_birthday_notification_sent(
-            self, user_id: int, new_value: bool
+    async def set_last_birthday_notification(
+            self, user_id: int, new_date: dt.datetime
     ):
         await self._set_user_field(
-            'birthday_notification_sent', user_id, new_value
+            'last_birthday_notification', user_id, new_date
         )
-
-    async def reset_all_birthday_notification_sent(self):
-        logger.info(f"Resetting all birthday_notification_sent to false")
-        async with self._session_maker() as session, session.begin():
-            await session.execute(
-                sa.update(User)
-                .where(User.birthday_notification_sent.is_(True))
-                .values(birthday_notification_sent=False)
-            )
 
     # endregion
     # region Guilds
