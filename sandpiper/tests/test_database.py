@@ -414,7 +414,7 @@ class TestGetBirthdaysRange:
         )
         assert_count_equal(result, [birthdays[0]])
 
-    async def test_null_birthday(self, database, birthdays, user_factory):
+    async def test_none(self, database, birthdays, user_factory):
         await user_factory(None)
         result = await database.get_birthdays_range(
             dt.date(2021, 3, 1), dt.date(2021, 3, 31)
