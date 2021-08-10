@@ -138,7 +138,7 @@ def run_birthdays_cog(
     async def f(
             user: discord.User, birthday: dt.date,
             now_when_scheduling: dt.datetime, now_when_sending: dt.datetime,
-            should_send = True
+            should_send=True, tz: TimezoneType = pytz.utc
     ) -> Optional[str]:
         # Add bot to main_guild
         add_user_to_guild(main_guild.id, bot.user.id, 'Bot')
@@ -154,8 +154,21 @@ def run_birthdays_cog(
             # Ensure a message was sent to main_channel
             main_channel.send.assert_called_once()
 
-            # Assert send_birthday_message slept until the birthday midnight
-            time_delta = (now_when_sending - now_when_scheduling).total_seconds()
+            birthday_this_year = tz.localize(dt.datetime(
+                now_when_scheduling.year, birthday.month, birthday.day, 0, 0
+            ))
+            now_when_scheduling = pytz.utc.localize(now_when_scheduling)
+            now_when_sending = pytz.utc.localize(now_when_sending)
+
+            if birthday_this_year >= now_when_scheduling:
+                # Assert send_birthday_message slept until the birthday midnight
+                time_delta = (now_when_sending - now_when_scheduling)
+            else:
+                # Assert send_birthday_message slept a negative amount of time
+                # since the birthday midnight occurred before the scheduling
+                # time
+                time_delta = (birthday_this_year - now_when_scheduling)
+            time_delta = time_delta.total_seconds()
             patch_asyncio_sleep.assert_called_with(time_delta)
 
             # Return the message for further assertions
@@ -234,7 +247,9 @@ class TestBirthdayInFuture:
             now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
             now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_15_minutes(
             self, main_guild, run_birthdays_cog, user_factory
@@ -250,7 +265,9 @@ class TestBirthdayInFuture:
             now_when_scheduling=dt.datetime(2020, 2, 13, 23, 45),
             now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_23_hours_59_minutes(
             self, main_guild, run_birthdays_cog, user_factory
@@ -266,7 +283,9 @@ class TestBirthdayInFuture:
             now_when_scheduling=dt.datetime(2020, 2, 13, 0, 1),
             now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_24_hours_should_not_send(
             self, main_guild, run_birthdays_cog, user_factory
@@ -277,7 +296,7 @@ class TestBirthdayInFuture:
             birthday=bday,
             timezone=pytz.timezone('UTC')
         )
-        msg = await run_birthdays_cog(
+        await run_birthdays_cog(
             user, bday,
             now_when_scheduling=dt.datetime(2020, 2, 13, 0, 0),
             now_when_sending=dt.datetime(2020, 2, 14, 0, 0),
@@ -302,7 +321,9 @@ class TestBirthdayInPast:
             now_when_scheduling=now,
             now_when_sending=now,
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_23_hours_59_minutes_UTC(
             self, main_guild, run_birthdays_cog, user_factory
@@ -319,7 +340,9 @@ class TestBirthdayInPast:
             now_when_scheduling=now,
             now_when_sending=now,
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_24_hours_UTC(
             self, main_guild, run_birthdays_cog, user_factory
@@ -331,7 +354,7 @@ class TestBirthdayInPast:
             birthday=bday,
             timezone=pytz.timezone('UTC')
         )
-        msg = await run_birthdays_cog(
+        await run_birthdays_cog(
             user, bday,
             now_when_scheduling=now,
             now_when_sending=now,
@@ -342,36 +365,42 @@ class TestBirthdayInPast:
             self, main_guild, run_birthdays_cog, user_factory
     ):
         bday = dt.date(2000, 2, 14)
+        tz = pytz.timezone('America/New_York')
         # 5 hours behind
         now = dt.datetime(2020, 2, 15, 4, 59)
         user = await user_factory(
             guild=main_guild,
             birthday=bday,
-            timezone=pytz.timezone('America/New_York')
+            timezone=tz
         )
         msg = await run_birthdays_cog(
             user, bday,
             now_when_scheduling=now,
             now_when_sending=now,
+            tz=tz
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_24_hours_new_york(
             self, main_guild, run_birthdays_cog, user_factory
     ):
         bday = dt.date(2000, 2, 14)
+        tz = pytz.timezone('America/New_York')
         # 5 hours behind
         now = dt.datetime(2020, 2, 15, 5, 0)
         user = await user_factory(
             guild=main_guild,
             birthday=bday,
-            timezone=pytz.timezone('America/New_York')
+            timezone=tz
         )
-        msg = await run_birthdays_cog(
+        await run_birthdays_cog(
             user, bday,
             now_when_scheduling=now,
             now_when_sending=now,
-            should_send=False
+            should_send=False,
+            tz=tz
         )
 
 
@@ -381,30 +410,38 @@ class TestTimezones:
             self, main_guild, run_birthdays_cog, user_factory
     ):
         bday = dt.date(2000, 2, 14)
+        tz = pytz.timezone('America/New_York')
         user = await user_factory(
             guild=main_guild,
             birthday=bday,
-            timezone=pytz.timezone('America/New_York')
+            timezone=tz
         )
         msg = await run_birthdays_cog(
             user, bday,
             now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 5, 0)
+            now_when_sending=dt.datetime(2020, 2, 14, 5, 0),
+            tz=tz
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
 
     async def test_dubai(
             self, main_guild, run_birthdays_cog, user_factory
     ):
         bday = dt.date(2000, 2, 14)
+        tz = pytz.timezone('Asia/Dubai')
         user = await user_factory(
             guild=main_guild,
             birthday=bday,
-            timezone=pytz.timezone('Asia/Dubai')
+            timezone=tz
         )
         msg = await run_birthdays_cog(
             user, bday,
             now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 13, 21, 0)
+            now_when_sending=dt.datetime(2020, 2, 13, 21, 0),
+            tz=tz
         )
-        assert_in(msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>")
+        assert_in(
+            msg, "name=Some member", "they=they", "age=20", f"ping=<@{user.id}>"
+        )
