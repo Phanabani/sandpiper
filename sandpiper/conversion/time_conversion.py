@@ -1,4 +1,5 @@
-from collections import Iterable, defaultdict
+from collections import defaultdict
+from collections.abc import Iterable
 import datetime as dt
 import logging
 from typing import Optional, Union, cast

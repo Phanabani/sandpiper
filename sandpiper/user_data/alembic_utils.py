@@ -1,4 +1,4 @@
-from collections import Callable
+from collections.abc import Callable
 import logging
 from pathlib import Path
 from typing import Any
