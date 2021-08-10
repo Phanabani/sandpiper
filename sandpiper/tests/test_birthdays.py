@@ -348,7 +348,7 @@ class TestBirthdayInPast:
             self, main_guild, run_birthdays_cog, user_factory
     ):
         bday = dt.date(2000, 2, 14)
-        now = dt.datetime(2020, 2, 14, 23, 59)
+        now = dt.datetime(2020, 2, 15, 0, 0)
         user = await user_factory(
             guild=main_guild,
             birthday=bday,
