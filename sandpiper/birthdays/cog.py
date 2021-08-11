@@ -266,7 +266,7 @@ class Birthdays(commands.Cog):
             await bday_channel.send(bday_msg)
 
         # Store the time we sent the notification
-        await db.set_last_birthday_notification(user_id, dt.datetime.now())
+        await db.set_last_birthday_notification(user_id, utc_now())
 
     async def get_past_upcoming_birthdays(
             self, past_birthdays_day_range: int = 7,
