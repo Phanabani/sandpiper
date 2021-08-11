@@ -122,6 +122,10 @@ class Database(metaclass=ABCMeta):
         pass
 
     async def get_pronouns_parsed(self, user_id: int) -> list[Pronouns]:
+        """
+        Parse the user's stored pronouns and return a list of corresponding
+        Pronouns objects. The list may be empty.
+        """
         pronouns = await self.get_pronouns(user_id)
         if pronouns is None:
             return []
