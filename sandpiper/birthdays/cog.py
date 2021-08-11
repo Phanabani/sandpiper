@@ -182,7 +182,7 @@ class Birthdays(commands.Cog):
             self._create_birthday_task(user_id, midnight_delta)
             return True
 
-        # Otherwise, if we missed their midnight, but it's still their birthday ,
+        # Otherwise, if we missed their midnight but it's still their birthday,
         # we can send immediately (negative delta will not sleep)
         now_local: dt.datetime = now.astimezone(timezone)
         if (midnight_delta < dt.timedelta(0)
