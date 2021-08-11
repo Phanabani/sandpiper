@@ -165,13 +165,13 @@ class Birthdays(commands.Cog):
             timezone = await db.get_timezone(user_id)
         if timezone is None:
             # If the user's timezone is null, just use UTC
-            timezone = pytz.UTC
+            timezone = pytz.utc
 
         # Determine midnight in this person's timezone so we can
         # wish them happy birthday at the start of their day
         birthday_this_year = dt.datetime(today.year, birthday.month, birthday.day)
         midnight_local: dt.datetime = timezone.localize(birthday_this_year)
-        midnight_utc = midnight_local.astimezone(pytz.UTC)
+        midnight_utc = midnight_local.astimezone(pytz.utc)
         midnight_delta = midnight_utc - now
 
         # Schedule the birthday task if their localized midnight is within the
