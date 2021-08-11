@@ -503,7 +503,7 @@ class TestPrivacies:
     ):
         """Use they/them"""
         await database.set_pronouns(main_user.id, "She/her")
-        await database.set_pronouns(main_user.id, PrivacyType.PRIVATE)
+        await database.set_privacy_pronouns(main_user.id, PrivacyType.PRIVATE)
 
         msg = await run_birthdays_cog(
             main_user, birthday, birthday_midnight, birthday_midnight
@@ -516,7 +516,7 @@ class TestPrivacies:
     ):
         """Use their pronouns"""
         await database.set_pronouns(main_user.id, "She/her")
-        await database.set_pronouns(main_user.id, PrivacyType.PUBLIC)
+        await database.set_privacy_pronouns(main_user.id, PrivacyType.PUBLIC)
 
         msg = await run_birthdays_cog(
             main_user, birthday, birthday_midnight, birthday_midnight
