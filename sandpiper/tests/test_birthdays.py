@@ -449,193 +449,153 @@ class TestTimezones:
 
 class TestPrivacies:
 
+    @pytest.fixture()
+    def birthday(self):
+        return dt.date(2000, 2, 14)
+
+    @pytest.fixture()
+    def birthday_midnight(self, birthday):
+        return dt.datetime(2020, 2, 14, 0, 0)
+
+    @pytest.fixture()
+    async def main_user(self, birthday, main_guild, user_factory):
+        yield await user_factory(
+            guild=main_guild,
+            birthday=birthday,
+            timezone=pytz.utc,
+        )
+
     async def test_preferred_name_private(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_guild, main_user,
+            run_birthdays_cog
     ):
         """Use their server nickname"""
-        bday = dt.date(2000, 2, 14)
-        display_name = 'Display name'
-        user = await user_factory(
-            guild=main_guild,
-            display_name=display_name,
-            name='Preferred name',
-            birthday=bday,
-            timezone=pytz.utc,
-            p_name=PrivacyType.PRIVATE
-        )
+        display_name = "Display name"
+        preferred_name = "Preferred name"
+        await database.set_preferred_name(main_user.id, preferred_name)
+        await database.set_privacy_preferred_name(main_user.id, PrivacyType.PRIVATE)
+        main_guild.get_member(main_user.id).display_name = display_name
+
         msg = await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
         assert_in(msg, f"name={display_name}")
 
     async def test_preferred_name_public(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_guild, main_user,
+            run_birthdays_cog
     ):
         """Use their preferred name"""
-        bday = dt.date(2000, 2, 14)
-        preferred_name = 'Preferred name'
-        user = await user_factory(
-            guild=main_guild,
-            display_name='Display name',
-            name=preferred_name,
-            birthday=bday,
-            timezone=pytz.utc,
-            p_name=PrivacyType.PUBLIC
-        )
+        display_name = "Display name"
+        preferred_name = "Preferred name"
+        await database.set_preferred_name(main_user.id, preferred_name)
+        await database.set_privacy_preferred_name(main_user.id, PrivacyType.PUBLIC)
+        main_guild.get_member(main_user.id).display_name = display_name
+
         msg = await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
         assert_in(msg, f"name={preferred_name}")
 
     async def test_pronouns_private(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Use they/them"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            pronouns='She/her',
-            birthday=bday,
-            timezone=pytz.utc,
-            p_pronouns=PrivacyType.PRIVATE
-        )
+        await database.set_pronouns(main_user.id, "She/her")
+        await database.set_pronouns(main_user.id, PrivacyType.PRIVATE)
+
         msg = await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
         assert_in(msg, "they=they")
 
     async def test_pronouns_public(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Use their pronouns"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            pronouns='She/her',
-            birthday=bday,
-            timezone=pytz.utc,
-            p_pronouns=PrivacyType.PUBLIC
-        )
+        await database.set_pronouns(main_user.id, "She/her")
+        await database.set_pronouns(main_user.id, PrivacyType.PUBLIC)
+
         msg = await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
         assert_in(msg, "they=she")
 
     async def test_birthday_private(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Don't schedule OR send the birthday"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            birthday=bday,
-            timezone=pytz.utc,
-            p_birthday=PrivacyType.PRIVATE
-        )
-        await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0),
+        await database.set_privacy_birthday(main_user.id, PrivacyType.PRIVATE)
+
+        msg = await run_birthdays_cog(
+            main_user, birthday, birthday_midnight, birthday_midnight,
             should_send=False
         )
 
     async def test_birthday_public(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Schedule and send the birthday"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            birthday=bday,
-            timezone=pytz.utc,
-            p_birthday=PrivacyType.PUBLIC
-        )
-        await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0),
+        await database.set_privacy_birthday(main_user.id, PrivacyType.PUBLIC)
+
+        msg = await run_birthdays_cog(
+            main_user, birthday, birthday_midnight, birthday_midnight,
             should_send=True
         )
 
+
     async def test_age_private(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Pick a template without age"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            birthday=bday,
-            timezone=pytz.utc,
-            p_age=PrivacyType.PRIVATE
-        )
+        await database.set_privacy_age(main_user.id, PrivacyType.PRIVATE)
+
         msg = await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
         assert "age=" not in msg
 
     async def test_age_public(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Pick a template with age"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            birthday=bday,
-            timezone=pytz.utc,
-            p_age=PrivacyType.PUBLIC
-        )
+        await database.set_privacy_age(main_user.id, PrivacyType.PUBLIC)
+
         msg = await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0)
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
         assert_in(msg, "age=20")
 
     async def test_timezone_private(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Schedule using UTC"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            birthday=bday,
-            timezone=pytz.timezone('America/New_York'),
-            p_timezone=PrivacyType.PRIVATE
-        )
-        await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 0, 0),
-            should_send=True
+        await database.set_timezone(main_user.id, pytz.timezone('America/New_York'))
+        await database.set_privacy_timezone(main_user.id, PrivacyType.PRIVATE)
+
+        msg = await run_birthdays_cog(
+            main_user, birthday, birthday_midnight, birthday_midnight
         )
 
     async def test_timezone_public(
-            self, main_guild, run_birthdays_cog, user_factory
+            self, birthday, birthday_midnight, database, main_user,
+            run_birthdays_cog
     ):
         """Schedule using their timezone"""
-        bday = dt.date(2000, 2, 14)
-        user = await user_factory(
-            guild=main_guild,
-            birthday=bday,
-            timezone=pytz.timezone('America/New_York'),
-            p_timezone=PrivacyType.PUBLIC
-        )
+        await database.set_timezone(main_user.id, pytz.timezone('America/New_York'))
+        await database.set_privacy_timezone(main_user.id, PrivacyType.PUBLIC)
+
         # Should send at 5:00 UTC (0:00 New York)
-        await run_birthdays_cog(
-            user, bday,
-            now_when_scheduling=dt.datetime(2020, 2, 14, 0, 0),
-            now_when_sending=dt.datetime(2020, 2, 14, 5, 0),
-            should_send=True
+        msg = await run_birthdays_cog(
+            main_user, birthday, birthday_midnight,
+            birthday_midnight + dt.timedelta(hours=5)
         )
 
 
