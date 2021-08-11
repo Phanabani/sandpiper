@@ -227,6 +227,17 @@ class Birthdays(commands.Cog):
             name = await db.get_preferred_name(user_id)
         has_preferred_name = name is not None
 
+        pronouns = None
+        if (await db.get_privacy_pronouns(user_id)) is PrivacyType.PUBLIC:
+            pronouns = await db.get_pronouns_parsed(user_id)
+        if pronouns:
+            # This is making an assumption that the first pronouns listed
+            # are preferred over the others, which is NOT true for everyone,
+            # but we need to pick one, so this is the best we can do for now
+            pronouns = pronouns[0]
+        else:
+            pronouns = common_pronouns['they']
+
         age = None
         if (await db.get_privacy_age(user_id)) is PrivacyType.PUBLIC:
             age = await db.get_age(user_id)
@@ -261,7 +272,8 @@ class Birthdays(commands.Cog):
 
             bday_msg_template = self._get_random_message(age=age is not None)
             bday_msg = format_birthday_message(
-                bday_msg_template, user_id=user_id, name=name, age=age
+                bday_msg_template, user_id=user_id,
+                name=name, pronouns=pronouns, age=age
             )
             await bday_channel.send(bday_msg)
 
