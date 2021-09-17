@@ -54,6 +54,16 @@ class SandpiperConfig(ConfigSchema):
                 message_templates_with_age: list[str] = [
                     "Hey!! It's {name}'s birthday! {They} turned {age} today. "
                     "Happy birthday {ping}!",
+
+                    "{name}! It's your birthday!! I can't believe you're "
+                    "already {age} ;u; Hope it's a great one "
+                    "{ping}!",
+
+                    "omg! did yall know it's {name}'s birthday?? {Theyre} "
+                    "{age} now! happy birthday {ping}! :D",
+
+                    "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! "
+                    "{They} just turned {age}! Happy birthday {ping}!!"
                 ]
 
     class _Logging(ConfigSchema):
