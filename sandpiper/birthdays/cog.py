@@ -218,7 +218,11 @@ class Birthdays(commands.Cog):
                 f"guilds with Sandpiper (user={user_id})"
             )
             return
-        guilds: list[discord.Guild] = user.mutual_guilds
+        if user is self.bot.user:
+            # Sandpiper herself, for easter egg below
+            guilds = self.bot.guilds
+        else:
+            guilds: list[discord.Guild] = user.mutual_guilds
 
         # Get some user info to use in the message
 
@@ -270,7 +274,15 @@ class Birthdays(commands.Cog):
             if not has_preferred_name:
                 name = member.display_name
 
-            bday_msg_template = self._get_random_message(age=age is not None)
+            if user_id == self.bot.user.id:
+                # Little easter egg for Sandpiper's birthday
+                bday_msg_template = (
+                    "hey! it's.... wait, it's my birthday!! thanks for the "
+                    "great year everyone. ily all and I hope you've enjoyed "
+                    "me being here! :heartpulse: :hatching_chick:"
+                )
+            else:
+                bday_msg_template = self._get_random_message(age=age is not None)
             bday_msg = format_birthday_message(
                 bday_msg_template, user_id=user_id,
                 name=name, pronouns=pronouns, age=age
