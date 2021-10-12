@@ -58,12 +58,16 @@ class Birthdays(commands.Cog):
 
     def __init__(
             self, bot: commands.Bot, *, message_templates_no_age: list[str],
-            message_templates_with_age: list[str]
+            message_templates_with_age: list[str],
+            past_birthdays_day_range: int,
+            upcoming_birthdays_day_range: int
     ):
         """Send happy birthday messages to users."""
         self.bot = bot
         self.message_templates_no_age = message_templates_no_age
         self.message_templates_with_age = message_templates_with_age
+        self.past_birthdays_day_range = past_birthdays_day_range
+        self.upcoming_birthdays_day_range = upcoming_birthdays_day_range
         self.tasks: dict[int, asyncio.Task] = {}
         self.daily_loop.start()
 
