@@ -394,17 +394,23 @@ class Birthdays(commands.Cog):
             self.past_birthdays_day_range, self.upcoming_birthdays_day_range
         )
 
-        msg = ["Past birthdays:"]
-        if not past:
-            msg.append('*None!*')
-        for user_id, _ in past:
-            msg.append(await self.format_bday_upcoming(user_id, past=True))
+        if not past and not upcoming:
+            await ctx.send("No birthdays yet!")
+            return
 
-        msg.append(f"\nUpcoming birthdays:")
-        if not upcoming:
-            msg.append('*None!*')
-        for user_id, _ in upcoming:
-            msg.append(await self.format_bday_upcoming(user_id, past=False))
+        msg = []
+        if past:
+            msg.append("Past birthdays:")
+            for user_id, _ in past:
+                msg.append(await self.format_bday_upcoming(user_id, past=True))
+
+        if past and upcoming:
+            msg.append('')
+
+        if upcoming:
+            msg.append(f"Upcoming birthdays:")
+            for user_id, _ in upcoming:
+                msg.append(await self.format_bday_upcoming(user_id, past=False))
 
         await ctx.send('\n'.join(msg))
 
