@@ -39,8 +39,8 @@ class SandpiperConfig(ConfigSchema):
 
             class _Birthdays(ConfigSchema):
 
-                past_birthdays_day_range: Annotated[int, Bounded(0, None)] = 7
-                upcoming_birthdays_day_range: Annotated[int, Bounded(0, None)] = 14
+                past_birthdays_day_range: Annotated[int, Bounded(0, 365)] = 7
+                upcoming_birthdays_day_range: Annotated[int, Bounded(0, 365)] = 14
                 message_templates_no_age: list[str] = [
                     "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
 
