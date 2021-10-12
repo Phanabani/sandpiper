@@ -362,19 +362,25 @@ class Birthdays(commands.Cog):
     async def birthdays(self, ctx: commands.Context):
         pass
 
-    async def format_bday_upcoming(self, user_id: int, past: bool) -> Optional[str]:
+    async def format_bday_upcoming(
+            self, user_id: int, guild: discord.Guild, past: bool
+    ) -> Optional[str]:
         db = await self._get_database()
+
+        user = self.bot.get_user(user_id)
+        if user is None:
+            return None
+        if not guild.get_member(user_id):
+            return None
+        if await db.get_privacy_birthday(user_id) is not PrivacyType.PUBLIC:
+            return None
 
         emojis_set = (
             self.PAST_BIRTHDAY_EMOJIS if past else self.UPCOMING_BIRTHDAY_EMOJIS
         )
         emoji = emojis_set[cheap_user_hash(user_id) % len(emojis_set)]
 
-        if await db.get_privacy_birthday(user_id) is not PrivacyType.PUBLIC:
-            return None
-
         bday = await db.get_birthday(user_id)
-        user = self.bot.get_user(user_id)
         user_qual = f"{user.name}#{user.discriminator}"
 
         if await db.get_privacy_preferred_name(user_id) is PrivacyType.PUBLIC:
@@ -402,7 +408,11 @@ class Birthdays(commands.Cog):
         if past:
             msg.append("Past birthdays:")
             for user_id, _ in past:
-                msg.append(await self.format_bday_upcoming(user_id, past=True))
+                bday_str = await self.format_bday_upcoming(
+                    user_id, ctx.guild, past=True
+                )
+                if bday_str:
+                    msg.append(bday_str)
 
         if past and upcoming:
             msg.append('')
@@ -410,7 +420,11 @@ class Birthdays(commands.Cog):
         if upcoming:
             msg.append(f"Upcoming birthdays:")
             for user_id, _ in upcoming:
-                msg.append(await self.format_bday_upcoming(user_id, past=False))
+                bday_str = await self.format_bday_upcoming(
+                    user_id, ctx.guild, past=False
+                )
+                if bday_str:
+                    msg.append(bday_str)
 
         await ctx.send('\n'.join(msg))
 
