@@ -62,7 +62,7 @@ class SandpiperConfig(ConfigSchema):
                     "omg! did yall know it's {name}'s birthday?? {Theyre} "
                     "{age} now! happy birthday {ping}! :D",
 
-                    "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! "
+                    "I am pleased to announce... IT'S {NAME}'S BIRTHDAY!! "
                     "{They} just turned {age}! Happy birthday {ping}!!"
                 ]
 
