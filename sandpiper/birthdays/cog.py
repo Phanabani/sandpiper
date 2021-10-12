@@ -396,9 +396,25 @@ class Birthdays(commands.Cog):
         help="View upcoming birthdays."
     )
     async def birthdays_upcoming(self, ctx: commands.Context):
-        past, upcoming = await self.get_past_upcoming_birthdays(
+        past_raw, upcoming_raw = await self.get_past_upcoming_birthdays(
             self.past_birthdays_day_range, self.upcoming_birthdays_day_range
         )
+
+        past = []
+        for user_id, _ in past_raw:
+            bday_str = await self.format_bday_upcoming(
+                user_id, ctx.guild, past=True
+            )
+            if bday_str:
+                past.append(bday_str)
+
+        upcoming = []
+        for user_id, _ in upcoming_raw:
+            bday_str = await self.format_bday_upcoming(
+                user_id, ctx.guild, past=False
+            )
+            if bday_str:
+                upcoming.append(bday_str)
 
         if not past and not upcoming:
             await ctx.send("No birthdays yet!")
@@ -407,24 +423,14 @@ class Birthdays(commands.Cog):
         msg = []
         if past:
             msg.append("Past birthdays:")
-            for user_id, _ in past:
-                bday_str = await self.format_bday_upcoming(
-                    user_id, ctx.guild, past=True
-                )
-                if bday_str:
-                    msg.append(bday_str)
+            msg.extend(past)
 
         if past and upcoming:
             msg.append('')
 
         if upcoming:
             msg.append(f"Upcoming birthdays:")
-            for user_id, _ in upcoming:
-                bday_str = await self.format_bday_upcoming(
-                    user_id, ctx.guild, past=False
-                )
-                if bday_str:
-                    msg.append(bday_str)
+            msg.extend(upcoming)
 
         await ctx.send('\n'.join(msg))
 
