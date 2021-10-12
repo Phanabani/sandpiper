@@ -13,6 +13,7 @@ __all__ = [
     'parse_date', 'format_date',
     'utc_now',
     'localize_time_to_datetime',
+    'day_of_the_year', 'sort_dates_no_year',
     'TimezoneMatches', 'fuzzy_match_timezone'
 ]
 
@@ -232,6 +233,26 @@ def localize_time_to_datetime(
         now_basis.year, now_basis.month, now_basis.day, time.hour, time.minute
     )
     return basis_tz.localize(basis_time)
+
+
+def day_of_the_year(datetime: Union[dt.date, dt.datetime]):
+    return int(datetime.strftime('%j'))
+
+
+def _sort_dates_no_year_func(d: dt.date, now: dt.datetime):
+    d_int = day_of_the_year(d.replace(year=1))
+    now_int = day_of_the_year(now.replace(year=1))
+    if now_int > d_int:
+        d_int += 367
+    return d_int
+
+
+def sort_dates_no_year(
+        dates: list, key=lambda x: x, now: Optional[dt.datetime] = None
+):
+    if now is None:
+        now = utc_now()
+    return sorted(dates, key=lambda x: _sort_dates_no_year_func(key(x), now))
 
 
 @dataclass

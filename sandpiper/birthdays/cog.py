@@ -10,7 +10,7 @@ import discord.ext.tasks as tasks
 import pytz
 
 from sandpiper.common.discord import AutoOrder, cheap_user_hash
-from sandpiper.common.time import utc_now
+from sandpiper.common.time import sort_dates_no_year, utc_now
 from sandpiper.user_data import (
     UserData, Database, PrivacyType,
     Pronouns, common_pronouns
@@ -399,9 +399,10 @@ class Birthdays(commands.Cog):
         past_raw, upcoming_raw = await self.get_past_upcoming_birthdays(
             self.past_birthdays_day_range, self.upcoming_birthdays_day_range
         )
+        now = utc_now()
 
         past = []
-        for user_id, _ in past_raw:
+        for user_id, _ in sort_dates_no_year(past_raw, lambda x: x[1], now):
             bday_str = await self.format_bday_upcoming(
                 user_id, ctx.guild, past=True
             )
@@ -409,7 +410,7 @@ class Birthdays(commands.Cog):
                 past.append(bday_str)
 
         upcoming = []
-        for user_id, _ in upcoming_raw:
+        for user_id, _ in sort_dates_no_year(upcoming_raw, lambda x: x[1], now):
             bday_str = await self.format_bday_upcoming(
                 user_id, ctx.guild, past=False
             )
