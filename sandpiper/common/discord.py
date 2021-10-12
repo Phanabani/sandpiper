@@ -50,6 +50,10 @@ class AutoOrder:
         return command
 
 
+def cheap_user_hash(user_id: int) -> int:
+    return user_id >> 22
+
+
 def date_handler(date_str: str) -> date:
     try:
         return parse_date(date_str)

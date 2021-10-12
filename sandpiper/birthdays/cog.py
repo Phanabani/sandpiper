@@ -9,6 +9,7 @@ import discord.ext.commands as commands
 import discord.ext.tasks as tasks
 import pytz
 
+from sandpiper.common.discord import AutoOrder, cheap_user_hash
 from sandpiper.common.time import utc_now
 from sandpiper.user_data import (
     UserData, Database, PrivacyType,
@@ -299,7 +300,7 @@ class Birthdays(commands.Cog):
     async def get_past_upcoming_birthdays(
             self, past_birthdays_day_range: int = 7,
             upcoming_birthdays_day_range: int = 14
-    ) -> tuple[list, list]:
+    ) -> tuple[list[tuple[int, dt.date]], list[tuple[int, dt.date]]]:
         """
         Get two lists of past and upcoming birthdays. This may be used in a
         user command to see who's having a birthday soon.
@@ -345,3 +346,66 @@ class Birthdays(commands.Cog):
             return
 
         await self.schedule_birthday(user_id, birthday)
+
+    # region Commands
+
+    auto_order = AutoOrder()
+    PAST_BIRTHDAY_EMOJIS = '🔷'
+    UPCOMING_BIRTHDAY_EMOJIS = '🎂🍰🧁🎈🎁🎉🎊'
+
+    @auto_order
+    @commands.group(
+        name='birthdays', invoke_without_command=False,
+        brief="Birthday commands.",
+        help="Commands for viewing birthdays."
+    )
+    async def birthdays(self, ctx: commands.Context):
+        pass
+
+    async def format_bday_upcoming(self, user_id: int, past: bool) -> Optional[str]:
+        db = await self._get_database()
+
+        emojis_set = (
+            self.PAST_BIRTHDAY_EMOJIS if past else self.UPCOMING_BIRTHDAY_EMOJIS
+        )
+        emoji = emojis_set[cheap_user_hash(user_id) % len(emojis_set)]
+
+        if await db.get_privacy_birthday(user_id) is not PrivacyType.PUBLIC:
+            return None
+
+        bday = await db.get_birthday(user_id)
+        user = self.bot.get_user(user_id)
+        user_qual = f"{user.name}#{user.discriminator}"
+
+        if await db.get_privacy_preferred_name(user_id) is PrivacyType.PUBLIC:
+            name = f"**{await db.get_preferred_name(user_id)}** ({user_qual})"
+        else:
+            name = f"**{user_qual}**"
+
+        return f"{emoji}  `{bday:%b %d}` - {name}"
+
+    @auto_order
+    @birthdays.command(
+        name='upcoming', aliases=('soon',),
+        help="View upcoming birthdays."
+    )
+    async def birthdays_upcoming(self, ctx: commands.Context):
+        past, upcoming = await self.get_past_upcoming_birthdays(
+            self.past_birthdays_day_range, self.upcoming_birthdays_day_range
+        )
+
+        msg = ["Past birthdays:"]
+        if not past:
+            msg.append('*None!*')
+        for user_id, _ in past:
+            msg.append(await self.format_bday_upcoming(user_id, past=True))
+
+        msg.append(f"\nUpcoming birthdays:")
+        if not upcoming:
+            msg.append('*None!*')
+        for user_id, _ in upcoming:
+            msg.append(await self.format_bday_upcoming(user_id, past=False))
+
+        await ctx.send('\n'.join(msg))
+
+    # endregion
