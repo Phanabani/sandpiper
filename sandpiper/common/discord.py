@@ -10,6 +10,7 @@ from sandpiper.user_data.enums import PrivacyType
 
 __all__ = [
     'AutoOrder', 'date_handler', 'privacy_handler',
+    'cheap_user_hash',
     'find_user_in_mutual_guilds', 'find_users_by_display_name',
     'find_users_by_username'
 ]
