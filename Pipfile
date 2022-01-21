@@ -15,7 +15,7 @@ Pint = "*"
 
 [dev-packages]
 coverage = "*"
-ipython = "*"
+ipython = ">=7.31.1"
 nest_asyncio = "*"
 pytest = "*"
 pytest-asyncio = "*"
