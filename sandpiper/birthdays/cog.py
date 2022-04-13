@@ -70,7 +70,7 @@ class Birthdays(commands.Cog):
         self.past_birthdays_day_range = past_birthdays_day_range
         self.upcoming_birthdays_day_range = upcoming_birthdays_day_range
         self.tasks: dict[int, asyncio.Task] = {}
-        self.daily_loop.start()
+        asyncio.run_coroutine_threadsafe(self.init_daily_loop(), self.bot.loop)
 
     def _create_birthday_task(self, user_id: int, midnight_delta: dt.timedelta):
         self.tasks[user_id] = task = self.bot.loop.create_task(
@@ -104,6 +104,10 @@ class Birthdays(commands.Cog):
             )
             self.tasks[user_id].cancel()
             del self.tasks[user_id]
+
+    async def init_daily_loop(self):
+        await self.bot.wait_until_ready()
+        self.daily_loop.start()
 
     @tasks.loop(hours=24)
     async def daily_loop(self):
