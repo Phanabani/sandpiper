@@ -95,7 +95,7 @@ class Birthdays(commands.Cog):
         except asyncio.CancelledError:
             pass  # Task cancellation should not be logged as an error.
         except Exception as e:
-            logging.error(f"Exception raised by task {task}", exc_info=e)
+            logger.error(f"Exception raised by task {task}", exc_info=e)
 
     async def _try_cancel_task(self, user_id):
         if user_id in self.tasks:
