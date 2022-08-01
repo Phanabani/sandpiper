@@ -30,6 +30,7 @@ class DatabaseSQLite(Database):
     _engine: Optional[AsyncEngine] = None
     _session_maker: Optional[T_Sessionmaker] = None
     db_path: Union[str, Path]
+    bot_user_id: Optional[int] = None
 
     def __init__(self, db_path: Union[str, Path]):
         if isinstance(db_path, Path):
@@ -437,11 +438,14 @@ class DatabaseSQLite(Database):
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
         logger.info(f"Getting all user timezones")
         async with self._session_maker() as session, session.begin():
-            result = (await session.execute(
+            stmt = (
                 sa.select(User.user_id, User.timezone)
                 .where(User.timezone.isnot(None))
                 .where(User.privacy_timezone == PrivacyType.PUBLIC)
-            )).all()
+            )
+            if self.bot_user_id:
+                stmt = stmt.where(User.user_id != self.bot_user_id)
+            result = (await session.execute(stmt)).all()
         return [(uid, pytz.timezone(tz_name)) for uid, tz_name in result]
 
     # endregion
