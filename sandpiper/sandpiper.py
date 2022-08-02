@@ -31,7 +31,7 @@ class Sandpiper(commands.Bot):
             messages=True
         )
         allowed_mentions = discord.AllowedMentions(users=True)
-        activity = discord.Game(f'{config.command_prefix} help')
+        activity = discord.Game(f'{config.command_prefix}help')
 
         super().__init__(
             # Client params
