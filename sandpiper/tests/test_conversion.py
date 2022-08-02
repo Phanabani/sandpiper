@@ -7,7 +7,8 @@ import discord.ext.commands as commands
 import pytest
 import pytz
 
-from ._helpers import *
+from .helpers.discord import *
+from .helpers.misc import *
 from sandpiper.common.time import TimezoneType, utc_now
 from sandpiper.conversion.cog import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern

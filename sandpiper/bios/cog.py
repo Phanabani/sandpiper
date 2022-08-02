@@ -1,89 +1,20 @@
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 import discord
-import discord.ext.commands as commands
 from discord.ext.commands import BadArgument
+import discord.ext.commands as commands
 
-from ..common.discord import *
-from ..common.embeds import Embeds
-from ..common.misc import join
-from ..common.time import format_date, fuzzy_match_timezone
-from ..user_data.cog import UserData, DatabaseUnavailable
-from ..user_data.database import Database, DatabaseError
-from ..user_data.enums import PrivacyType
+from .strings import *
+from sandpiper.birthdays import Birthdays
+from sandpiper.common.discord import *
+from sandpiper.common.embeds import *
+from sandpiper.common.time import format_date, fuzzy_match_timezone
+from sandpiper.user_data import *
 
 __all__ = ['Bios']
 
 logger = logging.getLogger('sandpiper.bios')
-
-privacy_emojis = {
-    PrivacyType.PRIVATE: '⛔',
-    PrivacyType.PUBLIC: '✅'
-}
-
-
-def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
-    privacy_emoji = privacy_emojis[privacy]
-    privacy = privacy.name.capitalize()
-    return f'{privacy_emoji} `{privacy:7}` | **{field_name}** • {value}'
-
-
-async def user_names_str(
-        ctx: commands.Context, db: Database, user_id: int,
-        *, preferred_name: str = None, username: str = None,
-        display_name: str = None
-):
-    """
-    Create a string with a user's names (preferred name, Discord username,
-    guild display names). You can supply ``preferred_name``, ``username``,
-    or ``display_name`` to optimize the number of operations this function
-    has to perform.
-    """
-
-    # Get pronouns
-    privacy_pronouns = await db.get_privacy_pronouns(user_id)
-    if privacy_pronouns == PrivacyType.PUBLIC:
-        pronouns = await db.get_pronouns(user_id)
-    else:
-        pronouns = None
-
-    # Get preferred name
-    if preferred_name is None:
-        privacy_preferred_name = await db.get_privacy_preferred_name(user_id)
-        if privacy_preferred_name == PrivacyType.PUBLIC:
-            preferred_name = await db.get_preferred_name(user_id)
-            if preferred_name is None:
-                preferred_name = '`No preferred name`'
-        else:
-            preferred_name = '`No preferred name`'
-
-    # Get discord username and discriminator
-    if username is None:
-        user: discord.User = ctx.bot.get_user(user_id)
-        if user is not None:
-            username = f'{user.name}#{user.discriminator}'
-        else:
-            username = '`User not found`'
-
-    if ctx.guild is None:
-        # Find the user's nicknames on servers they share with the executor
-        # of the whois command
-        members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
-        display_names = ', '.join(m.display_name for m in members)
-    else:
-        if display_name is None:
-            # Find the user's nickname in the current guild ONLY
-            display_names = ctx.guild.get_member(user_id).display_name
-        else:
-            # Use the passed-in display name
-            display_names = display_name
-
-    return join(
-        join(preferred_name, pronouns and f'({pronouns})', sep=' '),
-        username, display_names,
-        sep=' • '
-    )
 
 
 def maybe_dm_only():
@@ -130,9 +61,18 @@ class Bios(commands.Cog):
     ):
         if isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, DatabaseUnavailable):
-                await Embeds.error(ctx, str(DatabaseUnavailable))
+                await ErrorEmbed(str(DatabaseUnavailable)).send(ctx)
+
+            elif isinstance(error.original, UserNotInDatabase):
+                # This user has no row in the database
+                await InfoEmbed(
+                    "You have no data stored with me. Use the `help` command "
+                    "to see all available commands!"
+                ).send(ctx)
+
             elif isinstance(error.original, DatabaseError):
-                await Embeds.error(ctx, "Error during database operation.")
+                await ErrorEmbed("Error during database operation.").send(ctx)
+
             else:
                 logger.error(
                     f'Unexpected error in "{ctx.command}" ('
@@ -140,9 +80,9 @@ class Bios(commands.Cog):
                     f'message={ctx.message!r})',
                     exc_info=error.original
                 )
-                await Embeds.error(ctx, "Unexpected error.")
+                await ErrorEmbed("Unexpected error.").send(ctx)
         else:
-            await Embeds.error(ctx, str(error))
+            await ErrorEmbed(str(error)).send(ctx)
 
     @commands.Cog.listener()
     async def on_command(self, ctx: commands.Context):
@@ -150,6 +90,29 @@ class Bios(commands.Cog):
             f'Running command "{ctx.command}" (author={ctx.author} '
             f'content={ctx.message.content!r})'
         )
+
+    @commands.Cog.listener('on_command_completion')
+    async def notify_birthdays_cog(self, ctx: commands.Context):
+        if ctx.command_failed:
+            # Not sure if this is possible here but might as well check
+            return
+
+        if ctx.command.qualified_name in (
+                'birthday set', 'timezone set',
+                'privacy all', 'privacy birthday', 'privacy timezone'
+        ):
+            logger.debug(
+                f"Notifying birthdays cog about change from command "
+                f"{ctx.command.qualified_name} (user_id={ctx.author.id})"
+            )
+            birthdays_cog: Birthdays
+            birthdays_cog = self.bot.get_cog('Birthdays')
+            if birthdays_cog is None:
+                logger.debug(
+                    "No birthdays cog loaded; skipping change notification"
+                )
+                return
+            await birthdays_cog.notify_change(ctx.author.id)
 
     @auto_order
     @commands.group(
@@ -184,13 +147,13 @@ class Bios(commands.Cog):
         p_age = await db.get_privacy_age(user_id)
         p_timezone = await db.get_privacy_timezone(user_id)
 
-        await Embeds.info(ctx, message=(
+        await InfoEmbed([
             user_info_str('Name', preferred_name, p_preferred_name),
             user_info_str('Pronouns', pronouns, p_pronouns),
             user_info_str('Birthday', birthday, p_birthday),
             user_info_str('Age', age, p_age),
             user_info_str('Timezone', timezone, p_timezone)
-        ))
+        ]).send(ctx)
 
     @auto_order
     @bio.command(
@@ -203,7 +166,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.delete_user(user_id)
-        await Embeds.success(ctx, "Deleted all of your personal info!")
+        await SuccessEmbed("Deleted all of your personal info!").send(ctx)
 
     # Privacy setters
 
@@ -227,7 +190,8 @@ class Bios(commands.Cog):
         example="privacy all public"
     )
     async def privacy_all(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
@@ -235,7 +199,15 @@ class Bios(commands.Cog):
         await db.set_privacy_birthday(user_id, new_privacy)
         await db.set_privacy_age(user_id, new_privacy)
         await db.set_privacy_timezone(user_id, new_privacy)
-        await Embeds.success(ctx, "All privacies set!")
+
+        embed = SuccessEmbed("All privacies set!", join='\n\n')
+        if new_privacy is PrivacyType.PUBLIC:
+            embed.append(BirthdayExplanations.birthday_is_public)
+            embed.append(BirthdayExplanations.age_is_public)
+        elif new_privacy is PrivacyType.PRIVATE:
+            embed.append(BirthdayExplanations.birthday_is_private)
+
+        await embed.send(ctx)
 
     @auto_order
     @privacy.command(
@@ -248,11 +220,12 @@ class Bios(commands.Cog):
         example="privacy name public"
     )
     async def privacy_name(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_preferred_name(user_id, new_privacy)
-        await Embeds.success(ctx, "Name privacy set!")
+        await SuccessEmbed("Name privacy set!").send(ctx)
 
     @auto_order
     @privacy.command(
@@ -264,11 +237,12 @@ class Bios(commands.Cog):
         example="privacy pronouns public"
     )
     async def privacy_pronouns(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_pronouns(user_id, new_privacy)
-        await Embeds.success(ctx, "Pronouns privacy set!")
+        await SuccessEmbed("Pronouns privacy set!").send(ctx)
 
     @auto_order
     @privacy.command(
@@ -280,11 +254,26 @@ class Bios(commands.Cog):
         example="privacy birthday public"
     )
     async def privacy_birthday(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_birthday(user_id, new_privacy)
-        await Embeds.success(ctx, "Birthday privacy set!")
+        embed = SuccessEmbed("Birthday privacy set!", join='\n\n')
+
+        # Tell them how their privacy affects their birthday announcement
+        if new_privacy is PrivacyType.PRIVATE:
+            embed.append(BirthdayExplanations.birthday_is_private)
+        if new_privacy is PrivacyType.PUBLIC:
+            embed.append(BirthdayExplanations.birthday_is_public)
+
+            age_privacy = await db.get_privacy_age(user_id)
+            if age_privacy is PrivacyType.PRIVATE:
+                embed.append(BirthdayExplanations.age_is_private)
+            if age_privacy is PrivacyType.PUBLIC:
+                embed.append(BirthdayExplanations.age_is_public)
+
+        await embed.send(ctx)
 
     @auto_order
     @privacy.command(
@@ -296,11 +285,22 @@ class Bios(commands.Cog):
         example="privacy age public"
     )
     async def privacy_age(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_age(user_id, new_privacy)
-        await Embeds.success(ctx, "Age privacy set!")
+        embed = SuccessEmbed("Age privacy set!", join='\n\n')
+
+        # Tell them how their privacy affects their birthday announcement
+        bday_privacy = await db.get_privacy_birthday(user_id)
+        if bday_privacy is PrivacyType.PUBLIC:
+            if new_privacy is PrivacyType.PRIVATE:
+                embed.append(BirthdayExplanations.age_is_private)
+            if new_privacy is PrivacyType.PUBLIC:
+                embed.append(BirthdayExplanations.age_is_public)
+
+        await embed.send(ctx)
 
     @auto_order
     @privacy.command(
@@ -312,11 +312,12 @@ class Bios(commands.Cog):
         example="privacy timezone public"
     )
     async def privacy_timezone(
-            self, ctx: commands.Context, new_privacy: privacy_handler):
+            self, ctx: commands.Context, new_privacy: privacy_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_privacy_timezone(user_id, new_privacy)
-        await Embeds.success(ctx, "Timezone privacy set!")
+        await SuccessEmbed("Timezone privacy set!").send(ctx)
 
     # Name
 
@@ -340,7 +341,7 @@ class Bios(commands.Cog):
         db = await self._get_database()
         preferred_name = await db.get_preferred_name(user_id)
         privacy = await db.get_privacy_preferred_name(user_id)
-        await Embeds.info(ctx, user_info_str('Name', preferred_name, privacy))
+        await InfoEmbed(user_info_str('Name', preferred_name, privacy)).send(ctx)
 
     @auto_order
     @name.command(
@@ -354,18 +355,16 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_name) > 64:
-            raise BadArgument(f"Name must be 64 characters or less "
-                              f"(yours: {len(new_name)}).")
-        await db.set_preferred_name(user_id, new_name)
-        await Embeds.success(ctx, "Preferred name set!")
-
-        if await db.get_privacy_preferred_name(user_id) == PrivacyType.PRIVATE:
-            await Embeds.warning(
-                ctx,
-                "Your preferred name is set to private. If you want others to "
-                "be able to see it through Sandpiper, set it to public with "
-                "the command `privacy name public`."
+            raise BadArgument(
+                f"Name must be 64 characters or less (yours: {len(new_name)})."
             )
+        await db.set_preferred_name(user_id, new_name)
+        embed = SuccessEmbed("Preferred name set!", join='\n\n')
+
+        if await db.get_privacy_preferred_name(user_id) is PrivacyType.PRIVATE:
+            embed.append(PrivacyExplanation.get('name'))
+
+        await embed.send(ctx)
 
     @auto_order
     @name.command(
@@ -377,7 +376,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_preferred_name(user_id, None)
-        await Embeds.success(ctx, "Preferred name deleted!")
+        await SuccessEmbed("Preferred name deleted!").send(ctx)
 
     # Pronouns
 
@@ -401,7 +400,7 @@ class Bios(commands.Cog):
         db = await self._get_database()
         pronouns = await db.get_pronouns(user_id)
         privacy = await db.get_privacy_pronouns(user_id)
-        await Embeds.info(ctx, user_info_str('Pronouns', pronouns, privacy))
+        await InfoEmbed(user_info_str('Pronouns', pronouns, privacy)).send(ctx)
 
     @auto_order
     @pronouns.command(
@@ -415,18 +414,17 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         if len(new_pronouns) > 64:
-            raise BadArgument(f"Pronouns must be 64 characters or less "
-                              f"(yours: {len(new_pronouns)}).")
+            raise BadArgument(
+                f"Pronouns must be 64 characters or less (yours: "
+                f"{len(new_pronouns)})."
+            )
         await db.set_pronouns(user_id, new_pronouns)
-        await Embeds.success(ctx, 'Pronouns set!')
+        embed = SuccessEmbed('Pronouns set!', join='\n\n')
 
         if await db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
-            await Embeds.warning(
-                ctx,
-                "Your pronouns are set to private. If you want others to be "
-                "able to see them through Sandpiper, set them to public with "
-                "the command `privacy pronouns public`."
-            )
+            embed.append(PrivacyExplanation.get('pronouns'))
+
+        await embed.send(ctx)
 
     @auto_order
     @pronouns.command(
@@ -438,7 +436,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_pronouns(user_id, None)
-        await Embeds.success(ctx, "Pronouns deleted!")
+        await SuccessEmbed("Pronouns deleted!").send(ctx)
 
     # Birthday
 
@@ -463,7 +461,7 @@ class Bios(commands.Cog):
         birthday = await db.get_birthday(user_id)
         birthday = format_date(birthday)
         privacy = await db.get_privacy_birthday(user_id)
-        await Embeds.info(ctx, user_info_str('Birthday', birthday, privacy))
+        await InfoEmbed(user_info_str('Birthday', birthday, privacy)).send(ctx)
 
     @auto_order
     @birthday.command(
@@ -485,22 +483,30 @@ class Bios(commands.Cog):
         )
     )
     @maybe_dm_only()
-    async def birthday_set(self, ctx: commands.Context, *,
-                           new_birthday: date_handler):
+    async def birthday_set(
+            self, ctx: commands.Context, *, new_birthday: date_handler
+    ):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, new_birthday)
-        await Embeds.success(ctx, "Birthday set!")
 
-        if await db.get_privacy_birthday(user_id) == PrivacyType.PRIVATE:
-            await Embeds.warning(
-                ctx,
-                "Your birthday is set to private. If you want others to be "
-                "able to see it through Sandpiper, set it to public with "
-                "the command `privacy birthday public`. If you want others to "
-                "know your age but not your birthday, you may set that to "
-                "public with the command `privacy age public`."
-            )
+        embed = SuccessEmbed("Birthday set!", join='\n\n')
+
+        # Tell them how their privacy affects their birthday announcement
+        bday_privacy = await db.get_privacy_birthday(user_id)
+        if bday_privacy is PrivacyType.PRIVATE:
+            embed.append(BirthdayExplanations.birthday_is_private_soft_suggest)
+
+        elif bday_privacy is PrivacyType.PUBLIC:
+            embed.append(BirthdayExplanations.birthday_is_public)
+
+            age_privacy = await db.get_privacy_age(user_id)
+            if age_privacy is PrivacyType.PRIVATE:
+                embed.append(BirthdayExplanations.age_is_private)
+            if age_privacy is PrivacyType.PUBLIC:
+                embed.append(BirthdayExplanations.age_is_public)
+
+        await embed.send(ctx)
 
     @auto_order
     @birthday.command(
@@ -512,7 +518,7 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_birthday(user_id, None)
-        await Embeds.success(ctx, "Birthday deleted!")
+        await SuccessEmbed("Birthday deleted!").send(ctx)
 
     # Age
 
@@ -538,7 +544,7 @@ class Bios(commands.Cog):
         age = await db.get_age(user_id)
         age = age if age is not None else 'N/A'
         privacy = await db.get_privacy_age(user_id)
-        await Embeds.info(ctx, user_info_str('Age', age, privacy))
+        await InfoEmbed(user_info_str('Age', age, privacy)).send(ctx)
 
     # noinspection PyUnusedLocal
     @auto_order
@@ -552,11 +558,10 @@ class Bios(commands.Cog):
     )
     @maybe_dm_only()
     async def age_set(self, ctx: commands.Context):
-        await Embeds.error(
-            ctx,
+        await ErrorEmbed(
             "Age is automatically calculated using your birthday. "
             "You don't need to set it!"
-        )
+        ).send(ctx)
 
     # noinspection PyUnusedLocal
     @auto_order
@@ -570,13 +575,12 @@ class Bios(commands.Cog):
     )
     @maybe_dm_only()
     async def age_delete(self, ctx: commands.Context):
-        await Embeds.error(
-            ctx,
+        await ErrorEmbed(
             "Age is automatically calculated using your birthday. You can "
             "either delete your birthday with `birthday delete` or set your "
             "age to private so others can't see it with "
             "`privacy age private`."
-        )
+        ).send(ctx)
 
     # Timezone
 
@@ -600,7 +604,7 @@ class Bios(commands.Cog):
         db = await self._get_database()
         timezone = await db.get_timezone(user_id)
         privacy = await db.get_privacy_timezone(user_id)
-        await Embeds.info(ctx, user_info_str('Timezone', timezone, privacy))
+        await InfoEmbed(user_info_str('Timezone', timezone, privacy)).send(ctx)
 
     @auto_order
     @timezone.command(
@@ -640,29 +644,27 @@ class Bios(commands.Cog):
                 "[timezone picker](http://kevalbhatt.github.io/timezone-picker/)."
             )
 
-        if tz_matches.best_match:
-            # Display best match with other possible matches
-            await db.set_timezone(user_id, tz_matches.best_match)
-            await Embeds.success(ctx, message=(
-                f"Timezone set to **{tz_matches.best_match}**!",
-                tz_matches.matches[1:] and "\nOther possible matches:",
-                '\n'.join([f'- {name}' for name, _ in tz_matches.matches[1:]])
-            ))
-        else:
+        if not tz_matches.best_match:
             # No best match; display other possible matches
-            await Embeds.error(ctx, message=(
+            await ErrorEmbed([
                 "Couldn't find a good match for the timezone you entered.",
                 "\nPossible matches:",
                 '\n'.join([f'- {name}' for name, _ in tz_matches.matches])
-            ))
+            ]).send(ctx)
+            return
+
+        # Display best match with other possible matches
+        await db.set_timezone(user_id, tz_matches.best_match)
+        embed = SuccessEmbed([
+            f"Timezone set to **{tz_matches.best_match}**!",
+            len(tz_matches.matches) > 1 and "\nOther possible matches:",
+            *[f'- {name}' for name, _ in tz_matches.matches[1:]]
+        ])
 
         if await db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
-            await Embeds.warning(
-                ctx,
-                "Your timezone is set to private. If you want others to be "
-                "able to see it through Sandpiper, set it to public with "
-                "the command `privacy timezone public`."
-            )
+            embed.append('\n' + PrivacyExplanation.get('timezone'))
+
+        await embed.send(ctx)
 
     @auto_order
     @timezone.command(
@@ -674,7 +676,91 @@ class Bios(commands.Cog):
         user_id: int = ctx.author.id
         db = await self._get_database()
         await db.set_timezone(user_id, None)
-        await Embeds.success(ctx, "Timezone deleted!")
+        await SuccessEmbed("Timezone deleted!").send(ctx)
+
+    # region Server commands
+
+    @auto_order
+    @commands.group(
+        name='server', invoke_without_command=False,
+        brief="Server commands. (admin only)",
+        help="Commands for managing server settings. (admin only)"
+    )
+    async def server(self, ctx: commands.Context):
+        pass
+
+    # region Birthday channel
+
+    @auto_order
+    @server.group(
+        name='birthday_channel', invoke_without_command=False,
+        brief="Birthday notification channel commands",
+        help=(
+            "Commands for managing the birthday notification channel"
+        )
+    )
+    async def server_birthday_channel(self, ctx: commands.Context):
+        pass
+
+    @auto_order
+    @server_birthday_channel.command(
+        name='show', aliases=_show_aliases,
+        brief="Show the birthday notification channel",
+        help=(
+            "Show the birthday notification channel in your server. This is "
+            "where Sandpiper will send messages when it's someone's birthday."
+        )
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def server_birthday_channel_show(self, ctx: commands.Context):
+        guild_id: int = ctx.guild.id
+        db = await self._get_database()
+
+        bday_channel_id = await db.get_guild_birthday_channel(guild_id)
+        if bday_channel_id is None:
+            await InfoEmbed(info_str("Birthday channel", "N/A")).send(ctx)
+            return
+
+        await InfoEmbed(info_str(
+            "Birthday channel", f"<#{bday_channel_id}> (id={bday_channel_id})"
+        )).send(ctx)
+
+    @auto_order
+    @server_birthday_channel.command(
+        name='set', aliases=_set_aliases,
+        brief="Set the birthday notification channel",
+        help=(
+            "Set the birthday notification channel in your server. This is "
+            "where Sandpiper will send messages when it's someone's birthday."
+        )
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def server_birthday_channel_set(
+            self, ctx: commands.Context, new_channel: discord.TextChannel
+    ):
+        guild_id: int = ctx.guild.id
+        db = await self._get_database()
+        await db.set_guild_birthday_channel(guild_id, new_channel.id)
+        await SuccessEmbed("Birthday channel set!").send(ctx)
+
+    @auto_order
+    @server_birthday_channel.command(
+        name='delete', aliases=_delete_aliases,
+        brief="Delete the birthday notification channel",
+        help=(
+            "Delete the birthday notification channel in your server. This is "
+            "where Sandpiper will send messages when it's someone's birthday."
+        )
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def server_birthday_channel_delete(self, ctx: commands.Context):
+        guild_id: int = ctx.guild.id
+        db = await self._get_database()
+        await db.set_guild_birthday_channel(guild_id, None)
+        await SuccessEmbed("Birthday channel deleted!").send(ctx)
+
+    # endregion
+    # endregion
 
     # Extra commands
 
@@ -759,8 +845,8 @@ class Bios(commands.Cog):
             user_strs.append(names)
 
         if user_strs:
-            await Embeds.info(ctx, message=user_strs)
+            await InfoEmbed(user_strs).send(ctx)
         else:
-            await Embeds.error(ctx, "No users found with this name.")
+            await ErrorEmbed("No users found with this name.").send(ctx)
 
     del auto_order

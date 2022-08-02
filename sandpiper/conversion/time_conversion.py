@@ -1,4 +1,5 @@
-from collections import Iterable, defaultdict
+from collections import defaultdict
+from collections.abc import Iterable
 import datetime as dt
 import logging
 from typing import Optional, Union, cast
@@ -7,7 +8,7 @@ import discord
 
 from sandpiper.common.time import *
 from sandpiper.common.misc import RuntimeMessages
-from sandpiper.user_data.database import Database
+from sandpiper.user_data import Database
 
 __all__ = (
     'UserTimezoneUnset',

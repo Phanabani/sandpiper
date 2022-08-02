@@ -1,7 +1,7 @@
-from collections import Iterable
-from typing import Union
+from collections.abc import Iterable, Sequence
+from typing import Optional, Union
 
-__all__ = ('join', 'prune', 'RuntimeMessages')
+__all__ = ['join', 'prune', 'listify', 'RuntimeMessages']
 
 
 def join(*fragments, sep=''):
@@ -10,6 +10,18 @@ def join(*fragments, sep=''):
 
 def prune(iterable: Iterable):
     return (i for i in iterable if i)
+
+
+def listify(it: Sequence, trim_after: Optional[int] = None) -> str:
+    if len(it) == 0:
+        return ''
+    if len(it) == 1:
+        return str(it[0])
+    if len(it) == 2:
+        return f"{it[0]} and {it[1]}"
+    if trim_after is not None:
+        return f"{', '.join(it[:trim_after])}, and {len(it) - trim_after} others"
+    return f"{', '.join(it[:-1])}, and {it[-1]}"
 
 
 class RuntimeMessages:

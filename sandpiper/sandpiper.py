@@ -60,7 +60,9 @@ class Sandpiper(commands.Bot):
 
         self.load_extension('sandpiper.user_data')
         self.load_extension('sandpiper.bios')
+        self.load_extension('sandpiper.birthdays')
         self.load_extension('sandpiper.conversion')
+        self.load_extension('sandpiper.upgrades')
 
     async def on_connect(self):
         logger.info('Client connected')
@@ -119,4 +121,5 @@ def run_bot():
 
     # Run bot
     sandpiper = Sandpiper(config.bot)
+    sandpiper.loop.set_debug(True)
     sandpiper.run(bot_token)

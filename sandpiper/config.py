@@ -31,10 +31,42 @@ class SandpiperConfig(ConfigSchema):
         class _Modules(ConfigSchema):
 
             bios: _Bios
+            birthdays: _Birthdays
 
             class _Bios(ConfigSchema):
 
                 allow_public_setting = False
+
+            class _Birthdays(ConfigSchema):
+
+                past_birthdays_day_range: Annotated[int, Bounded(0, 365)] = 7
+                upcoming_birthdays_day_range: Annotated[int, Bounded(0, 365)] = 14
+                message_templates_no_age: list[str] = [
+                    "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
+
+                    "{name}! It's your birthday!! Hope it's a great one "
+                    "{ping}!",
+
+                    "omg! did yall know it's {name}'s birthday?? happy "
+                    "birthday {ping}! :D",
+
+                    "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! "
+                    "Happy birthday {ping}!!"
+                ]
+                message_templates_with_age: list[str] = [
+                    "Hey!! It's {name}'s birthday! {They} turned {age} today. "
+                    "Happy birthday {ping}!",
+
+                    "{name}! It's your birthday!! I can't believe you're "
+                    "already {age} ;u; Hope it's a great one "
+                    "{ping}!",
+
+                    "omg! did yall know it's {name}'s birthday?? {Theyre} "
+                    "{age} now! happy birthday {ping}! :D",
+
+                    "I am pleased to announce... IT'S {NAME}'S BIRTHDAY!! "
+                    "{They} just turned {age}! Happy birthday {ping}!!"
+                ]
 
     class _Logging(ConfigSchema):
 
@@ -50,7 +82,7 @@ class SandpiperConfig(ConfigSchema):
         when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
         interval: Annotated[int, Bounded(1, None)] = 1
         backup_count: Annotated[int, Bounded(0, None)] = 7
-        format = "%(asctime)s|%(levelname)s|%(name)s|%(message)s"
+        format = "%(asctime)s %(levelname)s %(name)s | %(message)s"
 
         @cached_property
         def formatter(self):

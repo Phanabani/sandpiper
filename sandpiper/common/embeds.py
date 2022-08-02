@@ -1,103 +1,109 @@
-from collections import Iterable
-from typing import Union
+from typing import Optional, Union
 
 import discord
 
-from .misc import join
+__all__ = [
+    'SimpleEmbed',
+    'SuccessEmbed', 'WarningEmbed', 'ErrorEmbed',
+    'InfoEmbed', 'SpecialEmbed',
+]
 
-__all__ = ['Embeds']
-
-FieldType = tuple[str, str, bool]
+T_Field = tuple[str, str, bool]
 
 
-class Embeds:
+class SimpleEmbed:
 
-    INFO_COLOR = 0x5E5FFF
-    SUCCESS_COLOR = 0x57FCA5
-    WARNING_COLOR = 0xE7D900
-    ERROR_COLOR = 0xFF0000
+    title = ''
+    color = 0x000000
 
-    @classmethod
-    async def info(cls, messageable: discord.abc.Messageable,
-                   message: Union[str, Iterable[str]] = None,
-                   fields: Iterable[FieldType] = None):
+    def __init__(
+            self, msg: Union[None, str, list[str]] = None,
+            fields: list[T_Field] = None,
+            *, title: Optional[str] = None, color: Optional[int] = None,
+            join: str = '\n'
+    ):
         """
-        Sends an info embed. At least one of ``message`` or ``fields`` must be
-        supplied.
-
-        :param messageable: A messageable interface to send the embed to
-        :param message: An info message. Can be either a single string or an
-            iterable of strings to join with newlines. Optional if ``fields``
-            is supplied.
-        :param fields: An iterable of fields to add to the embed where each
-            field is a tuple of shape (name, value, inline). Optional if
-            ``message`` is supplied.
+        :param msg: the message to add to the embed. May be a list of str
+            which will be joined upon sending.
+        :param fields: an iterable of fields to add to the embed where each
+            field is a tuple of shape (name, value, inline)
+        :param title: the title of the embed. If None, it will use the class's
+            default title.
+        :param join: the string to join multiple messages with
         """
-        if not (message or fields):
-            raise ValueError('You must specify at least one of message or fields')
+        if msg is None:
+            msg = []
+        elif isinstance(msg, str):
+            msg = [msg]
+        elif not isinstance(msg, list):
+            raise TypeError(
+                f"message must be None or of type (str, list[str])"
+            )
+        self.message_parts: list[str] = msg
 
-        if isinstance(message, str):
-            pass
-        elif isinstance(message, Iterable):
-            message = join(*message, sep='\n')
-        elif message is None:
-            message = discord.Embed.Empty
-        else:
-            raise ValueError('Message must either be None, a single string, '
-                             'or an iterable of strings')
+        if fields is None:
+            fields = []
+        elif not isinstance(fields, list):
+            raise TypeError(f"fields must be None or of type list")
+        self.fields: list[T_Field] = fields
 
-        embed = discord.Embed(title='Info', description=message,
-                              color=cls.INFO_COLOR)
+        if title is not None:
+            self.title = title
 
-        if fields:
-            for name, value, inline in fields:
+        if color is not None:
+            self.color = color
+
+        self.join_str = join
+
+    def append(self, msg: str):
+        """
+        Add another string to the embed's message.
+        """
+        if not isinstance(msg, str):
+            raise TypeError("msg must be of type str")
+        self.message_parts.append(msg)
+
+    async def send(self, messageable: discord.abc.Messageable):
+        """
+        Send the embed to `messageable`.
+
+        :param messageable: a messageable interface to send the embed to
+        """
+        desc = discord.Embed.Empty
+        if self.message_parts:
+            desc = self.join_str.join(self.message_parts)
+
+        embed = discord.Embed(
+            title=self.title, description=desc, color=self.color
+        )
+
+        if self.fields:
+            for name, value, inline in self.fields:
                 embed.add_field(name=name, value=value, inline=inline)
+
         await messageable.send(embed=embed)
 
-    @classmethod
-    async def success(cls, messageable: discord.abc.Messageable,
-                      message: Union[str, Iterable[str]]):
-        """
-        Sends a success embed.
 
-        :param messageable: A messageable interface to send the embed to
-        :param message: The success message. Can be either a single string or
-            an iterable of strings to join with newlines.
-        """
-        if not isinstance(message, str) and isinstance(message, Iterable):
-            message = join(*message, sep='\n')
-        embed = discord.Embed(
-            title='Success', description=message, color=cls.SUCCESS_COLOR)
-        await messageable.send(embed=embed)
+class SuccessEmbed(SimpleEmbed):
+    color = 0x57FCA5
+    title = 'Success'
 
-    @classmethod
-    async def warning(cls, messageable: discord.abc.Messageable,
-                      message: Union[str, Iterable[str]]):
-        """
-        Sends a success embed.
 
-        :param messageable: A messageable interface to send the embed to
-        :param message: The success message. Can be either a single string or
-            an iterable of strings to join with newlines.
-        """
-        if not isinstance(message, str) and isinstance(message, Iterable):
-            message = join(*message, sep='\n')
-        embed = discord.Embed(
-            title='Warning', description=message, color=cls.WARNING_COLOR)
-        await messageable.send(embed=embed)
+class WarningEmbed(SimpleEmbed):
+    color = 0xE7D900
+    title = 'Warning'
 
-    @classmethod
-    async def error(cls, messageable: discord.abc.Messageable,
-                    message: Union[str, Iterable[str]]):
-        """
-        Sends an error embed.
 
-        :param messageable: A messageable interface to send the embed to
-        :param message: The error message. Can be either a single string or an
-            iterable of strings to join with newlines.
-        """
-        if not isinstance(message, str) and isinstance(message, Iterable):
-            message = join(*message, sep='\n')
-        embed = discord.Embed(
-            title='Error', description=message, color=cls.ERROR_COLOR)
-        await messageable.send(embed=embed)
+class ErrorEmbed(SimpleEmbed):
+    color = 0xFF0000
+    title = 'Error'
+
+
+class InfoEmbed(SimpleEmbed):
+    color = 0x5E5FFF
+    title = 'Info'
+
+
+class SpecialEmbed(SimpleEmbed):
+    color = 0xF656F1
+    title = 'Announcement'
