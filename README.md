@@ -177,11 +177,11 @@ You can put multiple times in a message as long as each is put in its own bracke
 You can explicitly specify input and output timezones very similarly to
 how units are specified in unit conversion:
 
-Timezone specification | How to write | What it does
----------------------- | ------------ | ------------
-Input timezone | `{5:45 PM London}` | Converts 5:45 PM in London time to all timezones of users in your server
-Output timezone | `{5:45 PM > Los Angeles}` | Converts 5:45 PM from your timezone to Los Angeles time
-Input & output timezone | `{5:45 PM Amsterdam > Helsinki}` | Converts 5:45 PM in Amsterdam time to Helsinki time
+| Timezone specification  | How to write                     | What it does                                                             |
+|-------------------------|----------------------------------|--------------------------------------------------------------------------|
+| Input timezone          | `{5:45 PM London}`               | Converts 5:45 PM in London time to all timezones of users in your server |
+| Output timezone         | `{5:45 PM > Los Angeles}`        | Converts 5:45 PM from your timezone to Los Angeles time                  |
+| Input & output timezone | `{5:45 PM Amsterdam > Helsinki}` | Converts 5:45 PM in Amsterdam time to Helsinki time                      |
 
 To use this feature without having to specify input/output timezones every time,
 you and your friends need to set your timezones with the `timezone set` command
@@ -215,41 +215,41 @@ most of these commands can only be used in DMs with Sandpiper for your privacy.
 
 #### General commands
 
-Command | Description
-------- | -----------
-`bio show` | Display all your stored info and their privacy settings.
-`bio delete` | Delete all your stored info.
+| Command      | Description                                              |
+|--------------|----------------------------------------------------------|
+| `bio show`   | Display all your stored info and their privacy settings. |
+| `bio delete` | Delete all your stored info.                             |
 
 #### Setting your info
 
 Setting a field doesn't automatically make it public. See the [privacy section](#manage-the-privacy-of-your-info)
 for more info about managing your privacy.
 
-Command | Description | Example
-------- | ----------- | -------
-`name set <new_name>` | Set your preferred name (max 64 characters). | `name set Phana`
-`pronouns set <new_pronouns>` | Set your pronouns (max 64 characters). | `pronouns set She/Her`
-`birthday set <new_birthday>` | Set your birthday in one of the following formats: `1997-08-27`, `8 August 1997`, `Aug 8 1997`, `August 8`, `8 Aug`. You may omit your birth year with the month-name format (age will not be calculated). | `birthday set 1997-08-27`
-`timezone set <new_timezone>` | Set your timezone. Don't worry about formatting. Typing the name of the nearest major city should be good enough, but you can also try your state/country if that doesn't work. If you're confused, use this website to find your full timezone name: http://kevalbhatt.github.io/timezone-picker | `timezone set new york`
+| Command                       | Description                                                                                                                                                                                                                                                                                       | Example                   |
+|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| `name set <new_name>`         | Set your preferred name (max 64 characters).                                                                                                                                                                                                                                                      | `name set Phana`          |
+| `pronouns set <new_pronouns>` | Set your pronouns (max 64 characters).                                                                                                                                                                                                                                                            | `pronouns set She/Her`    |
+| `birthday set <new_birthday>` | Set your birthday in one of the following formats: `1997-08-27`, `8 August 1997`, `Aug 8 1997`, `August 8`, `8 Aug`. You may omit your birth year with the month-name format (age will not be calculated).                                                                                        | `birthday set 1997-08-27` |
+| `timezone set <new_timezone>` | Set your timezone. Don't worry about formatting. Typing the name of the nearest major city should be good enough, but you can also try your state/country if that doesn't work. If you're confused, use this website to find your full timezone name: http://kevalbhatt.github.io/timezone-picker | `timezone set new york`   |
 
 #### Displaying your info
 
-Command | Description | Example
-------- | ----------- | -------
-`name show` | Display your preferred name. | `name show`
-`pronouns show` | Display your pronouns. | `pronouns show`
-`birthday show` | Display your birthday. | `birthday show`
-`age show` | Display your age (calculated automatically from your birthday). | `age show`
-`timezone show` | Display your timezone. | `timezone show`
+| Command         | Description                                                     | Example         |
+|-----------------|-----------------------------------------------------------------|-----------------|
+| `name show`     | Display your preferred name.                                    | `name show`     |
+| `pronouns show` | Display your pronouns.                                          | `pronouns show` |
+| `birthday show` | Display your birthday.                                          | `birthday show` |
+| `age show`      | Display your age (calculated automatically from your birthday). | `age show`      |
+| `timezone show` | Display your timezone.                                          | `timezone show` |
 
 #### Deleting your info
 
-Command | Description | Example
-------- | ----------- | -------
-`name delete` | Delete your preferred name. | `name delete`
-`pronouns delete` | Delete your pronouns. | `pronouns delete`
-`birthday delete` | Delete your birthday. | `birthday delete`
-`timezone delete` | Delete your timezone. | `timezone delete`
+| Command           | Description                 | Example           |
+|-------------------|-----------------------------|-------------------|
+| `name delete`     | Delete your preferred name. | `name delete`     |
+| `pronouns delete` | Delete your pronouns.       | `pronouns delete` |
+| `birthday delete` | Delete your birthday.       | `birthday delete` |
+| `timezone delete` | Delete your timezone.       | `timezone delete` |
 
 #### Manage the privacy of your info
 
@@ -258,14 +258,14 @@ You can set the privacy for each field in your bio to either `public` or
 anyone may be able to see it as long as they are in the same server as you and
 Sandpiper.
 
-Command | Description | Example
-------- | ----------- | -------
-`privacy all <new_privacy>` | Set the privacy of all your info at once. | `privacy all public`
-`privacy name <new_privacy>` | Set the privacy of your preferred name. | `privacy name public`
-`privacy pronouns <new_privacy>` | Set the privacy of your pronouns. | `privacy pronouns public`
-`privacy birthday <new_privacy>` | Set the privacy of your birthday. | `privacy birthday private`
-`privacy age <new_privacy>` | Set the privacy of your age. | `privacy age private`
-`privacy timezone <new_privacy>` | Set the privacy of your timezone. | `privacy timezone public`
+| Command                          | Description                               | Example                    |
+|----------------------------------|-------------------------------------------|----------------------------|
+| `privacy all <new_privacy>`      | Set the privacy of all your info at once. | `privacy all public`       |
+| `privacy name <new_privacy>`     | Set the privacy of your preferred name.   | `privacy name public`      |
+| `privacy pronouns <new_privacy>` | Set the privacy of your pronouns.         | `privacy pronouns public`  |
+| `privacy birthday <new_privacy>` | Set the privacy of your birthday.         | `privacy birthday private` |
+| `privacy age <new_privacy>`      | Set the privacy of your age.              | `privacy age private`      |
+| `privacy timezone <new_privacy>` | Set the privacy of your timezone.         | `privacy timezone public`  |
 
 #### Search for users by one of their names
 
@@ -276,9 +276,9 @@ or their nickname in a server you are both in.
 
 You can run this command in a server or in Sandpiper DMs.
 
-Command | Description | Example
-------- | ----------- | -------
-`whois <name>` | Search for a user by one of their names on Discord. | `whois jason`
+| Command        | Description                                         | Example       |
+|----------------|-----------------------------------------------------|---------------|
+| `whois <name>` | Search for a user by one of their names on Discord. | `whois jason` |
 
 ## Developers
 
