@@ -37,6 +37,7 @@ def format_birthday_message(
         'themself': p.reflexive,
         'are': p.to_be_conjugation,
         'theyre': p.subjective_to_be_contraction,
+        'age_suffix': f'{age}{get_ordinal_suffix(age)}',
     }
     args_generated_cases = {}
     for k, v in generate_cases.items():
@@ -44,11 +45,8 @@ def format_birthday_message(
         args_generated_cases[k.capitalize()] = v.capitalize()
         args_generated_cases[k.upper()] = v.upper()
 
-    age_suffix = f'{age}{get_ordinal_suffix(age)}'
-
     return msg.format(
         **args_generated_cases,
         ping=f"<@{user_id}>",
         age=age,
-        age_suffix=age_suffix
     )
