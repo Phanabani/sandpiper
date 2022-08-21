@@ -13,6 +13,12 @@ ordinal_suffixes = {
 }
 
 
+def capitalize_first(string: str) -> str:
+    if not string:
+        return ''
+    return string[0].upper() + string[1:]
+
+
 def get_ordinal_suffix(number: int) -> str:
     return ordinal_suffixes.get(number % 10, base_ordinal_suffix)
 
@@ -46,7 +52,7 @@ def format_birthday_message(
     args_generated_cases = {}
     for k, v in generate_cases.items():
         args_generated_cases[k] = v
-        args_generated_cases[k.capitalize()] = v.capitalize()
+        args_generated_cases[capitalize_first(k)] = capitalize_first(v)
         args_generated_cases[k.upper()] = v.upper()
 
     return msg.format(
