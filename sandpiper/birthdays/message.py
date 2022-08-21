@@ -1,8 +1,20 @@
-__all__ = ["format_birthday_message"]
+__all__ = ["get_ordinal_suffix", "format_birthday_message"]
 
 from typing import Optional
 
 from sandpiper.user_data import Pronouns, common_pronouns
+
+
+base_ordinal_suffix = 'th'
+ordinal_suffixes = {
+    1: 'st',
+    2: 'nd',
+    3: 'rd'
+}
+
+
+def get_ordinal_suffix(age: int) -> str:
+    return ordinal_suffixes.get(age % 10, base_ordinal_suffix)
 
 
 def format_birthday_message(
@@ -32,8 +44,11 @@ def format_birthday_message(
         args_generated_cases[k.capitalize()] = v.capitalize()
         args_generated_cases[k.upper()] = v.upper()
 
+    age_suffix = f'{age}{get_ordinal_suffix(age)}'
+
     return msg.format(
         **args_generated_cases,
         ping=f"<@{user_id}>",
-        age=age
+        age=age,
+        age_suffix=age_suffix
     )
