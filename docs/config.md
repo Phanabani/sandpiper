@@ -48,10 +48,12 @@ If the user allows their age to be visible, the template will be picked from
 See [Birthday message template formatting](#birthday-message-template-formatting) for more details
 on how to format the message template fields.
 
-| Key                          | Type         | Value                                                                       |
-|------------------------------|--------------|-----------------------------------------------------------------------------|
-| `message_templates_no_age`   | `list[str]?` | A list of birthday message templates ***without*** the user's age announced |
-| `message_templates_with_age` | `list[str]?` | A list of birthday message templates ***with*** the user's age announced    |
+| Key                            | Type         | Value                                                                                                             |
+|--------------------------------|--------------|-------------------------------------------------------------------------------------------------------------------|
+| `past_birthdays_day_range`     | `int?`       | How many days behind to show past birthdays in the `birthdays upcoming` command (between 0 and 365, inclusive)    |
+| `upcoming_birthdays_day_range` | `int?`       | How many days ahead to show upcoming birthdays in the `birthdays upcoming` command (between 0 and 365, inclusive) |
+| `message_templates_no_age`     | `list[str]?` | A list of birthday message templates ***without*** the user's age announced                                       |
+| `message_templates_with_age`   | `list[str]?` | A list of birthday message templates ***with*** the user's age announced                                          |
 
 ### logging
 
