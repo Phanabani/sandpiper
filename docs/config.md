@@ -78,6 +78,7 @@ will use it to personalize the message.
 
 - `name`
 - `age`
+- `age_suffixed` (20th, 21st, 22nd, etc.)
 - `ping` (a Discord user ping, like "@Sandpiper")
 - `they`
 - `them`
@@ -94,7 +95,7 @@ Examples:
 
 - `"{ping}! It's your birthday!"`
     - @Sandpiper! It's your birthday!
-- `"IT'S {NAME}'s BIRTHDAY!"`
-    - IT'S SANDPIPER'S BIRTHDAY!
+- `"IT'S {NAME}'S {AGE_SUFFIXED} BIRTHDAY!"`
+    - IT'S SANDPIPER'S 1ST BIRTHDAY!
 - `"Hey! It's {name}'s birthday! {They} {are} {age} years old today!"`
     - Hey! It's Sandpiper's birthday! She is 1 years old today!
