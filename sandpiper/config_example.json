@@ -6,6 +6,22 @@
         "modules": {
             "bios": {
                 "allow_public_setting": false
+            },
+            "birthdays": {
+                "past_birthdays_day_range": 7,
+                "upcoming_birthdays_day_range": 14,
+                "message_templates_no_age": [
+                    "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
+                    "{name}! It's your birthday!! Hope it's a great one {ping}!",
+                    "omg! did yall know it's {name}'s birthday?? happy birthday {ping}! :D",
+                    "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! Happy birthday {ping}!!"
+                ],
+                "message_templates_with_age": [
+                    "Hey!! It's {name}'s birthday! {They} turned {age} today. Happy birthday {ping}!",
+                    "{name}! It's your birthday!! I can't believe you're already {age} ;u; Hope it's a great one {ping}!",
+                    "omg! did yall know it's {name}'s birthday?? {Theyre} {age} now! happy birthday {ping}! :D",
+                    "I am pleased to announce... IT'S {NAME}'S BIRTHDAY!! {They} just turned {age}! Happy birthday {ping}!!"
+                ]
             }
         }
     },
