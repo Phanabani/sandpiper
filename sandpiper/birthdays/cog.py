@@ -9,50 +9,17 @@ import discord.ext.commands as commands
 import discord.ext.tasks as tasks
 import pytz
 
+from sandpiper.birthdays.message import format_birthday_message
 from sandpiper.common.discord import AutoOrder, cheap_user_hash
 from sandpiper.common.time import sort_dates_no_year, utc_now
 from sandpiper.user_data import (
     UserData, Database, PrivacyType,
-    Pronouns, common_pronouns
+    common_pronouns
 )
 
 __all__ = ['Birthdays']
 
 logger = logging.getLogger('sandpiper.birthdays')
-
-
-def format_birthday_message(
-        msg: str,
-        user_id: int,
-        name: str,
-        pronouns: Pronouns = common_pronouns['they'],
-        age: Optional[int] = None
-):
-    p = pronouns
-
-    # Generate normal (not explicitly lower), capitalized, and upper versions
-    # of these args
-    generate_cases = {
-        'name': name,
-        'they': p.subjective,
-        'them': p.objective,
-        'their': p.determiner,
-        'theirs': p.possessive,
-        'themself': p.reflexive,
-        'are': p.to_be_conjugation,
-        'theyre': p.subjective_to_be_contraction,
-    }
-    args_generated_cases = {}
-    for k, v in generate_cases.items():
-        args_generated_cases[k] = v
-        args_generated_cases[k.capitalize()] = v.capitalize()
-        args_generated_cases[k.upper()] = v.upper()
-
-    return msg.format(
-        **args_generated_cases,
-        ping=f"<@{user_id}>",
-        age=age
-    )
 
 
 class Birthdays(commands.Cog):
