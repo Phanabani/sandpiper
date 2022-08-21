@@ -2,8 +2,8 @@
 
 Sandpiper can be configured with a JSON file at `sandpiper/config.json`.
 [sandpiper/config_example.json](../sandpiper/config_example.json) contains
-default values and can be used as a template. `bot_token` is the only required
-field.
+default values and can be used as a template. Field types suffixed by `?` are
+optional.
 
 ## Config Fields
 
@@ -23,8 +23,8 @@ for more info on how these fields are used.
 
 | Key              | Type      | Value                                          |
 |------------------|-----------|------------------------------------------------|
-| `command_prefix` | `string` | What users type to run a command               |
-| `description`    | `string` | Description of the bot (used in help messages) |
+| `command_prefix` | `string?` | What users type to run a command               |
+| `description`    | `string?` | Description of the bot (used in help messages) |
 
 ### bot.modules.bios
 
@@ -34,7 +34,7 @@ by other modules.
 
 | Key                            | Type    | Value                                                                                                                                                                                                                                  |
 |--------------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `allow_public_setting`         | `bool` | Whether commands like `name set` are allowed outside DMs. This is `false` by default to force users to DM Sandpiper for their privacy, but it may be easier to troubleshoot with them if they're allowed to enter commands in servers. |
+| `allow_public_setting`         | `bool?` | Whether commands like `name set` are allowed outside DMs. This is `false` by default to force users to DM Sandpiper for their privacy, but it may be easier to troubleshoot with them if they're allowed to enter commands in servers. |
 
 ### bot.modules.birthdays
 
@@ -50,8 +50,8 @@ on how to format the message template fields.
 
 | Key                          | Type         | Value                                                                       |
 |------------------------------|--------------|-----------------------------------------------------------------------------|
-| `message_templates_no_age`   | `list[str]` | A list of birthday message templates ***without*** the user's age announced |
-| `message_templates_with_age` | `list[str]` | A list of birthday message templates ***with*** the user's age announced    |
+| `message_templates_no_age`   | `list[str]?` | A list of birthday message templates ***without*** the user's age announced |
+| `message_templates_with_age` | `list[str]?` | A list of birthday message templates ***with*** the user's age announced    |
 
 ### logging
 
@@ -62,13 +62,13 @@ for more info on how these fields are used.
 
 | Key                       | Type       | Value                                                                                                                                         |
 |---------------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| `sandpiper_logging_level` | `string`  | Sandpiper's most verbose logging level. Must be one of ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').                                     |
-| `discord_logging_level`   | `string`  | discord.py's most verbose logging level. Must be one of ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').                                    |
-| `output_file`             | `string`  | Absolute or relative (to sandpiper module) filepath to output logs to (including filename)                                                    |
-| `when`                    | `integer` | Type of time interval for rotating log files. Must be one of ('S', 'M', 'H', 'D', 'midnight')                                                 |
-| `interval`                | `integer` | Number of specified time intervals that must elapse before rotating to a new log file                                                         |
-| `backup_count`            | `integer` | Number of backup log files to retain (deletes oldest after limit is reached)                                                                  |
-| `format`                  | `string`  | Format string used when writing log messages ([format string reference](https://docs.python.org/3/library/logging.html#logrecord-attributes)) |
+| `sandpiper_logging_level` | `string?`  | Sandpiper's most verbose logging level. Must be one of ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').                                     |
+| `discord_logging_level`   | `string?`  | discord.py's most verbose logging level. Must be one of ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').                                    |
+| `output_file`             | `string?`  | Absolute or relative (to sandpiper module) filepath to output logs to (including filename)                                                    |
+| `when`                    | `integer?` | Type of time interval for rotating log files. Must be one of ('S', 'M', 'H', 'D', 'midnight')                                                 |
+| `interval`                | `integer?` | Number of specified time intervals that must elapse before rotating to a new log file                                                         |
+| `backup_count`            | `integer?` | Number of backup log files to retain (deletes oldest after limit is reached)                                                                  |
+| `format`                  | `string?`  | Format string used when writing log messages ([format string reference](https://docs.python.org/3/library/logging.html#logrecord-attributes)) |
 
 ## Birthday message template formatting
 
