@@ -25,6 +25,7 @@ Her current features include:
     - [Unit conversion](#unit-conversion)
     - [Time conversion](#time-conversion)
     - [Bios](#bios)
+    - [Birthday notifications](#birthday-notifications)
 - [Developers](#developers)
 - [Planned features](#planned-features)
 - [Inspiration](#inspiration)
@@ -280,6 +281,47 @@ You can run this command in a server or in Sandpiper DMs.
 |----------------|-----------------------------------------------------|---------------|
 | `whois <name>` | Search for a user by one of their names on Discord. | `whois jason` |
 
+### Birthday notifications
+
+Sandpiper can announce your birthday to your friends!
+
+To enable this feature, set some of your info with the [bios](#bios) commands:
+
+- Birthday
+- \[Optional] Timezone
+- \[Optional] Name
+- \[Optional] Pronouns
+
+You also need to set these fields to public with the [privacy commands](#manage-the-privacy-of-your-info)
+for them to be used (otherwise, they are private by default, and Sandpiper will
+not use them to keep your personal info private).
+
+Here is how your personal info will be used to create your birthday announcement
+message:
+
+- Birthday
+  - (Public) Your birthday will be announced on every server you and Sandpiper are in together
+  - (Private) Your birthday will not be announced
+- Timezone
+  - (Public) Your birthday will be announced at midnight in your timezone
+  - (Private) Your birthday will be announced at midnight UTC (coordinated universal time)
+- Name
+  - (Public) Your preferred name will be used in the message
+  - (Private) Your Discord username will be used in the message
+- Pronouns
+  - (Public) Your pronouns will be used in the message
+  - (Private) They/them will be used in the message
+- Age
+  - (Public and birth year set) Your new age will be displayed in the message
+  - (Private or birth year not set) Your new age will not be displayed in the message
+
+#### Commands
+
+| Command              | Description                       | Example              |
+|----------------------|-----------------------------------|----------------------|
+| `birthdays upcoming` | Show upcoming and past birthdays. | `birthdays upcoming` |
+
+
 ## Developers
 
 ### Installation
@@ -319,7 +361,7 @@ Open `htmlcov/index.html` to view the coverage report.
   - [X] Birthday
   - [X] Timezone
 - [X] Time conversion
-- [ ] Birthday notifications
+- [X] Birthday notifications
 
 ## Inspiration
 
