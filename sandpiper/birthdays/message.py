@@ -1,4 +1,4 @@
-__all__ = ["get_ordinal_suffix", "format_birthday_message"]
+__all__ = ["age_with_suffix", "format_birthday_message"]
 
 from typing import Optional
 
@@ -13,8 +13,12 @@ ordinal_suffixes = {
 }
 
 
-def get_ordinal_suffix(age: int) -> str:
-    return ordinal_suffixes.get(age % 10, base_ordinal_suffix)
+def get_ordinal_suffix(number: int) -> str:
+    return ordinal_suffixes.get(number % 10, base_ordinal_suffix)
+
+
+def age_with_suffix(age: int) -> str:
+    return f'{age}{get_ordinal_suffix(age)}'
 
 
 def format_birthday_message(
@@ -37,7 +41,7 @@ def format_birthday_message(
         'themself': p.reflexive,
         'are': p.to_be_conjugation,
         'theyre': p.subjective_to_be_contraction,
-        'age_suffix': f'{age}{get_ordinal_suffix(age)}',
+        'age_suffix': age_with_suffix(age),
     }
     args_generated_cases = {}
     for k, v in generate_cases.items():
