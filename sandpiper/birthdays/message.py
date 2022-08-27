@@ -47,7 +47,7 @@ def format_birthday_message(
         'themself': p.reflexive,
         'are': p.to_be_conjugation,
         'theyre': p.subjective_to_be_contraction,
-        'age_suffixed': age_with_suffix(age) if age is not None else None,
+        'age_suffixed': age_with_suffix(age) if age is not None else '',
     }
     args_generated_cases = {}
     for k, v in generate_cases.items():
