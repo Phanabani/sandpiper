@@ -34,6 +34,7 @@ class Sandpiper(commands.Bot):
             intents=intents,
             allowed_mentions=allowed_mentions,
             activity=activity,
+            log_handler=None,
             # Bot params
             command_prefix=get_prefix,
             description=config.description,
