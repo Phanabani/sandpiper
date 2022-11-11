@@ -53,14 +53,15 @@ class Sandpiper(commands.Bot):
 
         self.modules_config = config.modules
 
-        self.load_extension("sandpiper.user_data")
-        self.load_extension("sandpiper.bios")
-        self.load_extension("sandpiper.birthdays")
-        self.load_extension("sandpiper.conversion")
-        self.load_extension("sandpiper.upgrades")
-
     async def setup_hook(self) -> None:
         self.loop.set_debug(True)
+
+        await self.load_extension("sandpiper.user_data")
+
+        await self.load_extension("sandpiper.bios")
+        await self.load_extension("sandpiper.birthdays")
+        await self.load_extension("sandpiper.conversion")
+        await self.load_extension("sandpiper.upgrades")
 
     async def on_connect(self):
         logger.info("Client connected")
