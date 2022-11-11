@@ -11,7 +11,7 @@ python = "^3.10"
 aiosqlite = "^0.17.0"
 alembic = "^1.7.5"
 certifi = "*"
-"discord.py" = "^1.7"
+"discord.py" = "^2"
 fuzzywuzzy = {extras = ["speedup"], version = "^0.18.0"}
 pytz = "*"
 regex = "^2021.11.10"
