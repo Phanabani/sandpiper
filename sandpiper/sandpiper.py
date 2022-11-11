@@ -18,7 +18,7 @@ class Sandpiper(commands.Bot):
     def __init__(self, config: SandpiperConfig._Bot):
 
         # noinspection PyUnusedLocal
-        def get_prefix(bot: commands.Bot, msg: discord.Message) -> str:
+        def get_prefix(bot: commands.Bot, msg: discord.Message) -> str | list[str]:
             """Allows prefix-less command invocation in DMs"""
             if isinstance(msg.channel, discord.DMChannel):
                 return ""
