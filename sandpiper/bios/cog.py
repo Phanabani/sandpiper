@@ -5,12 +5,12 @@ import discord
 from discord.ext.commands import BadArgument
 import discord.ext.commands as commands
 
-from .strings import *
 from sandpiper.birthdays import Birthdays
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.user_data import *
+from .strings import *
 
 __all__ = ["Bios"]
 
@@ -231,7 +231,7 @@ class Bios(commands.Cog):
     @privacy.command(
         name="pronouns",
         brief="Set pronouns privacy.",
-        help=("Set the privacy of your pronouns to either 'private' or 'public'."),
+        help="Set the privacy of your pronouns to either 'private' or 'public'.",
         example="privacy pronouns public",
     )
     async def privacy_pronouns(
@@ -246,7 +246,7 @@ class Bios(commands.Cog):
     @privacy.command(
         name="birthday",
         brief="Set birthday privacy.",
-        help=("Set the privacy of your birthday to either 'private' or 'public'."),
+        help="Set the privacy of your birthday to either 'private' or 'public'.",
         example="privacy birthday public",
     )
     async def privacy_birthday(
@@ -275,7 +275,7 @@ class Bios(commands.Cog):
     @privacy.command(
         name="age",
         brief="Set age privacy.",
-        help=("Set the privacy of your age to either 'private' or 'public'."),
+        help="Set the privacy of your age to either 'private' or 'public'.",
         example="privacy age public",
     )
     async def privacy_age(self, ctx: commands.Context, new_privacy: privacy_handler):
@@ -298,7 +298,7 @@ class Bios(commands.Cog):
     @privacy.command(
         name="timezone",
         brief="Set timezone privacy.",
-        help=("Set the privacy of your timezone to either 'private' or 'public'."),
+        help="Set the privacy of your timezone to either 'private' or 'public'.",
         example="privacy timezone public",
     )
     async def privacy_timezone(
@@ -688,7 +688,7 @@ class Bios(commands.Cog):
         name="birthday_channel",
         invoke_without_command=False,
         brief="Birthday notification channel commands",
-        help=("Commands for managing the birthday notification channel"),
+        help="Commands for managing the birthday notification channel",
     )
     async def server_birthday_channel(self, ctx: commands.Context):
         pass
