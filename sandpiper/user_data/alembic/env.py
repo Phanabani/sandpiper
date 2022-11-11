@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from alembic import context
 
-sandpiper_root_dir = Path(__file__, '../../../..')
+sandpiper_root_dir = Path(__file__, "../../../..")
 sys.path.insert(0, str(sandpiper_root_dir.absolute()))
 from sandpiper.user_data.models import Base
 

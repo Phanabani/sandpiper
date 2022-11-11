@@ -2,103 +2,85 @@ from .pronouns import *
 
 
 class TestOneClass:
-
     def test_one_case(self):
-        pronouns = Pronouns.parse('He')
-        assert pronouns == [
-            Pronouns('he', 'him', 'his', 'his', 'himself')
-        ]
+        pronouns = Pronouns.parse("He")
+        assert pronouns == [Pronouns("he", "him", "his", "his", "himself")]
 
     def test_two_cases(self):
-        pronouns = Pronouns.parse('She/her')
-        assert pronouns == [
-            Pronouns('she', 'her', 'her', 'hers', 'herself')
-        ]
+        pronouns = Pronouns.parse("She/her")
+        assert pronouns == [Pronouns("she", "her", "her", "hers", "herself")]
 
     def test_three_cases(self):
-        pronouns = Pronouns.parse('They/them/their')
-        assert pronouns == [
-            Pronouns('they', 'them', 'their', 'theirs', 'themself')
-        ]
+        pronouns = Pronouns.parse("They/them/their")
+        assert pronouns == [Pronouns("they", "them", "their", "theirs", "themself")]
 
     def test_five_cases(self):
-        pronouns = Pronouns.parse('Xe/xem/xyr/xyrs/xemself')
-        assert pronouns == [
-            Pronouns('xe', 'xem', 'xyr', 'xyrs', 'xemself')
-        ]
+        pronouns = Pronouns.parse("Xe/xem/xyr/xyrs/xemself")
+        assert pronouns == [Pronouns("xe", "xem", "xyr", "xyrs", "xemself")]
 
 
 class TestTwoClasses:
-
     def test_one_case(self):
-        pronouns = Pronouns.parse('They/he')
+        pronouns = Pronouns.parse("They/he")
         assert pronouns == [
-            Pronouns('they', 'them', 'their', 'theirs', 'themself'),
-            Pronouns('he', 'him', 'his', 'his', 'himself')
+            Pronouns("they", "them", "their", "theirs", "themself"),
+            Pronouns("he", "him", "his", "his", "himself"),
         ]
 
     def test_two_cases(self):
-        pronouns = Pronouns.parse('She/her he/him')
+        pronouns = Pronouns.parse("She/her he/him")
         assert pronouns == [
-            Pronouns('she', 'her', 'her', 'hers', 'herself'),
-            Pronouns('he', 'him', 'his', 'his', 'himself')
+            Pronouns("she", "her", "her", "hers", "herself"),
+            Pronouns("he", "him", "his", "his", "himself"),
         ]
 
 
 class TestUniqueClass:
-
     def test_one_case(self):
-        pronouns = Pronouns.parse('Pup')
-        assert pronouns == [
-            Pronouns('pup', 'pup', 'pups', 'pups', 'pupself')
-        ]
+        pronouns = Pronouns.parse("Pup")
+        assert pronouns == [Pronouns("pup", "pup", "pups", "pups", "pupself")]
 
     def test_three_cases(self):
-        pronouns = Pronouns.parse('Unique/missing/some')
+        pronouns = Pronouns.parse("Unique/missing/some")
         assert pronouns == [
-            Pronouns('unique', 'missing', 'some', 'uniques', 'uniqueself')
+            Pronouns("unique", "missing", "some", "uniques", "uniqueself")
         ]
 
     def test_five_cases(self):
-        pronouns = Pronouns.parse('Unique/but/not/missing/any')
-        assert pronouns == [
-            Pronouns('unique', 'but', 'not', 'missing', 'any')
-        ]
+        pronouns = Pronouns.parse("Unique/but/not/missing/any")
+        assert pronouns == [Pronouns("unique", "but", "not", "missing", "any")]
 
     def test_five_cases_mixed_with_known(self):
-        pronouns = Pronouns.parse('He/pup/she')
+        pronouns = Pronouns.parse("He/pup/she")
         assert pronouns == [
-            Pronouns('he', 'him', 'his', 'his', 'himself'),
-            Pronouns('pup', 'pup', 'pups', 'pups', 'pupself'),
-            Pronouns('she', 'her', 'her', 'hers', 'herself')
+            Pronouns("he", "him", "his", "his", "himself"),
+            Pronouns("pup", "pup", "pups", "pups", "pupself"),
+            Pronouns("she", "her", "her", "hers", "herself"),
         ]
 
 
 class TestMisc:
-
     def test_no_args(self):
-        pronouns = Pronouns.parse('')
-        assert pronouns == [
-            Pronouns('they', 'them', 'their', 'theirs', 'themself')
-        ]
+        pronouns = Pronouns.parse("")
+        assert pronouns == [Pronouns("they", "them", "their", "theirs", "themself")]
 
     def test_backslash(self):
-        pronouns = Pronouns.parse('she\\he')
+        pronouns = Pronouns.parse("she\\he")
         assert pronouns == [
-            Pronouns('she', 'her', 'her', 'hers', 'herself'),
-            Pronouns('he', 'him', 'his', 'his', 'himself')
+            Pronouns("she", "her", "her", "hers", "herself"),
+            Pronouns("he", "him", "his", "his", "himself"),
         ]
 
     def test_spaces(self):
-        pronouns = Pronouns.parse('she / he')
+        pronouns = Pronouns.parse("she / he")
         assert pronouns == [
-            Pronouns('she', 'her', 'her', 'hers', 'herself'),
-            Pronouns('he', 'him', 'his', 'his', 'himself')
+            Pronouns("she", "her", "her", "hers", "herself"),
+            Pronouns("he", "him", "his", "his", "himself"),
         ]
 
     def test_repeats(self):
-        pronouns = Pronouns.parse('She/her he/him she/her')
+        pronouns = Pronouns.parse("She/her he/him she/her")
         assert pronouns == [
-            Pronouns('she', 'her', 'her', 'hers', 'herself'),
-            Pronouns('he', 'him', 'his', 'his', 'himself')
+            Pronouns("she", "her", "her", "hers", "herself"),
+            Pronouns("he", "him", "his", "his", "himself"),
         ]

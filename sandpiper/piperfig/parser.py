@@ -3,16 +3,24 @@ from io import TextIOBase
 import json
 import sys
 from types import MethodType
+
 # noinspection PyPep8Naming
 from typing import (
-    Any, Annotated, Literal, NoReturn, TextIO, Union, get_type_hints, overload
+    Any,
+    Annotated,
+    Literal,
+    NoReturn,
+    TextIO,
+    Union,
+    get_type_hints,
+    overload,
 )
 
 from .exceptions import *
 from .misc import *
 from .transformers import *
 
-__all__ = ('ConfigSchema',)
+__all__ = ("ConfigSchema",)
 
 NoDefault = object()
 
@@ -22,27 +30,21 @@ def is_json_type(type_: type) -> bool:
 
 
 def is_annotated(type_):
-    return hasattr(type_, '__metadata__') and hasattr(type_, '__origin__')
+    return hasattr(type_, "__metadata__") and hasattr(type_, "__origin__")
 
 
 def should_skip(name: str, value: Any = None) -> bool:
-    return (
-        name.startswith('_')
-        or (
-            value is not None
-            and isinstance(value, (MethodType, cached_property))
-        )
+    return name.startswith("_") or (
+        value is not None and isinstance(value, (MethodType, cached_property))
     )
 
 
 class ConfigSchema:
 
     __path: str
-    __fields: dict[
-        str, tuple[Annotated[Any, 'Type'], Annotated[Any, 'Default']]
-    ]
+    __fields: dict[str, tuple[Annotated[Any, "Type"], Annotated[Any, "Default"]]]
 
-    def __init__(self, config: Union[dict, str, TextIO], *, _schema_path=''):
+    def __init__(self, config: Union[dict, str, TextIO], *, _schema_path=""):
         self.__path = _schema_path
         self.deserialize(config)
 
@@ -59,7 +61,7 @@ class ConfigSchema:
             cls,
             globalns=vars(sys.modules[cls.__module__]),
             localns=vars(cls),
-            include_extras=True
+            include_extras=True,
         )
         cls_dict = cls.__dict__
 
@@ -79,9 +81,10 @@ class ConfigSchema:
                     _convert(default, field_type, field_name)
                 except Exception:
                     raise ConfigSchemaError(
-                        cls, field_name,
+                        cls,
+                        field_name,
                         f"Default value {default} does not match type "
-                        f"annotation {field_type}"
+                        f"annotation {field_type}",
                     )
             cls.__fields[field_name] = field_type, default
 
@@ -94,9 +97,10 @@ class ConfigSchema:
                 field_type = _infer_type(default)
             except TypeError:
                 raise ConfigSchemaError(
-                    cls, field_name,
+                    cls,
+                    field_name,
                     f"Could not infer type of default value {default}. "
-                    f"It's probably an invalid type."
+                    f"It's probably an invalid type.",
                 )
             cls.__fields[field_name] = (field_type, default)
 
@@ -124,12 +128,14 @@ class ConfigSchema:
             self.__read_field(config, field_name, field_type, default)
 
     def __read_field(
-            self, json_parsed: dict[str, Any], field_name: str,
-            field_type: Any, default: Any = NoDefault
+        self,
+        json_parsed: dict[str, Any],
+        field_name: str,
+        field_type: Any,
+        default: Any = NoDefault,
     ):
         qualified_name = qualified(self.__path, field_name)
-        if (isinstance(field_type, type)
-                and issubclass(field_type, ConfigSchema)):
+        if isinstance(field_type, type) and issubclass(field_type, ConfigSchema):
             assert default is NoDefault, (
                 f"Config field {qualified_name} is annotated as a schema "
                 f"and should not have a default value"
@@ -137,8 +143,7 @@ class ConfigSchema:
             # The type is a schema, so pass the json-parsed dict into the
             # schema type for further parsing
             final_value = field_type(
-                json_parsed.get(field_name, {}),
-                _schema_path=qualified_name
+                json_parsed.get(field_name, {}), _schema_path=qualified_name
             )
             setattr(self, field_name, final_value)
             return
@@ -179,8 +184,7 @@ class ConfigSchema:
 
     @staticmethod
     def __serialize_field(field_type, value) -> Any:
-        if (isinstance(field_type, type)
-                and issubclass(field_type, ConfigSchema)):
+        if isinstance(field_type, type) and issubclass(field_type, ConfigSchema):
             return value.serialize(json_=False)
 
         if is_annotated(field_type):
@@ -198,7 +202,7 @@ def _infer_type(value):
 
     if isinstance(value, dict):
         if any(not isinstance(i, str) for i in value.keys()):
-            raise TypeError('Dict keys must be strings to conform with JSON')
+            raise TypeError("Dict keys must be strings to conform with JSON")
         return dict[str, Union[tuple(_infer_type(i) for i in value.values())]]
 
     if is_json_type(type(value)):
@@ -214,16 +218,17 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
 
     if isinstance(type_, ConfigTransformer):
         raise ConfigSchemaError(
-            cls, field_name,
+            cls,
+            field_name,
             f"You may only use ConfigTransformers as metadata in "
             f"typing.Annotated. Try something like "
-            f"Annotated[out_type, {type_!r}]"
+            f"Annotated[out_type, {type_!r}]",
         )
 
     if isinstance(type_, type) and issubclass(type_, ConfigSchema):
         return
 
-    if hasattr(type_, '__origin__') and hasattr(type_, '__metadata__'):
+    if hasattr(type_, "__origin__") and hasattr(type_, "__metadata__"):
         # This annotation is Annotated with metadata
         # noinspection PyTypeChecker
         needs_origin_check = _validate_transformers(cls, field_name, type_)
@@ -231,7 +236,7 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
             _validate_annotation(cls, field_name, type_.__origin__)
         return
 
-    if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
+    if hasattr(type_, "__origin__") and hasattr(type_, "__args__"):
         # Use special rules for typing module types
         type_origin = type_.__origin__
         type_args = type_.__args__
@@ -266,15 +271,15 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
             for literal in type_args:
                 if isinstance(literal, list) or not is_json_type(type(literal)):
                     raise ConfigSchemaError(
-                        cls, field_name,
+                        cls,
+                        field_name,
                         f"Literal values may only be instances of NoneType, "
-                        f"bool, int, float, or str"
+                        f"bool, int, float, or str",
                     )
             return
 
         raise ConfigSchemaError(
-            cls, field_name,
-            f"Special type annotation {type_origin} is not accepted."
+            cls, field_name, f"Special type annotation {type_origin} is not accepted."
         )
 
     if type_ is tuple:
@@ -287,9 +292,10 @@ def _validate_annotation(cls: type, field_name: str, type_) -> NoReturn:
 
     # Some other annotation we can't handle
     raise ConfigSchemaError(
-        cls, field_name,
+        cls,
+        field_name,
         f"Type annotation {type_} is not accepted. Maybe you want to use the "
-        f"FromType transformer?"
+        f"FromType transformer?",
     )
 
 
@@ -311,18 +317,20 @@ def _validate_transformers(cls: type, field_name: str, type_) -> bool:
             # Implicit to_type for FromType is only allowed as the last
             # transformer
             raise ConfigSchemaError(
-                cls, field_name,
+                cls,
+                field_name,
                 "A FromType transformer with an implicit to_type may only be "
-                "the last transformer in the sequence."
+                "the last transformer in the sequence.",
             )
 
         if prev_type is not None and trans.in_type != prev_type:
             # The input type of this transformer doesn't match the output type
             # of the previous transformer
             raise ConfigSchemaError(
-                cls, field_name,
+                cls,
+                field_name,
                 f"Input type {trans.in_type} of Transformer {trans} does not "
-                f"match the output type {prev_type} of the previous transformer"
+                f"match the output type {prev_type} of the previous transformer",
             )
 
         prev_type = trans.out_type
@@ -333,9 +341,10 @@ def _validate_transformers(cls: type, field_name: str, type_) -> bool:
                 # JSON type
                 if not is_json_type(trans.from_type):
                     raise ConfigSchemaError(
-                        cls, field_name,
+                        cls,
+                        field_name,
                         f"The input type of the first FromType transformer "
-                        f"must be a valid JSON type, got {trans.from_type}"
+                        f"must be a valid JSON type, got {trans.from_type}",
                     )
                 first_fromtype_encountered = True
 
@@ -349,25 +358,24 @@ def _validate_transformers(cls: type, field_name: str, type_) -> bool:
         return True
     elif target_type is not prev_type:
         raise ConfigSchemaError(
-            cls, field_name,
+            cls,
+            field_name,
             f"out_type {prev_type} of the final transformer does not match the "
-            f"annotated type {target_type} of this field"
+            f"annotated type {target_type} of this field",
         )
     return False
 
 
-def _convert(
-        value: Any, type_: Any, qualified_name: str
-):
+def _convert(value: Any, type_: Any, qualified_name: str):
     if type_ is Any:
         # Any type is accepted
         return value
 
-    if hasattr(type_, '__metadata__'):
+    if hasattr(type_, "__metadata__"):
         # Annotated with transformers
         return do_transformations(value, type_)
 
-    if hasattr(type_, '__origin__') and hasattr(type_, '__args__'):
+    if hasattr(type_, "__origin__") and hasattr(type_, "__args__"):
         # Use special rules for typing module types
         type_origin = type_.__origin__
         type_args = type_.__args__
@@ -394,15 +402,12 @@ def _convert(
             typecheck((list, tuple), value, qualified_name)
             if len(value) != len(type_args):
                 raise ValueError(
-                    f"Expected a tuple of length {len(type_args)}, got "
-                    f"{len(value)}"
+                    f"Expected a tuple of length {len(type_args)}, got " f"{len(value)}"
                 )
 
             converted_list = []
             for i, subtype in enumerate(type_args):
-                converted = _convert(
-                    value[i], subtype, f"{qualified_name}[{i}]"
-                )
+                converted = _convert(value[i], subtype, f"{qualified_name}[{i}]")
                 converted_list.append(converted)
             return tuple(converted_list)
 
@@ -412,9 +417,7 @@ def _convert(
             list_type = type_args[0]
             converted_list = []
             for i, subvalue in enumerate(value):
-                converted = _convert(
-                    subvalue, list_type, f"{qualified_name}[{i}]"
-                )
+                converted = _convert(subvalue, list_type, f"{qualified_name}[{i}]")
                 converted_list.append(converted)
             return converted_list
 
@@ -424,17 +427,13 @@ def _convert(
             key_type, value_type = type_args
             if key_type is not str:
                 # Ideally should never happen
-                raise RuntimeError(
-                    "The dict keys type annotation should be str"
-                )
+                raise RuntimeError("The dict keys type annotation should be str")
 
             converted_dict = {}
             for key, val in value.items():
                 dict_qual_name = f"{qualified_name}[{key}]"
                 typecheck(key_type, key, dict_qual_name)
-                converted = _convert(
-                    val, value_type, dict_qual_name
-                )
+                converted = _convert(val, value_type, dict_qual_name)
                 converted_dict[key] = converted
 
             return converted_dict
@@ -442,9 +441,7 @@ def _convert(
         if type_origin is Literal:
             # Check equality with one of the literal values
             if value not in type_args:
-                raise ValueError(
-                    f"Value must be equal to one of {type_args}"
-                )
+                raise ValueError(f"Value must be equal to one of {type_args}")
             return value
 
     if type_ is tuple:

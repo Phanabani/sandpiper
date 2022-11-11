@@ -1,15 +1,14 @@
 from typing import NoReturn, Union
 
-__all__ = ('qualified', 'typecheck')
+__all__ = ("qualified", "typecheck")
 
 
 def qualified(parent: str, name: str) -> str:
-    return (parent + '.' if parent else '') + name
+    return (parent + "." if parent else "") + name
 
 
 def typecheck(
-        type_: Union[type, tuple[type, ...]], value, name: str,
-        use_isinstance=False
+    type_: Union[type, tuple[type, ...]], value, name: str, use_isinstance=False
 ) -> NoReturn:
     if use_isinstance:
         is_type = isinstance(value, type_)

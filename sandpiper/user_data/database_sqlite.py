@@ -9,7 +9,10 @@ import pytz
 import sqlalchemy as sa
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import (
-    AsyncConnection, AsyncEngine, AsyncSession, create_async_engine
+    AsyncConnection,
+    AsyncEngine,
+    AsyncSession,
+    create_async_engine,
 )
 from sqlalchemy.orm import sessionmaker
 
@@ -51,9 +54,10 @@ class DatabaseSQLite(Database):
         self._engine = create_async_engine(
             f"sqlite+aiosqlite:///{self.db_path}", echo=False, future=True
         )
-        self._session_maker = cast(T_Sessionmaker, sessionmaker(
-            self._engine, expire_on_commit=False, class_=AsyncSession
-        ))
+        self._session_maker = cast(
+            T_Sessionmaker,
+            sessionmaker(self._engine, expire_on_commit=False, class_=AsyncSession),
+        )
 
         await self._do_upgrades()
 
@@ -79,28 +83,30 @@ class DatabaseSQLite(Database):
         revision = await alembic_utils.get_current_heads(self._engine)
         if revision:
             logger.info("Performing Alembic upgrade to head (may be a no-op)")
-            await alembic_utils.upgrade(self._engine, 'head')
+            await alembic_utils.upgrade(self._engine, "head")
             return
 
         logger.info("Database has no Alembic version")
         async with self._engine.begin() as conn:
             # Check the sqlite meta table for table definitions
             conn: AsyncConnection
-            no_tables = (await conn.execute(sa.text(
-                "SELECT 1 FROM sqlite_master LIMIT 1"
-            ))).first() is None
-            user_data_table_exists = (await conn.execute(sa.text(
-                "SELECT 1 FROM sqlite_master WHERE name = 'user_data' LIMIT 1"
-            ))).first() is not None
+            no_tables = (
+                await conn.execute(sa.text("SELECT 1 FROM sqlite_master LIMIT 1"))
+            ).first() is None
+            user_data_table_exists = (
+                await conn.execute(
+                    sa.text(
+                        "SELECT 1 FROM sqlite_master WHERE name = 'user_data' LIMIT 1"
+                    )
+                )
+            ).first() is not None
 
         if no_tables:
             # This database is empty, we can create all and stamp as head
-            logger.info(
-                "Empty database; creating all and stamping as Alembic head"
-            )
+            logger.info("Empty database; creating all and stamping as Alembic head")
             async with self._engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
-            await alembic_utils.stamp(self._engine, 'head')
+            await alembic_utils.stamp(self._engine, "head")
 
         elif user_data_table_exists:
             # The database already existed but was not tracked yet by Alembic.
@@ -110,9 +116,9 @@ class DatabaseSQLite(Database):
                 "user_data table found; stamping with the appropriate "
                 "Alembic revision to continue with upgrades"
             )
-            await alembic_utils.stamp(self._engine, '91e18fdd475a')
+            await alembic_utils.stamp(self._engine, "91e18fdd475a")
             logger.info("Upgrading to head")
-            await alembic_utils.upgrade(self._engine, 'head')
+            await alembic_utils.upgrade(self._engine, "head")
 
         else:
             err_msg = (
@@ -131,9 +137,11 @@ class DatabaseSQLite(Database):
     @staticmethod
     async def _get_sandpiper_meta(session: AsyncSession) -> SandpiperMeta:
         try:
-            return (await session.execute(
-                sa.select(SandpiperMeta).where(SandpiperMeta.id == 0)
-            )).scalar_one()
+            return (
+                await session.execute(
+                    sa.select(SandpiperMeta).where(SandpiperMeta.id == 0)
+                )
+            ).scalar_one()
         except NoResultFound:
             sandpiper_meta = SandpiperMeta(id=0)
             session.add(sandpiper_meta)
@@ -141,12 +149,12 @@ class DatabaseSQLite(Database):
 
     @staticmethod
     async def _get_user(
-            session: AsyncSession, user_id: int, create_if_missing=True
+        session: AsyncSession, user_id: int, create_if_missing=True
     ) -> Optional[User]:
         try:
-            return (await session.execute(
-                sa.select(User).where(User.user_id == user_id)
-            )).scalar_one()
+            return (
+                await session.execute(sa.select(User).where(User.user_id == user_id))
+            ).scalar_one()
         except NoResultFound:
             if not create_if_missing:
                 return None
@@ -157,38 +165,37 @@ class DatabaseSQLite(Database):
     @staticmethod
     async def _get_guild(session: AsyncSession, guild_id: int) -> Guild:
         try:
-            return (await session.execute(
-                sa.select(Guild).where(Guild.guild_id == guild_id)
-            )).scalar_one()
+            return (
+                await session.execute(
+                    sa.select(Guild).where(Guild.guild_id == guild_id)
+                )
+            ).scalar_one()
         except NoResultFound:
             guild = Guild(guild_id=guild_id)
             session.add(guild)
             return guild
 
-    async def _get_user_field(
-            self, field_name: str, user_id: int
-    ) -> Optional[Any]:
+    async def _get_user_field(self, field_name: str, user_id: int) -> Optional[Any]:
         logger.info(f"Getting {field_name} (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
             try:
-                return (await session.execute(
-                    sa.select(getattr(User, field_name))
-                    .where(User.user_id == user_id)
-                )).scalar_one()
+                return (
+                    await session.execute(
+                        sa.select(getattr(User, field_name)).where(
+                            User.user_id == user_id
+                        )
+                    )
+                ).scalar_one()
             except NoResultFound:
                 raise UserNotInDatabase
 
     async def _set_user_field(self, field_name: str, user_id: int, value: Any):
-        logger.info(
-            f"Setting {field_name} (user_id={user_id}, new_value={value})"
-        )
+        logger.info(f"Setting {field_name} (user_id={user_id}, new_value={value})")
         async with self._session_maker() as session, session.begin():
             if value is None:
                 # When using the delete command, it sends None. We don't want
                 # to create a new user if they're just trying to delete data
-                user = await self._get_user(
-                    session, user_id, create_if_missing=False
-                )
+                user = await self._get_user(session, user_id, create_if_missing=False)
                 if user is None:
                     raise UserNotInDatabase
             else:
@@ -196,20 +203,21 @@ class DatabaseSQLite(Database):
             setattr(user, field_name, value)
 
     async def _get_user_privacy_field(
-            self, field_name: str, user_id: int
+        self, field_name: str, user_id: int
     ) -> Optional[PrivacyType]:
-        logger.info(
-            f"Getting {field_name} privacy (user_id={user_id})"
-        )
+        logger.info(f"Getting {field_name} privacy (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
-            privacy = (await session.execute(
-                sa.select(getattr(User, f"privacy_{field_name}"))
-                .where(User.user_id == user_id))
+            privacy = (
+                await session.execute(
+                    sa.select(getattr(User, f"privacy_{field_name}")).where(
+                        User.user_id == user_id
+                    )
+                )
             ).scalar()
             return PrivacyType(privacy) if privacy is not None else None
 
     async def _set_user_privacy_field(
-            self, field_name: str, user_id: int, new_privacy: PrivacyType
+        self, field_name: str, user_id: int, new_privacy: PrivacyType
     ):
         logger.info(
             f"Setting {field_name} privacy (user_id={user_id} "
@@ -225,15 +233,14 @@ class DatabaseSQLite(Database):
     async def get_sandpiper_version(self) -> str:
         logger.info(f"Getting Sandpiper version")
         async with self._session_maker() as session, session.begin():
-            return (await session.execute(
-                sa.select(SandpiperMeta.version)
-                .where(SandpiperMeta.id == 0)
-            )).scalar()
+            return (
+                await session.execute(
+                    sa.select(SandpiperMeta.version).where(SandpiperMeta.id == 0)
+                )
+            ).scalar()
 
     async def set_sandpiper_version(self, new_version: str):
-        logger.info(
-            f"Setting Sandpiper version (new_value={new_version})"
-        )
+        logger.info(f"Setting Sandpiper version (new_value={new_version})")
         async with self._session_maker() as session, session.begin():
             sandpiper_meta = await self._get_sandpiper_meta(session)
             sandpiper_meta.version = new_version
@@ -250,98 +257,76 @@ class DatabaseSQLite(Database):
     async def delete_user(self, user_id: int):
         logger.info(f"Deleting user (user_id={user_id})")
         async with self._session_maker() as session, session.begin():
-            await session.execute(
-                sa.delete(User).where(User.user_id == user_id)
-            )
+            await session.execute(sa.delete(User).where(User.user_id == user_id))
 
     async def get_all_user_ids(self) -> list[int]:
         logger.info(f"Getting all user IDs")
         async with self._session_maker() as session, session.begin():
-            return (await session.execute(
-                sa.select(User.user_id)
-            )).scalars().all()
+            return (await session.execute(sa.select(User.user_id))).scalars().all()
 
     # endregion
     # region Preferred name
 
     async def get_preferred_name(self, user_id: int) -> Optional[str]:
-        return await self._get_user_field('preferred_name', user_id)
+        return await self._get_user_field("preferred_name", user_id)
 
-    async def set_preferred_name(
-            self, user_id: int, new_preferred_name: Optional[str]
-    ):
-        await self._set_user_field(
-            'preferred_name', user_id, new_preferred_name
-        )
+    async def set_preferred_name(self, user_id: int, new_preferred_name: Optional[str]):
+        await self._set_user_field("preferred_name", user_id, new_preferred_name)
 
-    async def get_privacy_preferred_name(
-            self, user_id: int
-    ) -> Optional[PrivacyType]:
-        return await self._get_user_privacy_field('preferred_name', user_id)
+    async def get_privacy_preferred_name(self, user_id: int) -> Optional[PrivacyType]:
+        return await self._get_user_privacy_field("preferred_name", user_id)
 
-    async def set_privacy_preferred_name(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
-        await self._set_user_privacy_field(
-            'preferred_name', user_id, new_privacy
-        )
+    async def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
+        await self._set_user_privacy_field("preferred_name", user_id, new_privacy)
 
-    async def find_users_by_preferred_name(
-            self, name: str
-    ) -> list[tuple[int, str]]:
+    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
         logger.info(f"Finding users by preferred name (name={name})")
-        if name == '':
+        if name == "":
             logger.info("Skipping empty string")
             return []
 
         async with self._session_maker() as session, session.begin():
-            return (await session.execute(
-                sa.select(User.user_id, User.preferred_name)
-                .where(User.preferred_name.like(f'%{name}%'))
-                .where(User.privacy_preferred_name == PrivacyType.PUBLIC)
-            )).all()
+            return (
+                await session.execute(
+                    sa.select(User.user_id, User.preferred_name)
+                    .where(User.preferred_name.like(f"%{name}%"))
+                    .where(User.privacy_preferred_name == PrivacyType.PUBLIC)
+                )
+            ).all()
 
     # endregion
     # region Pronouns
 
     async def get_pronouns(self, user_id: int) -> Optional[str]:
-        return await self._get_user_field('pronouns', user_id)
+        return await self._get_user_field("pronouns", user_id)
 
     async def set_pronouns(self, user_id: int, new_pronouns: Optional[str]):
-        await self._set_user_field('pronouns', user_id, new_pronouns)
+        await self._set_user_field("pronouns", user_id, new_pronouns)
 
     async def get_privacy_pronouns(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_user_privacy_field('pronouns', user_id)
+        return await self._get_user_privacy_field("pronouns", user_id)
 
-    async def set_privacy_pronouns(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
-        await self._set_user_privacy_field('pronouns', user_id, new_privacy)
+    async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
+        await self._set_user_privacy_field("pronouns", user_id, new_privacy)
 
     # endregion
     # region Birthday
 
     async def get_birthday(self, user_id: int) -> Optional[dt.date]:
-        return await self._get_user_field('birthday', user_id)
+        return await self._get_user_field("birthday", user_id)
 
-    async def set_birthday(
-            self, user_id: int, new_birthday: Optional[dt.date]
-    ):
-        await self._set_user_field('birthday', user_id, new_birthday)
+    async def set_birthday(self, user_id: int, new_birthday: Optional[dt.date]):
+        await self._set_user_field("birthday", user_id, new_birthday)
 
     async def get_privacy_birthday(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_user_privacy_field('birthday', user_id)
+        return await self._get_user_privacy_field("birthday", user_id)
 
-    async def set_privacy_birthday(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
-        await self._set_user_privacy_field('birthday', user_id, new_privacy)
+    async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
+        await self._set_user_privacy_field("birthday", user_id, new_privacy)
 
     @staticmethod
     def _birthday_range_predicate(start: dt.date, end: dt.date):
-        wrap = (
-            (32 * start.month + start.day) > (32 * end.month + end.day)
-        )
+        wrap = (32 * start.month + start.day) > (32 * end.month + end.day)
 
         def f(d: dt.date) -> bool:
             if wrap:
@@ -374,9 +359,11 @@ class DatabaseSQLite(Database):
         return f
 
     async def get_birthdays_range(
-            self, start: dt.date, end: dt.date,
-            max_last_notification_time: Optional[dt.date] = None
-    ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
+        self,
+        start: dt.date,
+        end: dt.date,
+        max_last_notification_time: Optional[dt.date] = None,
+    ) -> list[tuple[Annotated[int, "user_id"], dt.date]]:
         logger.info(
             f"Getting all birthdays between {start.day}-{start.month} and "
             f"{end.day}-{end.month}"
@@ -397,43 +384,41 @@ class DatabaseSQLite(Database):
                 )
             birthdays_unfiltered = (await session.execute(stmt)).all()
 
-        return list(filter(
-            lambda r: self._birthday_range_predicate(start, end)(r[1]),
-            birthdays_unfiltered
-        ))
+        return list(
+            filter(
+                lambda r: self._birthday_range_predicate(start, end)(r[1]),
+                birthdays_unfiltered,
+            )
+        )
 
     # endregion
     # region Age
 
     async def get_privacy_age(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_user_privacy_field('age', user_id)
+        return await self._get_user_privacy_field("age", user_id)
 
     async def set_privacy_age(self, user_id: int, new_privacy: PrivacyType):
-        await self._set_user_privacy_field('age', user_id, new_privacy)
+        await self._set_user_privacy_field("age", user_id, new_privacy)
 
     # endregion
     # region Timezone
 
     async def get_timezone(self, user_id: int) -> Optional[TimezoneType]:
-        tz_name = await self._get_user_field('timezone', user_id)
+        tz_name = await self._get_user_field("timezone", user_id)
         if tz_name:
             return pytz.timezone(tz_name)
         return None
 
-    async def set_timezone(
-            self, user_id: int, new_timezone: Optional[TimezoneType]
-    ):
+    async def set_timezone(self, user_id: int, new_timezone: Optional[TimezoneType]):
         if new_timezone:
             new_timezone = new_timezone.zone
-        await self._set_user_field('timezone', user_id, new_timezone)
+        await self._set_user_field("timezone", user_id, new_timezone)
 
     async def get_privacy_timezone(self, user_id: int) -> Optional[PrivacyType]:
-        return await self._get_user_privacy_field('timezone', user_id)
+        return await self._get_user_privacy_field("timezone", user_id)
 
-    async def set_privacy_timezone(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
-        await self._set_user_privacy_field('timezone', user_id, new_privacy)
+    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
+        await self._set_user_privacy_field("timezone", user_id, new_privacy)
 
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
         logger.info(f"Getting all user timezones")
@@ -452,30 +437,25 @@ class DatabaseSQLite(Database):
     # region Other user stuff
 
     async def get_last_birthday_notification(self, user_id: int) -> dt.datetime:
-        return await self._get_user_field('last_birthday_notification', user_id)
+        return await self._get_user_field("last_birthday_notification", user_id)
 
-    async def set_last_birthday_notification(
-            self, user_id: int, new_date: dt.datetime
-    ):
-        await self._set_user_field(
-            'last_birthday_notification', user_id, new_date
-        )
+    async def set_last_birthday_notification(self, user_id: int, new_date: dt.datetime):
+        await self._set_user_field("last_birthday_notification", user_id, new_date)
 
     # endregion
     # region Guilds
 
-    async def get_guild_birthday_channel(
-            self, guild_id: int
-    ) -> Optional[str]:
+    async def get_guild_birthday_channel(self, guild_id: int) -> Optional[str]:
         logger.info(f"Getting guild birthday_channel (guild_id={guild_id})")
         async with self._session_maker() as session, session.begin():
-            return (await session.execute(
-                sa.select(Guild.birthday_channel)
-                .where(Guild.guild_id == guild_id)
-            )).scalar()
+            return (
+                await session.execute(
+                    sa.select(Guild.birthday_channel).where(Guild.guild_id == guild_id)
+                )
+            ).scalar()
 
     async def set_guild_birthday_channel(
-            self, guild_id: int, new_birthday_channel: Optional[int]
+        self, guild_id: int, new_birthday_channel: Optional[int]
     ):
         logger.info(
             f"Setting guild birthday_channel (guild_id={guild_id}, "

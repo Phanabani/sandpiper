@@ -19,10 +19,12 @@ from sandpiper.user_data import DatabaseSQLite
 @pytest.fixture()
 def new_id():
     last_id = 0
+
     def f() -> int:
         nonlocal last_id
         last_id += 1
         return last_id
+
     return f
 
 
@@ -36,16 +38,19 @@ def users_map() -> dict[int, discord.User]:
     return {}
 
 
-T_BaseUserType = TypeVar('T_BaseUserType', bound=Type[discord.user.BaseUser])
+T_BaseUserType = TypeVar("T_BaseUserType", bound=Type[discord.user.BaseUser])
 
 
 def __create_mock_user(
-        users: list[discord.User], users_map: dict[int, discord.User],
-        guilds: list[discord.Guild], client_user_id: int,
-        mock_spec: T_BaseUserType,
-        id: int, name: Optional[str] = None,
-        discriminator: Optional[int] = None,
-        **kwargs
+    users: list[discord.User],
+    users_map: dict[int, discord.User],
+    guilds: list[discord.Guild],
+    client_user_id: int,
+    mock_spec: T_BaseUserType,
+    id: int,
+    name: Optional[str] = None,
+    discriminator: Optional[int] = None,
+    **kwargs,
 ) -> T_BaseUserType:
     """
     Create a mock user and add it to the mapping structures.
@@ -70,20 +75,20 @@ def __create_mock_user(
     if id in users_map:
         raise ValueError(f"User with id={id} already exists")
     if name is None:
-        name = 'A_User'
+        name = "A_User"
     if discriminator is None:
         discriminator = id % 10000
 
-    user = mock.create_autospec(
-        mock_spec, id=id, discriminator=discriminator, **kwargs
-    )
+    user = mock.create_autospec(mock_spec, id=id, discriminator=discriminator, **kwargs)
     user.name = name
 
     def get_mutual_guilds():
         mutual_guilds = []
         for guild in guilds:
-            if (guild.get_member(client_user_id) is not None
-                    and guild.get_member(id) is not None):
+            if (
+                guild.get_member(client_user_id) is not None
+                and guild.get_member(id) is not None
+            ):
                 # Both the bot and the user are in this guild
                 mutual_guilds.append(guild)
         return mutual_guilds
@@ -102,8 +107,10 @@ def __create_mock_user(
 @pytest.fixture()
 def make_user(bot, guilds, new_id, users, users_map):
     def f(
-            id: Optional[int] = None, name: Optional[str] = None,
-            discriminator: Optional[int] = None, **kwargs
+        id: Optional[int] = None,
+        name: Optional[str] = None,
+        discriminator: Optional[int] = None,
+        **kwargs,
     ) -> T_BaseUserType:
         """
         Add a mock user to the client. You can access users through the list
@@ -119,8 +126,14 @@ def make_user(bot, guilds, new_id, users, users_map):
         if id is None:
             id = new_id()
         return __create_mock_user(
-            users, users_map, guilds, bot.user.id, discord.User,
-            id=id, name=name, discriminator=discriminator
+            users,
+            users_map,
+            guilds,
+            bot.user.id,
+            discord.User,
+            id=id,
+            name=name,
+            discriminator=discriminator,
         )
 
     return f
@@ -139,8 +152,10 @@ def channels_map() -> dict[int, discord.TextChannel]:
 @pytest.fixture()
 def make_channel(new_id, channels, channels_map):
     def f(
-            guild: discord.Guild, id_: Optional[int] = None,
-            name: Optional[str] = None, **kwargs
+        guild: discord.Guild,
+        id_: Optional[int] = None,
+        name: Optional[str] = None,
+        **kwargs,
     ) -> discord.TextChannel:
         """
         Add a mock text channel to the client. You can access text channels
@@ -158,7 +173,7 @@ def make_channel(new_id, channels, channels_map):
         if id_ in channels_map:
             raise ValueError(f"Channel with id={id_} already exists")
         if name is None:
-            name = 'a-channel'
+            name = "a-channel"
 
         channel = mock.create_autospec(discord.TextChannel, id=id_, **kwargs)
         channel.name = name
@@ -190,7 +205,7 @@ def guilds_map() -> dict[int, discord.Guild]:
 @pytest.fixture()
 def make_guild(new_id, guilds, guilds_map):
     def f(
-            id_: Optional[int] = None, name: Optional[str] = None, **kwargs
+        id_: Optional[int] = None, name: Optional[str] = None, **kwargs
     ) -> discord.Guild:
         """
         Add a mock guild to the client. You can access guilds through the list
@@ -207,7 +222,7 @@ def make_guild(new_id, guilds, guilds_map):
         if id_ in guilds_map:
             raise ValueError(f"Guild with id={id_} already exists")
         if name is None:
-            name = 'A_Guild'
+            name = "A_Guild"
 
         guild = mock.create_autospec(discord.Guild, id=id_, **kwargs)
         guild.name = name
@@ -230,7 +245,7 @@ def make_guild(new_id, guilds, guilds_map):
 @pytest.fixture()
 def add_user_to_guild(users_map, guilds_map):
     def f(
-            guild_id: int, user_id: int, display_name: Optional[str], **kwargs
+        guild_id: int, user_id: int, display_name: Optional[str], **kwargs
     ) -> discord.Member:
         """
         Create a mock member by adding a user to a guild. The user and guild
@@ -251,14 +266,16 @@ def add_user_to_guild(users_map, guilds_map):
         guild = guilds_map[guild_id]
         # noinspection PyUnresolvedReferences
         if user_id in guild._members_map:
-            raise ValueError(
-                f"Member with id={user_id} already exists in this guild"
-            )
+            raise ValueError(f"Member with id={user_id} already exists in this guild")
         user = users_map[user_id]
         member = MagicMock_(
             spec=discord.Member,
-            id=user_id, name=user.name, discriminator=user.discriminator,
-            guild=guild, display_name=display_name, **kwargs
+            id=user_id,
+            name=user.name,
+            discriminator=user.discriminator,
+            guild=guild,
+            display_name=display_name,
+            **kwargs,
         )
         guild.members.append(member)
         # noinspection PyUnresolvedReferences
@@ -280,21 +297,20 @@ def message() -> discord.Message:
 # noinspection PyPropertyAccess
 @pytest.fixture()
 async def bot(
-        users, users_map, channels, channels_map, guilds, guilds_map,
-        new_id
+    users, users_map, channels, channels_map, guilds, guilds_map, new_id
 ) -> commands.Bot:
     patchers = []
 
     # Patch in some mocks for bot attributes that tests may need to work
     # with (otherwise they're unsettable)
-    for attr in ('users', 'guilds'):
+    for attr in ("users", "guilds"):
         p = mock.patch(f"discord.ext.commands.Bot.{attr}")
         patchers.append(p)
         p.start()
 
     # Create a dummy bot that will never actually connect but will help
     # with invocation
-    bot = commands.Bot(command_prefix='')
+    bot = commands.Bot(command_prefix="")
 
     @functools.wraps(mock.patch.object)
     def patch(attr, *, target=bot, **kwargs):
@@ -310,27 +326,32 @@ async def bot(
     # This function checks if message author is the self bot and skips
     # context creation (meaning we won't get command invocation), so
     # we will bypass it
-    patch('_skip_check', return_value=False)
+    patch("_skip_check", return_value=False)
 
     # This connection (discord.state.ConnectionState) object has a `user`
     # field which is accessed by the client's `user` property. The
     # _skip_check function is called with `client.user.id` which doesn't
     # exist (since we aren't connecting) and raises an AttributeError, so
     # we need to patch it in.
-    connection_mock = patch('_connection')
+    connection_mock = patch("_connection")
     client_uid = new_id()
     connection_mock.user = __create_mock_user(
-        users, users_map, guilds, client_uid, discord.ClientUser,
-        id=client_uid, name='Bot'
+        users,
+        users_map,
+        guilds,
+        client_uid,
+        discord.ClientUser,
+        id=client_uid,
+        name="Bot",
     )
 
-    get_user = patch('get_user')
+    get_user = patch("get_user")
     get_user.side_effect = lambda id: users_map.get(id, None)
 
-    get_channel = patch('get_channel')
+    get_channel = patch("get_channel")
     get_channel.side_effect = lambda id: channels_map.get(id, None)
 
-    get_guild = patch('get_guild')
+    get_guild = patch("get_guild")
     get_guild.side_effect = lambda id: guilds_map.get(id, None)
 
     bot.guilds = guilds
@@ -381,6 +402,7 @@ def invoke_cmd_get_embeds(invoke_cmd):
         """
         send = await invoke_cmd(message_content)
         return get_embeds(send)
+
     return f
 
 
@@ -399,7 +421,7 @@ def dispatch_msg(bot, message):
         message.content = message_content
         message.channel.send = mock.AsyncMock()
 
-        for listener in bot.extra_events.get('on_message', []):
+        for listener in bot.extra_events.get("on_message", []):
             await listener(message)
         return message.channel.send
 
@@ -418,6 +440,7 @@ def dispatch_msg_get_contents(dispatch_msg):
         """
         send = await dispatch_msg(message_content)
         return get_contents(send)
+
     return f
 
 
@@ -433,6 +456,7 @@ def dispatch_msg_get_embeds(dispatch_msg):
         """
         send = await dispatch_msg(message_content)
         return get_embeds(send)
+
     return f
 
 
@@ -446,13 +470,11 @@ async def database() -> DatabaseSQLite:
     """Create, connect, and patch in a database adapter"""
 
     # Connect to a dummy database
-    db = DatabaseSQLite(':memory:')
+    db = DatabaseSQLite(":memory:")
     await db.connect()
 
     # Bypass UserData cog lookup by patching in the database
-    patcher = mock.patch(
-        'sandpiper.user_data.UserData.get_database', return_value=db
-    )
+    patcher = mock.patch("sandpiper.user_data.UserData.get_database", return_value=db)
     patcher.start()
 
     yield db
@@ -464,9 +486,7 @@ async def database() -> DatabaseSQLite:
 @pytest.fixture()
 def patch_localzone_utc() -> pytz.UTC:
     # Patch localzone to use UTC
-    patcher = mock.patch(
-        'tzlocal.get_localzone', autospec=True
-    )
+    patcher = mock.patch("tzlocal.get_localzone", autospec=True)
     mock_localzone = patcher.start()
     mock_localzone.return_value = pytz.UTC
 
@@ -477,19 +497,17 @@ def patch_localzone_utc() -> pytz.UTC:
 
 @pytest.fixture()
 def patch_datetime() -> list[mock.MagicMock]:
-    patchers = patch_all_symbol_imports(dt, 'sandpiper.', 'test')
+    patchers = patch_all_symbol_imports(dt, "sandpiper.", "test")
     dt_mocks = []
 
     for patcher in patchers:
         mock_datetime = patcher.start()
         dt_mocks.append(mock_datetime)
 
-        mock_datetime.datetime = mock.MagicMock(
-            spec=dt.datetime, wraps=dt.datetime)
+        mock_datetime.datetime = mock.MagicMock(spec=dt.datetime, wraps=dt.datetime)
         mock_datetime.date = mock.MagicMock(spec=dt.date, wraps=dt.date)
         mock_datetime.time = mock.MagicMock(spec=dt.time, wraps=dt.time)
-        mock_datetime.timedelta = mock.MagicMock(
-            spec=dt.timedelta, wraps=dt.timedelta)
+        mock_datetime.timedelta = mock.MagicMock(spec=dt.timedelta, wraps=dt.timedelta)
 
     yield dt_mocks
 
@@ -499,7 +517,6 @@ def patch_datetime() -> list[mock.MagicMock]:
 
 @pytest.fixture()
 def patch_datetime_now(patch_datetime):
-
     def f(static_datetime: dt.datetime) -> dt.datetime:
         for dt_mock in patch_datetime:
             dt_mock.datetime.now.return_value = static_datetime
@@ -516,7 +533,7 @@ def fail_on_log_error(caplog):
 
     i = 0
     exc_texts = []
-    records = caplog.get_records('setup') + caplog.get_records('call')
+    records = caplog.get_records("setup") + caplog.get_records("call")
     for r in records:
         if not r.levelno == logging.ERROR:
             continue
@@ -526,15 +543,13 @@ def fail_on_log_error(caplog):
             exc_texts.append(
                 f"[Error {i}]\n{r.message}\n"
                 f"(No traceback, but here's the logging location)\n"
-                f"  File \"{r.pathname}\", line {r.lineno}"
+                f'  File "{r.pathname}", line {r.lineno}'
             )
         i += 1
 
     if exc_texts:
-        exc_texts = '\n\n'.join(exc_texts)
-        pytest.fail(
-            f"Errors logged during testing:\n{exc_texts}", pytrace=False
-        )
+        exc_texts = "\n\n".join(exc_texts)
+        pytest.fail(f"Errors logged during testing:\n{exc_texts}", pytrace=False)
 
 
 # endregion

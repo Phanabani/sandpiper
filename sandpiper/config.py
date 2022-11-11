@@ -8,7 +8,7 @@ from typing import Annotated, Literal
 from sandpiper.common.paths import MODULE_PATH
 from sandpiper.piperfig import *
 
-__all__ = ('SandpiperConfig',)
+__all__ = ("SandpiperConfig",)
 
 
 class SandpiperConfig(ConfigSchema):
@@ -43,43 +43,34 @@ class SandpiperConfig(ConfigSchema):
                 upcoming_birthdays_day_range: Annotated[int, Bounded(0, 365)] = 14
                 message_templates_no_age: list[str] = [
                     "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
-
-                    "{name}! It's your birthday!! Hope it's a great one "
-                    "{ping}!",
-
+                    "{name}! It's your birthday!! Hope it's a great one " "{ping}!",
                     "omg! did yall know it's {name}'s birthday?? happy "
                     "birthday {ping}! :D",
-
                     "I am pleased to announce... IT'S {NAME}'s BIRTHDAY!! "
-                    "Happy birthday {ping}!!"
+                    "Happy birthday {ping}!!",
                 ]
                 message_templates_with_age: list[str] = [
                     "Hey!! It's {name}'s birthday! {They} turned {age} today. "
                     "Happy birthday {ping}!",
-
                     "{name}! It's your birthday!! I can't believe you're "
                     "already {age} ;u; Hope it's a great one "
                     "{ping}!",
-
                     "omg! did yall know it's {name}'s birthday?? {Theyre} "
                     "{age} now! happy birthday {ping}! :D",
-
                     "I am pleased to announce... IT'S {NAME}'S BIRTHDAY!! "
-                    "{They} just turned {age}! Happy birthday {ping}!!"
+                    "{They} just turned {age}! Happy birthday {ping}!!",
                 ]
 
     class _Logging(ConfigSchema):
 
-        _logging_levels = Literal[
-            'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-        ]
+        _logging_levels = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-        sandpiper_logging_level: _logging_levels = 'INFO'
-        discord_logging_level: _logging_levels = 'WARNING'
-        output_file: Annotated[Path, MaybeRelativePath(MODULE_PATH)] = (
-            './logs/sandpiper.log'
-        )
-        when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
+        sandpiper_logging_level: _logging_levels = "INFO"
+        discord_logging_level: _logging_levels = "WARNING"
+        output_file: Annotated[
+            Path, MaybeRelativePath(MODULE_PATH)
+        ] = "./logs/sandpiper.log"
+        when: Literal["S", "M", "H", "D", "midnight"] = "midnight"
         interval: Annotated[int, Bounded(1, None)] = 1
         backup_count: Annotated[int, Bounded(0, None)] = 7
         format = "%(asctime)s %(levelname)s %(name)s | %(message)s"
@@ -100,6 +91,6 @@ class SandpiperConfig(ConfigSchema):
             return handler
 
 
-if __name__ == '__main__':
-    config = SandpiperConfig({'bot_token': '<BOT_TOKEN>'})
+if __name__ == "__main__":
+    config = SandpiperConfig({"bot_token": "<BOT_TOKEN>"})
     print(config.serialize())

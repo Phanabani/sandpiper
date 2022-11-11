@@ -1,15 +1,15 @@
 import sqlalchemy.types as types
 
-__all__ = ['Snowflake']
+__all__ = ["Snowflake"]
 
 
 class Snowflake(types.TypeDecorator):
-    '''
+    """
     SQLite only stores (signed) int64, so we need to coerce Snowflakes to
     strings for storage.
 
     20 == the number of digits in (1<<64) - 1
-    '''
+    """
 
     impl = types.String(20)
 

@@ -5,18 +5,20 @@ from typing import Any, Optional, Type, TypeVar, overload
 from .misc import typecheck
 
 __all__ = (
-    'do_transformations', 'do_transformations_back',
-    'ConfigTransformer', 'FromType',
-    'Bounded', 'MaybeRelativePath'
+    "do_transformations",
+    "do_transformations_back",
+    "ConfigTransformer",
+    "FromType",
+    "Bounded",
+    "MaybeRelativePath",
 )
 
-V1 = TypeVar('V1')
-V2 = TypeVar('V2')
+V1 = TypeVar("V1")
+V2 = TypeVar("V2")
 
 
 def do_transformations(value, annotation):
-    if (not hasattr(annotation, '__origin__')
-            or not hasattr(annotation, '__metadata__')):
+    if not hasattr(annotation, "__origin__") or not hasattr(annotation, "__metadata__"):
         raise TypeError(f"Value {annotation} is not an Annotated instance")
 
     target_type: type = annotation.__origin__
@@ -52,8 +54,7 @@ def do_transformations(value, annotation):
 
 
 def do_transformations_back(value, annotation):
-    if (not hasattr(annotation, '__origin__')
-            or not hasattr(annotation, '__metadata__')):
+    if not hasattr(annotation, "__origin__") or not hasattr(annotation, "__metadata__"):
         raise TypeError(f"Value {annotation} is not an Annotated instance")
 
     target_type: type = annotation.__origin__
@@ -87,7 +88,6 @@ def do_transformations_back(value, annotation):
 
 
 class ConfigTransformer(metaclass=ABCMeta):
-
     @property
     @abstractmethod
     def in_type(self) -> Type[V1]:
@@ -116,16 +116,12 @@ class FromType(ConfigTransformer):
     )
 
     # TODO update to generic type[] once jetbrains fixes a bug in pycharm
-    def __init__(
-            self, from_type: Type[V1], to_type: Optional[Type[V2]] = None
-    ):
+    def __init__(self, from_type: Type[V1], to_type: Optional[Type[V2]] = None):
         self.from_type = from_type
         self.to_type = to_type
 
     def __repr__(self):
-        return (
-            f"FromType({self.from_type.__name__!r}, {self.to_type.__name__!r})"
-        )
+        return f"FromType({self.from_type.__name__!r}, {self.to_type.__name__!r})"
 
     def __str__(self):
         return f"<FromType from={self.from_type} to={self.to_type}>"
@@ -139,14 +135,14 @@ class FromType(ConfigTransformer):
         return self.to_type
 
     def transform(self, value: V1) -> V2:
-        typecheck(self.from_type, value, 'value')
+        typecheck(self.from_type, value, "value")
         if self.to_type is not None:
             return self.to_type(value)
         raise RuntimeError(self.__implicit_err_msg)
 
     def transform_back(self, value: V2) -> V1:
         if self.to_type is not None:
-            typecheck(self.to_type, value, 'value')
+            typecheck(self.to_type, value, "value")
         else:
             raise RuntimeError(self.__implicit_err_msg)
         return self.from_type(value)
@@ -154,7 +150,6 @@ class FromType(ConfigTransformer):
 
 # noinspection PyShadowingBuiltins
 class Bounded(ConfigTransformer):
-
     @overload
     def __init__(self, min: V1, max: V1):
         pass
@@ -175,9 +170,7 @@ class Bounded(ConfigTransformer):
                     f"{type(max)}"
                 )
             if min > max:
-                raise ValueError(
-                    f"min {min} is greater than max {max}"
-                )
+                raise ValueError(f"min {min} is greater than max {max}")
             self.type = type(min)
         elif min is not None:
             self.type = type(min)
@@ -207,12 +200,10 @@ class Bounded(ConfigTransformer):
                 f"Value {value} must be greater than or equal to {self.min}"
             )
         if self.max is not None and value > self.max:
-            raise ValueError(
-                f"Value {value} must be less than or equal to {self.max}"
-            )
+            raise ValueError(f"Value {value} must be less than or equal to {self.max}")
 
     def transform(self, value: V1) -> V1:
-        typecheck(self.type, value, 'value')
+        typecheck(self.type, value, "value")
         self.check(value)
         return value
 
@@ -221,12 +212,9 @@ class Bounded(ConfigTransformer):
 
 
 class MaybeRelativePath(ConfigTransformer):
-
     def __init__(self, root_path: Path):
         if not isinstance(root_path, Path):
-            raise TypeError(
-                f"root_path must be of type Path, got {type(root_path)}"
-            )
+            raise TypeError(f"root_path must be of type Path, got {type(root_path)}")
         self.root_path = root_path
 
     def __repr__(self):
@@ -244,14 +232,14 @@ class MaybeRelativePath(ConfigTransformer):
         return Path
 
     def transform(self, value: str) -> Path:
-        typecheck(str, value, 'value')
+        typecheck(str, value, "value")
         path = Path(value)
         if not path.is_absolute():
             return self.root_path / path
         return path
 
     def transform_back(self, value: Path) -> str:
-        typecheck(Path, value, 'value', use_isinstance=True)
+        typecheck(Path, value, "value", use_isinstance=True)
         if value.is_relative_to(self.root_path):
             return str(value.relative_to(self.root_path))
         return str(value.absolute())

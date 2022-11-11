@@ -10,23 +10,21 @@ from pint.quantity import Quantity
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.conversion.unit_map import UnitMap
 
-__all__ = ['convert_measurement']
+__all__ = ["convert_measurement"]
 
-logger = logging.getLogger('sandpiper.conversion.unit_conversion')
+logger = logging.getLogger("sandpiper.conversion.unit_conversion")
 
 ureg = UnitRegistry(
-    autoconvert_offset_to_baseunit=True,  # For temperatures
-    non_int_type=Decimal
+    autoconvert_offset_to_baseunit=True, non_int_type=Decimal  # For temperatures
 )
 ureg.define(
-    '@alias degreeC = c = C = degreec = degc = degC = °C = °c '
-    '= Celsius = celsius'
+    "@alias degreeC = c = C = degreec = degc = degC = °C = °c " "= Celsius = celsius"
 )
 ureg.define(
-    '@alias degreeF = f = F = degreef = degf = degF = °F = °f '
-    '= Fahrenheit = fahrenheit'
+    "@alias degreeF = f = F = degreef = degf = degF = °F = °f "
+    "= Fahrenheit = fahrenheit"
 )
-ureg.define('@alias hour = h')
+ureg.define("@alias hour = h")
 Q_ = ureg.Quantity
 
 unit_map: UnitMap[Unit] = UnitMap(
@@ -77,59 +75,55 @@ unit_map: UnitMap[Unit] = UnitMap(
         ureg.minute: ureg.hour,
         ureg.hour: ureg.day,
         ureg.day: ureg.week,
-    }
+    },
 )
 
 imperial_shorthand_pattern = re.compile(
     # Either feet or inches may be excluded, but not both, so make sure
     # at least one of them matches with this lookahead
-    r'^(?=.)'
+    r"^(?=.)"
     # Only allow integer foot values
-    r'(?:(?P<foot>[\d]+)\')?'
-    r'(?:'
-        # Allow a space if foot is matched
-        r'(?(foot) ?|)'
-        # Allow integer or decimal inch values
-        r'(?P<inch>\d+|\d*\.\d+)\"'
-    r')?'
-    r'$'
+    r"(?:(?P<foot>[\d]+)\')?"
+    r"(?:"
+    # Allow a space if foot is matched
+    r"(?(foot) ?|)"
+    # Allow integer or decimal inch values
+    r"(?P<inch>\d+|\d*\.\d+)\""
+    r")?"
+    r"$"
 )
 
 
 class UndefinedUnitError(Exception):
-
     def __init__(self, unit: str):
         self.unit = unit
 
     def __str__(self):
-        return f"Unknown unit \"{self.unit}\""
+        return f'Unknown unit "{self.unit}"'
 
 
 class NotAMeasurementError(Exception):
-
     def __init__(self, value: str):
         self.value = value
 
     def __str__(self):
-        return f"\"{self.value}\" is not a measurement"
+        return f'"{self.value}" is not a measurement'
 
 
 class UnmappedUnitError(Exception):
-
     def __init__(self, quantity: Quantity):
         self.quantity = quantity
 
     def __str__(self):
         return (
-            f"I don't know what unit to convert \"{self.quantity.u}\" to. You "
+            f'I don\'t know what unit to convert "{self.quantity.u}" to. You '
             f"can specify an output unit like this: "
             f"{{{self.quantity} > otherunit}}"
         )
 
 
 def convert_measurement(
-        quantity_str: str, unit: str = None,
-        *, runtime_msgs: RuntimeMessages = None
+    quantity_str: str, unit: str = None, *, runtime_msgs: RuntimeMessages = None
 ) -> Union[tuple[Quantity, Quantity], Decimal, None]:
     """
     Parse and convert a quantity string between imperial and metric
@@ -148,9 +142,9 @@ def convert_measurement(
     if height := imperial_shorthand_pattern.match(quantity_str):
         # User used imperial length shorthand
         # e.g. 5' 8" == 5 feet + 8 inches
-        logger.info('Imperial length shorthand detected')
-        foot = Q_(Decimal(foot), 'foot') if (foot := height['foot']) else 0
-        inch = Q_(Decimal(inch), 'inch') if (inch := height['inch']) else 0
+        logger.info("Imperial length shorthand detected")
+        foot = Q_(Decimal(foot), "foot") if (foot := height["foot"]) else 0
+        inch = Q_(Decimal(inch), "inch") if (inch := height["inch"]) else 0
         quantity: Quantity = foot + inch
     else:
         # Regular parsing
@@ -174,8 +168,7 @@ def convert_measurement(
 
     if not isinstance(quantity, Quantity):
         logger.warning(
-            f"Unexpected type {type(quantity)} encountered after parsing "
-            f"expression"
+            f"Unexpected type {type(quantity)} encountered after parsing " f"expression"
         )
         return None
 
@@ -202,8 +195,5 @@ def convert_measurement(
             runtime_msgs += UndefinedUnitError(unit)
         return None
 
-    logger.info(
-        f"Conversion successful: "
-        f"{quantity:.2f~P} -> {quantity_out:.2f~P}"
-    )
+    logger.info(f"Conversion successful: " f"{quantity:.2f~P} -> {quantity_out:.2f~P}")
     return quantity, quantity_out

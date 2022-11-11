@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 __all__ = [
-    'UserData', 'DatabaseUnavailable',
-    'Database', 'DatabaseError', 'UserNotInDatabase',
-    'DatabaseSQLite',
-    'PrivacyType',
-    'Pronouns', 'common_pronouns'
+    "UserData",
+    "DatabaseUnavailable",
+    "Database",
+    "DatabaseError",
+    "UserNotInDatabase",
+    "DatabaseSQLite",
+    "PrivacyType",
+    "Pronouns",
+    "common_pronouns",
 ]
 
 import asyncio
@@ -24,7 +28,7 @@ from .pronouns import Pronouns, common_pronouns
 if typing.TYPE_CHECKING:
     from sandpiper import Sandpiper
 
-DB_FILE = Path(__file__).parent.parent / 'sandpiper.db'
+DB_FILE = Path(__file__).parent.parent / "sandpiper.db"
 
 
 def setup(bot: Sandpiper):
@@ -33,12 +37,13 @@ def setup(bot: Sandpiper):
     asyncio.run_coroutine_threadsafe(db.connect(), bot.loop)
     user_data.set_database_adapter(db)
     bot.add_cog(user_data)
-    bot.add_listener(set_bot_user_id(bot, db), 'on_ready')
+    bot.add_listener(set_bot_user_id(bot, db), "on_ready")
 
 
 def set_bot_user_id(bot: Sandpiper, db: DatabaseSQLite):
     async def fn():
         db.bot_user_id = bot.user.id
+
     return fn
 
 
@@ -53,6 +58,6 @@ async def do_disconnect(user_data: UserData):
 
 def teardown(bot: Bot):
     """Disconnects from the database"""
-    user_data: Optional[UserData] = bot.get_cog('UserData')
+    user_data: Optional[UserData] = bot.get_cog("UserData")
     if user_data is not None:
         asyncio.run_coroutine_threadsafe(do_disconnect(user_data), bot.loop)

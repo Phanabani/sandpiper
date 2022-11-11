@@ -7,16 +7,17 @@ from semver import VersionInfo
 
 from sandpiper.user_data import Database, UserData
 
-__all__ = ['UpgradeHandler', 'do_upgrades']
+__all__ = ["UpgradeHandler", "do_upgrades"]
 
 logger = logging.getLogger(__name__)
 
 
 class UpgradeHandler(metaclass=ABCMeta):
-
     def __init__(
-            self, bot: commands.Bot, previous_version: VersionInfo,
-            current_version: VersionInfo
+        self,
+        bot: commands.Bot,
+        previous_version: VersionInfo,
+        current_version: VersionInfo,
     ):
         """
         :param bot: the running Discord bot
@@ -34,7 +35,7 @@ class UpgradeHandler(metaclass=ABCMeta):
         )
 
     async def _get_database(self) -> Optional[Database]:
-        user_data: UserData = self.bot.get_cog('UserData')
+        user_data: UserData = self.bot.get_cog("UserData")
         if user_data is None:
             logger.warning("Failed to load the UserData cog")
             return None
@@ -56,10 +57,12 @@ class UpgradeHandler(metaclass=ABCMeta):
 
 
 async def do_upgrades(
-        bot: commands.Bot, previous_version: Optional[str],
-        current_version: str, upgrade_handlers: list[Type[UpgradeHandler]]
+    bot: commands.Bot,
+    previous_version: Optional[str],
+    current_version: str,
+    upgrade_handlers: list[Type[UpgradeHandler]],
 ):
-    previous_version = VersionInfo.parse(previous_version or '0.0.0')
+    previous_version = VersionInfo.parse(previous_version or "0.0.0")
     current_version = VersionInfo.parse(current_version)
     logger.info(
         f"Beginning application upgrade from {previous_version} to "

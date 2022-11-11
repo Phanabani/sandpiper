@@ -10,20 +10,17 @@ from sandpiper.common.time import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.user_data import Database
 
-__all__ = (
-    'UserTimezoneUnset',
-    'TimezoneNotFound',
-    'convert_time_to_user_timezones'
-)
+__all__ = ("UserTimezoneUnset", "TimezoneNotFound", "convert_time_to_user_timezones")
 
-logger = logging.getLogger('sandpiper.conversion.time_conversion')
+logger = logging.getLogger("sandpiper.conversion.time_conversion")
 
 T_ConvertedTimes = list[tuple[str, list[dt.datetime]]]
-T_ConvertedTimesGroupedUnderInputTimezones = list[tuple[Optional[str], T_ConvertedTimes]]
+T_ConvertedTimesGroupedUnderInputTimezones = list[
+    tuple[Optional[str], T_ConvertedTimes]
+]
 
 
 class UserTimezoneUnset(Exception):
-
     def __str__(self):
         return (
             "Your timezone is not set. Use the `help timezone set` command "
@@ -32,12 +29,11 @@ class UserTimezoneUnset(Exception):
 
 
 class TimezoneNotFound(Exception):
-
     def __init__(self, timezone: str):
         self.timezone = timezone
 
     def __str__(self):
-        return f"Timezone \"{self.timezone}\" not found"
+        return f'Timezone "{self.timezone}" not found'
 
 
 def _get_timezone(name: str) -> Optional[TimezoneType]:
@@ -60,13 +56,14 @@ async def _get_guild_timezones(db: Database, guild: discord.Guild) -> set[Timezo
     all_timezones = await db.get_all_timezones()
     return {
         # Filter out timezones of users outside this guild
-        tz for user_id, tz in all_timezones if guild.get_member(user_id)
+        tz
+        for user_id, tz in all_timezones
+        if guild.get_member(user_id)
     }
 
 
 async def _convert_times(
-        times: list[dt.datetime],
-        out_timezones: Union[TimezoneType, Iterable[TimezoneType]]
+    times: list[dt.datetime], out_timezones: Union[TimezoneType, Iterable[TimezoneType]]
 ) -> T_ConvertedTimes:
     """
     Convert a list of datetimes to the given timezones.
@@ -81,22 +78,20 @@ async def _convert_times(
 
     conversions: T_ConvertedTimes = []
     for tz in out_timezones:
-        times = [
-            time.astimezone(tz) for time in times
-        ]
+        times = [time.astimezone(tz) for time in times]
         conversions.append((tz.zone, times))
     conversions.sort(key=lambda conv: conv[1][0].utcoffset())
     return conversions
 
 
 async def convert_time_to_user_timezones(
-        db: Database, user_id: int, guild: discord.Guild,
-        time_strs: list[tuple[str, str]],
-        *, runtime_msgs: RuntimeMessages
-) -> tuple[
-    T_ConvertedTimesGroupedUnderInputTimezones,
-    list[tuple[str, str]]
-]:
+    db: Database,
+    user_id: int,
+    guild: discord.Guild,
+    time_strs: list[tuple[str, str]],
+    *,
+    runtime_msgs: RuntimeMessages,
+) -> tuple[T_ConvertedTimesGroupedUnderInputTimezones, list[tuple[str, str]]]:
     """
     Convert times.
 
@@ -125,8 +120,8 @@ async def convert_time_to_user_timezones(
     # Each datetime under a given timezone will be converted to that timezone
     # only. The None key is a special case, where each datetime mapped to it
     # will be converted to all user timezones in the database
-    out_timezone_map: dict[Optional[TimezoneType], list[dt.datetime]] = (
-        defaultdict(list)
+    out_timezone_map: dict[Optional[TimezoneType], list[dt.datetime]] = defaultdict(
+        list
     )
     failed: list[tuple[str, str]] = []  # Strings that should pass on to unit conversion
     user_tz = None
@@ -134,16 +129,14 @@ async def convert_time_to_user_timezones(
         try:
             parsed_time, timezone_in_str, definitely_time = parse_time(tstr)
         except ValueError as e:
-            logger.info(
-                f"Failed to parse time string (string={tstr!r}, reason={e})"
-            )
+            logger.info(f"Failed to parse time string (string={tstr!r}, reason={e})")
             # Failed to parse as a time, so pass it on to unit conversion
             failed.append((tstr, timezone_out_str))
             continue
         except:
             logger.warning(
-                f"Unhandled exception while parsing time string "
-                f"(string={tstr!r})", exc_info=True
+                f"Unhandled exception while parsing time string " f"(string={tstr!r})",
+                exc_info=True,
             )
             continue
 
@@ -200,7 +193,7 @@ async def convert_time_to_user_timezones(
             conversions.append((None, converted))
         else:
             # Otherwise, print this header to distinguish it from the others
-            conversions.append(('All timezones', converted))
+            conversions.append(("All timezones", converted))
 
     # Handle any other output timezones
     for timezone_out, times in out_timezone_map.items():
@@ -210,10 +203,7 @@ async def convert_time_to_user_timezones(
         if not times:
             continue
         converted = await _convert_times(times, timezone_out)
-        conversions.append((
-            cast(TimezoneType, times[0].tzinfo).zone,
-            converted
-        ))
+        conversions.append((cast(TimezoneType, times[0].tzinfo).zone, converted))
 
     return conversions, failed
 

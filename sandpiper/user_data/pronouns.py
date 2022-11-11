@@ -2,15 +2,15 @@ from __future__ import annotations
 from dataclasses import astuple, dataclass
 import re
 
-__all__ = ['Pronouns', 'common_pronouns']
+__all__ = ["Pronouns", "common_pronouns"]
 
-_slashed_group_pattern = re.compile(r'[a-zA-Z]+(?: *[/\\] *[a-zA-Z]+)*')
+_slashed_group_pattern = re.compile(r"[a-zA-Z]+(?: *[/\\] *[a-zA-Z]+)*")
 
 
 @dataclass
 class Pronouns:
 
-    subjective: str = 'they'
+    subjective: str = "they"
     objective: str = None
     determiner: str = None
     possessive: str = None
@@ -18,26 +18,26 @@ class Pronouns:
 
     def __post_init__(self):
         if self.objective is None:
-            if self.subjective == 'they':
-                self.objective = 'them'
+            if self.subjective == "they":
+                self.objective = "them"
             else:
                 self.objective = self.subjective
 
         if self.determiner is None:
-            if self.subjective == 'they':
-                self.determiner = 'their'
+            if self.subjective == "they":
+                self.determiner = "their"
             else:
                 self.determiner = f"{self.subjective}s"
 
         if self.possessive is None:
-            if self.subjective == 'they':
-                self.possessive = 'theirs'
+            if self.subjective == "they":
+                self.possessive = "theirs"
             else:
                 self.possessive = f"{self.subjective}s"
 
         if self.reflexive is None:
-            if self.subjective == 'they':
-                self.reflexive = 'themself'
+            if self.subjective == "they":
+                self.reflexive = "themself"
             else:
                 self.reflexive = f"{self.subjective}self"
 
@@ -51,18 +51,18 @@ class Pronouns:
         )
 
     def __str__(self):
-        return '/'.join(self.to_tuple())
+        return "/".join(self.to_tuple())
 
     @property
     def to_be_conjugation(self):
         # Conjugation following Elverson (ey/em) pronouns can be either is or are
-        if self.subjective == 'they':
-            return 'are'
-        return 'is'
+        if self.subjective == "they":
+            return "are"
+        return "is"
 
     @property
     def subjective_to_be_contraction(self):
-        if self.subjective == 'they':
+        if self.subjective == "they":
             return "they're"
         return f"{self.subjective}'s"
 
@@ -80,7 +80,7 @@ class Pronouns:
             They/he
             Xe/xem/xyr/xyrs/xemself
         """
-        if string == '':
+        if string == "":
             return [Pronouns()]
 
         out = []
@@ -88,7 +88,7 @@ class Pronouns:
         for slashed_group in _slashed_group_pattern.finditer(string):
             # Iterate through groups of slashed pronouns ("she/her they/them")
             first = True
-            split = iter(re.split(r' *[\\/] *', slashed_group.group()))
+            split = iter(re.split(r" *[\\/] *", slashed_group.group()))
             for pronoun in map(lambda x: x.lower(), split):
                 pronoun = pronoun
                 # Infer set of pronouns from this one
@@ -117,25 +117,25 @@ class Pronouns:
 
 
 common_pronouns = {
-    'they': Pronouns('they', 'them', 'their', 'theirs', 'themself'),
-    'she': Pronouns('she', 'her', 'her', 'hers', 'herself'),
-    'he': Pronouns('he', 'him', 'his', 'his', 'himself'),
-    'it': Pronouns('it', 'it', 'its', 'its', 'itself'),
-    'one': Pronouns('one', 'one', "one's", "one's", 'oneself'),
-    'thon': Pronouns('thon', 'thon', 'thons', "thon's", 'thonself'),
-    'ae': Pronouns('ae', 'aer', 'aer', 'aers', 'aerself'),
-    'co': Pronouns('co', 'co', 'cos', "co's", 'coself'),
-    've': Pronouns('ve', 'ver', 'vis', 'vers', 'verself'),
-    'vi': Pronouns('vi', 'vir', 'vis', 'virs', 'virself'),
-    'xe': Pronouns('xe', 'xem', 'xyr', 'xyrs', 'xemself'),
-    'per': Pronouns('per', 'per', 'per', 'pers', 'perself'),  # person
-    'ey': Pronouns('ey', 'em', 'eir', 'eirs', 'emself'),  # Elverson
-    'hu': Pronouns('hu', 'hum', 'hus', 'hus', 'huself'),  # humanist
+    "they": Pronouns("they", "them", "their", "theirs", "themself"),
+    "she": Pronouns("she", "her", "her", "hers", "herself"),
+    "he": Pronouns("he", "him", "his", "his", "himself"),
+    "it": Pronouns("it", "it", "its", "its", "itself"),
+    "one": Pronouns("one", "one", "one's", "one's", "oneself"),
+    "thon": Pronouns("thon", "thon", "thons", "thon's", "thonself"),
+    "ae": Pronouns("ae", "aer", "aer", "aers", "aerself"),
+    "co": Pronouns("co", "co", "cos", "co's", "coself"),
+    "ve": Pronouns("ve", "ver", "vis", "vers", "verself"),
+    "vi": Pronouns("vi", "vir", "vis", "virs", "virself"),
+    "xe": Pronouns("xe", "xem", "xyr", "xyrs", "xemself"),
+    "per": Pronouns("per", "per", "per", "pers", "perself"),  # person
+    "ey": Pronouns("ey", "em", "eir", "eirs", "emself"),  # Elverson
+    "hu": Pronouns("hu", "hum", "hus", "hus", "huself"),  # humanist
     # Conflicts with e below, so it's disambiguated
-    'e_spivak': Pronouns('e', 'em', 'eir', 'eirs', 'emself'),  # Spivak
-    'ze': Pronouns('ze', 'zir', 'zir', 'zirs', 'zirself'),
-    'fae': Pronouns('fae', 'faer', 'faer', 'faers', 'faerself'),
-    'e': Pronouns('e', 'em', 'es', 'ems', 'emself'),
+    "e_spivak": Pronouns("e", "em", "eir", "eirs", "emself"),  # Spivak
+    "ze": Pronouns("ze", "zir", "zir", "zirs", "zirself"),
+    "fae": Pronouns("fae", "faer", "faer", "faers", "faerself"),
+    "e": Pronouns("e", "em", "es", "ems", "emself"),
 }
 
 

@@ -8,18 +8,17 @@ from sandpiper.common.misc import join
 from sandpiper.user_data import Database, PrivacyType
 
 __all__ = [
-    'PrivacyExplanation', 'BirthdayExplanations',
-    'info_str', 'user_info_str', 'user_names_str',
+    "PrivacyExplanation",
+    "BirthdayExplanations",
+    "info_str",
+    "user_info_str",
+    "user_names_str",
 ]
 
-privacy_emojis = {
-    PrivacyType.PRIVATE: '⛔',
-    PrivacyType.PUBLIC: '✅'
-}
+privacy_emojis = {PrivacyType.PRIVATE: "⛔", PrivacyType.PUBLIC: "✅"}
 
 
 class PrivacyExplanation:
-
     @staticmethod
     def get(friendly_name: str, privacy_name: Optional[str] = None):
         if privacy_name is None:
@@ -66,9 +65,13 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
 
 
 async def user_names_str(
-        ctx: commands.Context, db: Database, user_id: int,
-        *, preferred_name: str = None, username: str = None,
-        display_name: str = None
+    ctx: commands.Context,
+    db: Database,
+    user_id: int,
+    *,
+    preferred_name: str = None,
+    username: str = None,
+    display_name: str = None,
 ):
     """
     Create a string with a user's names (preferred name, Discord username,
@@ -90,23 +93,23 @@ async def user_names_str(
         if privacy_preferred_name == PrivacyType.PUBLIC:
             preferred_name = await db.get_preferred_name(user_id)
             if preferred_name is None:
-                preferred_name = '`No preferred name`'
+                preferred_name = "`No preferred name`"
         else:
-            preferred_name = '`No preferred name`'
+            preferred_name = "`No preferred name`"
 
     # Get discord username and discriminator
     if username is None:
         user: discord.User = ctx.bot.get_user(user_id)
         if user is not None:
-            username = f'{user.name}#{user.discriminator}'
+            username = f"{user.name}#{user.discriminator}"
         else:
-            username = '`User not found`'
+            username = "`User not found`"
 
     if ctx.guild is None:
         # Find the user's nicknames on servers they share with the executor
         # of the whois command
         members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
-        display_names = ', '.join(m.display_name for m in members)
+        display_names = ", ".join(m.display_name for m in members)
     else:
         if display_name is None:
             # Find the user's nickname in the current guild ONLY
@@ -116,7 +119,8 @@ async def user_names_str(
             display_names = display_name
 
     return join(
-        join(preferred_name, pronouns and f'({pronouns})', sep=' '),
-        username, display_names,
-        sep=' • '
+        join(preferred_name, pronouns and f"({pronouns})", sep=" "),
+        username,
+        display_names,
+        sep=" • ",
     )

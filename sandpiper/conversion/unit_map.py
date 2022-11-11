@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class UnitMap(Generic[T]):
@@ -10,9 +10,7 @@ class UnitMap(Generic[T]):
     _two_way: dict[T, T]
     _one_way: dict[T, T]
 
-    def __init__(
-            self, *, two_way: dict[T, T], one_way: dict[T, T] = None
-    ):
+    def __init__(self, *, two_way: dict[T, T], one_way: dict[T, T] = None):
         if not isinstance(two_way, dict):
             raise ValueError(f"two_way must be a dict")
         self._two_way = self._create_bidict(two_way)

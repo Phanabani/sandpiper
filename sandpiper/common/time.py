@@ -8,104 +8,117 @@ import pytz
 import tzlocal
 
 __all__ = [
-    'TimezoneType',
-    'no_zeropad', 'time_format', 'parse_time',
-    'parse_date', 'format_date',
-    'utc_now',
-    'localize_time_to_datetime',
-    'day_of_the_year', 'sort_dates_no_year',
-    'TimezoneMatches', 'fuzzy_match_timezone'
+    "TimezoneType",
+    "no_zeropad",
+    "time_format",
+    "parse_time",
+    "parse_date",
+    "format_date",
+    "utc_now",
+    "localize_time_to_datetime",
+    "day_of_the_year",
+    "sort_dates_no_year",
+    "TimezoneMatches",
+    "fuzzy_match_timezone",
 ]
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 
 time_pattern = re.compile(
-    r'^'
-    r'(?P<hour>[0-2]?\d)'
-    r'(?::?(?P<minute>\d{2}))?'
-    r'\s*'
-    r'(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?'
-    r'$',
-    re.I
+    r"^"
+    r"(?P<hour>[0-2]?\d)"
+    r"(?::?(?P<minute>\d{2}))?"
+    r"\s*"
+    r"(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?"
+    r"$",
+    re.I,
 )
 
 time_pattern_with_timezone = re.compile(
-    r'^'
-    r'(?:'
-        r'(?P<hour>[0-2]?\d)'
-        r'(?:'
-            r'(?P<colon>:)?'
-            r'(?P<minute>\d{2})'
-        r')?'
-        r'(?: ?(?P<period>'
-            r'(?P<period_am>a|am)'
-            r'|(?P<period_pm>p|pm)'
-        r'))?'
-        r'|(?P<keyword>'
-            r'(?P<now>now)'
-            r'|(?P<noon>noon)'
-            r'|(?P<midnight>midnight)'
-        r')'
-    r')'
-    r'(?(period)'
-        r' (?P<timezone1>\S.*)'
-        r'|(?(colon)'
-            r' (?P<timezone2>\S.*)'
-            r'|(?(keyword)'
-                r' (?P<timezone_keyword>\S.*)'
-            r')'
-        r')'
-    r')?'
-    r'$',
-    re.I
+    r"^"
+    r"(?:"
+    r"(?P<hour>[0-2]?\d)"
+    r"(?:"
+    r"(?P<colon>:)?"
+    r"(?P<minute>\d{2})"
+    r")?"
+    r"(?: ?(?P<period>"
+    r"(?P<period_am>a|am)"
+    r"|(?P<period_pm>p|pm)"
+    r"))?"
+    r"|(?P<keyword>"
+    r"(?P<now>now)"
+    r"|(?P<noon>noon)"
+    r"|(?P<midnight>midnight)"
+    r")"
+    r")"
+    r"(?(period)"
+    r" (?P<timezone1>\S.*)"
+    r"|(?(colon)"
+    r" (?P<timezone2>\S.*)"
+    r"|(?(keyword)"
+    r" (?P<timezone_keyword>\S.*)"
+    r")"
+    r")"
+    r")?"
+    r"$",
+    re.I,
 )
 
 date_pattern_simple = re.compile(
-    r'^(?P<year>\d{4})'
-    r'[/-](?P<month>\d\d)'
-    r'[/-](?P<day>\d\d)$'
+    r"^(?P<year>\d{4})" r"[/-](?P<month>\d\d)" r"[/-](?P<day>\d\d)$"
 )
 
 date_pattern_words = re.compile(
-    r'^(?:(?P<day1>\d{1,2}) )?'
-    r'(?P<month>'
-        r'jan(?:uary)?'
-        r'|feb(?:ruary)?'
-        r'|mar(?:ch)?'
-        r'|apr(?:il)?'
-        r'|may'
-        r'|june?'
-        r'|july?'
-        r'|aug(?:ust)?'
-        r'|sep(?:t(?:ember)?)?'
-        r'|oct(?:ober)?'
-        r'|nov(?:ember)?'
-        r'|dec(?:ember)?'
-    r')'
-    r'(?: (?P<day2>\d{1,2}))?'
-    r'(?: (?P<year>\d{4}))?$',
-    re.I
+    r"^(?:(?P<day1>\d{1,2}) )?"
+    r"(?P<month>"
+    r"jan(?:uary)?"
+    r"|feb(?:ruary)?"
+    r"|mar(?:ch)?"
+    r"|apr(?:il)?"
+    r"|may"
+    r"|june?"
+    r"|july?"
+    r"|aug(?:ust)?"
+    r"|sep(?:t(?:ember)?)?"
+    r"|oct(?:ober)?"
+    r"|nov(?:ember)?"
+    r"|dec(?:ember)?"
+    r")"
+    r"(?: (?P<day2>\d{1,2}))?"
+    r"(?: (?P<year>\d{4}))?$",
+    re.I,
 )
 
 months = {
-    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 try:
     # Unix strip zero-padding
-    no_zeropad = '-'
-    dt.datetime.now().strftime(f'%{no_zeropad}d')
+    no_zeropad = "-"
+    dt.datetime.now().strftime(f"%{no_zeropad}d")
 except ValueError:
     try:
         # Windows strip zero-padding
-        no_zeropad = '#'
-        dt.datetime.now().strftime(f'%{no_zeropad}d')
+        no_zeropad = "#"
+        dt.datetime.now().strftime(f"%{no_zeropad}d")
     except ValueError:
         # Fallback without stripping zero-padding
-        no_zeropad = ''
+        no_zeropad = ""
 
-time_format = f'%{no_zeropad}I:%M %p (%H:%M)'
+time_format = f"%{no_zeropad}I:%M %p (%H:%M)"
 
 
 def utc_now() -> dt.datetime:
@@ -127,11 +140,11 @@ def parse_time(time_str: str) -> tuple[dt.time, Optional[str], bool]:
 
     match = time_pattern_with_timezone.match(time_str)
     if not match:
-        raise ValueError('No match')
+        raise ValueError("No match")
 
     # Handle keyword times
-    if match['keyword']:
-        if match['now']:
+    if match["keyword"]:
+        if match["now"]:
             now = utc_now()
             # This is a little heavy-handed because instead of just passing
             # back the localized datetime, we're passing the time and the
@@ -140,21 +153,21 @@ def parse_time(time_str: str) -> tuple[dt.time, Optional[str], bool]:
             # handle the timezone parsing. Maybe it could change in the future.
             return now.time(), cast(TimezoneType, now.tzinfo).zone, True
 
-        if match['midnight']:
+        if match["midnight"]:
             time = dt.time(0, 0)
-        elif match['noon']:
+        elif match["noon"]:
             time = dt.time(12, 0)
         else:
             raise ValueError("This should be impossible but let's be safe")
-        return time, match['timezone_keyword'] or None, True
+        return time, match["timezone_keyword"] or None, True
 
-    hour = int(match['hour'])
-    minute = int(match['minute'] or 0)
+    hour = int(match["hour"])
+    minute = int(match["minute"] or 0)
 
     if (0 > hour > 23) or (0 > minute > 59):
-        raise ValueError('Hour or minute is out of range')
+        raise ValueError("Hour or minute is out of range")
 
-    if match['period_pm']:
+    if match["period_pm"]:
         if hour < 12:
             # This is PM and we use 24 hour times in datetime, so add 12 hours
             hour += 12
@@ -162,8 +175,8 @@ def parse_time(time_str: str) -> tuple[dt.time, Optional[str], bool]:
             # 12 PM is 12:00
             pass
         else:
-            raise ValueError('24 hour times do not use AM or PM')
-    elif match['period_am']:
+            raise ValueError("24 hour times do not use AM or PM")
+    elif match["period_am"]:
         if hour < 12:
             # AM, so no change
             pass
@@ -171,32 +184,32 @@ def parse_time(time_str: str) -> tuple[dt.time, Optional[str], bool]:
             # 12 AM is 00:00
             hour = 0
         else:
-            raise ValueError('24 hour times do not use AM or PM')
+            raise ValueError("24 hour times do not use AM or PM")
 
     return (
         dt.time(hour, minute),
-        match['timezone1'] or match['timezone2'] or None,
-        bool(match['colon'] or match['period'])
+        match["timezone1"] or match["timezone2"] or None,
+        bool(match["colon"] or match["period"]),
     )
 
 
 def parse_date(date_str: str) -> dt.date:
     if match := date_pattern_simple.match(date_str):
-        year = int(match['year'])
-        month = int(match['month'])
-        day = int(match['day'])
+        year = int(match["year"])
+        month = int(match["month"])
+        day = int(match["day"])
 
     elif match := date_pattern_words.match(date_str):
-        year = int(match['year'] or 1)
-        month = months[match['month'][:3].lower()]
-        day1 = match['day1']
-        day2 = match['day2']
+        year = int(match["year"] or 1)
+        month = months[match["month"][:3].lower()]
+        day1 = match["day1"]
+        day2 = match["day2"]
         if (day1 is None) == (day2 is None):
             raise ValueError("You must specify the day")
         day = int(day1 if day1 is not None else day2)
 
     else:
-        raise ValueError('No match')
+        raise ValueError("No match")
 
     return dt.date(year, month, day)
 
@@ -205,13 +218,11 @@ def format_date(date: Optional[dt.date]):
     if date is None:
         return None
     if date.year == 1:
-        return date.strftime(f'%B %{no_zeropad}d')
-    return date.strftime('%Y-%m-%d')
+        return date.strftime(f"%B %{no_zeropad}d")
+    return date.strftime("%Y-%m-%d")
 
 
-def localize_time_to_datetime(
-        time: dt.time, basis_tz: TimezoneType
-) -> dt.datetime:
+def localize_time_to_datetime(time: dt.time, basis_tz: TimezoneType) -> dt.datetime:
     """
     Turn a time into a datetime, localized in the given timezone based on the
     current day in that timezone.
@@ -236,7 +247,7 @@ def localize_time_to_datetime(
 
 
 def day_of_the_year(datetime: Union[dt.date, dt.datetime]):
-    return int(datetime.strftime('%j'))
+    return int(datetime.strftime("%j"))
 
 
 def _sort_dates_no_year_func(d: dt.date, now: dt.datetime):
@@ -247,9 +258,7 @@ def _sort_dates_no_year_func(d: dt.date, now: dt.datetime):
     return d_int
 
 
-def sort_dates_no_year(
-        dates: list, key=lambda x: x, now: Optional[dt.datetime] = None
-):
+def sort_dates_no_year(dates: list, key=lambda x: x, now: Optional[dt.datetime] = None):
     if now is None:
         now = utc_now()
     return sorted(dates, key=lambda x: _sort_dates_no_year_func(key(x), now))
@@ -263,7 +272,7 @@ class TimezoneMatches:
 
 
 def fuzzy_match_timezone(
-        tz_str: str, best_match_threshold=75, lower_score_cutoff=50, limit=5
+    tz_str: str, best_match_threshold=75, lower_score_cutoff=50, limit=5
 ) -> TimezoneMatches:
     """
     Fuzzily match a timezone based on given timezone name.
@@ -282,8 +291,11 @@ def fuzzy_match_timezone(
     # substrings. Searching "Amst" would pick "GMT" rather than "Amsterdam".
     # The _set_ratio methods are totally unusable.
     matches: list[tuple[str, int]] = fuzzy_process.extractBests(
-        tz_str, pytz.common_timezones, scorer=fuzz.partial_token_sort_ratio,
-        score_cutoff=lower_score_cutoff, limit=limit
+        tz_str,
+        pytz.common_timezones,
+        scorer=fuzz.partial_token_sort_ratio,
+        score_cutoff=lower_score_cutoff,
+        limit=limit,
     )
     tz_matches = TimezoneMatches(matches)
 

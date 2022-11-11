@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ecce1f1e8760'
-down_revision = 'deb518f1a216'
+revision = "ecce1f1e8760"
+down_revision = "deb518f1a216"
 branch_labels = None
 depends_on = None
 
@@ -27,18 +27,18 @@ def upgrade():
     represent the decimal form of the highest 64-bit unsigned int)
     """
 
-    with op.batch_alter_table('users') as batch_op:
-        batch_op.alter_column('user_id', type_=sa.String(20))
+    with op.batch_alter_table("users") as batch_op:
+        batch_op.alter_column("user_id", type_=sa.String(20))
 
-    with op.batch_alter_table('guilds') as batch_op:
-        batch_op.alter_column('guild_id', type_=sa.String(20))
-        batch_op.alter_column('birthday_channel', type_=sa.String(20))
+    with op.batch_alter_table("guilds") as batch_op:
+        batch_op.alter_column("guild_id", type_=sa.String(20))
+        batch_op.alter_column("birthday_channel", type_=sa.String(20))
 
 
 def downgrade():
-    with op.batch_alter_table('users') as batch_op:
-        batch_op.alter_column('user_id', type_=sa.BigInteger)
+    with op.batch_alter_table("users") as batch_op:
+        batch_op.alter_column("user_id", type_=sa.BigInteger)
 
-    with op.batch_alter_table('guilds') as batch_op:
-        batch_op.alter_column('guild_id', type_=sa.BigInteger)
-        batch_op.alter_column('birthday_channel', type_=sa.BigInteger)
+    with op.batch_alter_table("guilds") as batch_op:
+        batch_op.alter_column("guild_id", type_=sa.BigInteger)
+        batch_op.alter_column("birthday_channel", type_=sa.BigInteger)
