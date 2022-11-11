@@ -19,7 +19,7 @@ from typing import Optional
 
 from discord.ext.commands import Bot
 
-from .cog import UserData, DatabaseUnavailable
+from .cog import DatabaseUnavailable, UserData
 from .database import *
 from .database_sqlite import DatabaseSQLite
 from .enums import PrivacyType
@@ -31,12 +31,12 @@ if typing.TYPE_CHECKING:
 DB_FILE = Path(__file__).parent.parent / "sandpiper.db"
 
 
-def setup(bot: Sandpiper):
+async def setup(bot: Sandpiper):
     user_data = UserData(bot)
     db = DatabaseSQLite(DB_FILE)
     asyncio.run_coroutine_threadsafe(db.connect(), bot.loop)
     user_data.set_database_adapter(db)
-    bot.add_cog(user_data)
+    await bot.add_cog(user_data)
     bot.add_listener(set_bot_user_id(bot, db), "on_ready")
 
 

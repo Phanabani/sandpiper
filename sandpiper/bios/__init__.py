@@ -1,8 +1,8 @@
-from .cog import Bios
 from sandpiper import Sandpiper
+from .cog import Bios
 
 
-def setup(bot: Sandpiper):
+async def setup(bot: Sandpiper):
     config = bot.modules_config.bios
     bios = Bios(bot, allow_public_setting=config.allow_public_setting)
-    bot.add_cog(bios)
+    await bot.add_cog(bios)

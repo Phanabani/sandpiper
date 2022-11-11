@@ -1,8 +1,8 @@
-from .cog import Birthdays
 from sandpiper import Sandpiper
+from .cog import Birthdays
 
 
-def setup(bot: Sandpiper):
+async def setup(bot: Sandpiper):
     config = bot.modules_config.birthdays
     birthdays = Birthdays(
         bot,
@@ -11,4 +11,4 @@ def setup(bot: Sandpiper):
         past_birthdays_day_range=config.past_birthdays_day_range,
         upcoming_birthdays_day_range=config.upcoming_birthdays_day_range,
     )
-    bot.add_cog(birthdays)
+    await bot.add_cog(birthdays)
