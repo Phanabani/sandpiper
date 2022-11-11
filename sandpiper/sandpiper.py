@@ -24,7 +24,9 @@ class Sandpiper(commands.Bot):
                 return ""
             return commands.when_mentioned_or(config.command_prefix)(bot, msg)
 
-        intents = discord.Intents(guilds=True, members=True, messages=True)
+        intents = discord.Intents(
+            guilds=True, members=True, messages=True, message_content=True
+        )
         allowed_mentions = discord.AllowedMentions(users=True)
         activity = discord.Game(f"{config.command_prefix}help")
 
