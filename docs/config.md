@@ -11,8 +11,8 @@ optional.
 
 Fields in the root JSON object.
 
-| Key         | Type   | Value                                                                                     |
-|-------------|--------|-------------------------------------------------------------------------------------------|
+| Key         | Type     | Value                                                                                     |
+|-------------|----------|-------------------------------------------------------------------------------------------|
 | `bot_token` | `string` | Your [Discord bot's](https://discord.com/developers/docs/topics/oauth2#bots) access token |
 
 ### bot
