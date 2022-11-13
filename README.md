@@ -368,6 +368,11 @@ Open `htmlcov/index.html` to view the coverage report.
   - [X] Timezone
 - [X] Time conversion
 - [X] Birthday notifications
+- [X] Thread support
+- [ ] Slash commands
+- [ ] Conversion editing/deletion
+- [ ] Time conversion images
+- [ ] Currency conversions
 
 ## Inspiration
 
