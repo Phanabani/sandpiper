@@ -310,7 +310,7 @@ async def bot(
 
     # Create a dummy bot that will never actually connect but will help
     # with invocation
-    bot = commands.Bot(command_prefix="")
+    bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
     @functools.wraps(mock.patch.object)
     def patch(attr, *, target=bot, **kwargs):
@@ -321,12 +321,23 @@ async def bot(
     # I don't need the extreme verbosity of this right now, but for some reason
     # when I set it to False, it shows errors that don't get shown if the
     # method is never called at all...
-    bot.loop.set_debug(False)
+    async with bot:
+        bot.loop.set_debug(False)
 
-    # This function checks if message author is the self bot and skips
+    # In `get_context`, if the message author is the self bot, it skips
     # context creation (meaning we won't get command invocation), so
-    # we will bypass it
-    patch("_skip_check", return_value=False)
+    # we will bypass this by making the user IDs always unequal
+    get_context_orig = bot.get_context
+
+    async def get_context_wrapper(self, *args, **kwargs):
+        prev_id = bot.user.id
+        bot.user.id = -1  # We'll never otherwise use negative IDs since they're invalid
+        ctx = await get_context_orig(self, *args, **kwargs)
+        bot.user.id = prev_id
+        return ctx
+
+    get_context = patch("get_context")
+    get_context.side_effect = get_context_wrapper
 
     # This connection (discord.state.ConnectionState) object has a `user`
     # field which is accessed by the client's `user` property. The
