@@ -19,9 +19,9 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture()
-def bot(bot) -> commands.Bot:
-    bot.add_cog(Conversion(bot))
-    bot.add_cog(UserData(bot))
+async def bot(bot) -> commands.Bot:
+    await bot.add_cog(Conversion(bot))
+    await bot.add_cog(UserData(bot))
     return bot
 
 

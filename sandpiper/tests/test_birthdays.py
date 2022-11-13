@@ -29,7 +29,7 @@ def asyncio_sleep():
 
 
 @pytest.fixture()
-def birthdays_cog(
+async def birthdays_cog(
     bot, message_templates_with_age, message_templates_no_age
 ) -> Birthdays:
     cog = Birthdays(
@@ -37,17 +37,17 @@ def birthdays_cog(
         message_templates_no_age=message_templates_no_age,
         message_templates_with_age=message_templates_with_age,
     )
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
     cog.daily_loop.count = 1
     cog.daily_loop.cancel()
     return cog
 
 
 @pytest.fixture()
-def bot(bot, database) -> commands.Bot:
+async def bot(bot, database) -> commands.Bot:
     """Add a Bios cog to a bot and return the bot"""
-    bot.add_cog(UserData(bot))
-    bot.loop.set_debug(True)
+    await bot.add_cog(UserData(bot))
+    await bot.loop.set_debug(True)
     return bot
 
 

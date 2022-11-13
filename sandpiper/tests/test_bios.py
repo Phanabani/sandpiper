@@ -19,10 +19,10 @@ T_DatabaseMethod = Callable[[int], Awaitable[PrivacyType]]
 
 
 @pytest.fixture()
-def bot(bot) -> commands.Bot:
+async def bot(bot) -> commands.Bot:
     """Add a Bios cog to a bot and return the bot"""
-    bot.add_cog(Bios(bot))
-    bot.add_cog(UserData(bot))
+    await bot.add_cog(Bios(bot))
+    await bot.add_cog(UserData(bot))
     return bot
 
 
