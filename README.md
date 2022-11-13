@@ -108,9 +108,15 @@ Sandpiper requires the following permissions to run normally:
 
 These correspond to the permission integer `19456`.
 
-Sandpiper also requires the [server members privileged intent](https://discord.com/developers/docs/topics/gateway#privileged-intents)
-to allow for Discord username/server nickname lookup in the `whois` command.
-You can enable it on the bot page of your application (https:\/\/discord.com/developers/applications/<client_id>/bot).
+Sandpiper also requires the following [privileged intents](https://discord.com/developers/docs/topics/gateway#privileged-intents):
+
+- Server members
+  - For Discord username/server nickname lookup in the `whois` command
+- Message content
+  - For running commands (will be replaced by slash commands) 
+  - For searching messages for unit/time conversion strings
+
+You can enable these on the bot page of your application (`https://discord.com/developers/applications/CLIENT_ID/bot`).
 
 ## Config
 
