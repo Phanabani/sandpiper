@@ -1,14 +1,14 @@
+__all__ = [
+    "MagicMock_",
+    "isinstance_mock_supported",
+    "patch_all_symbol_imports",
+]
+
 import sys
 from typing import Any, Optional
 from unittest import mock
 
 import pytest
-
-__all__ = [
-    'MagicMock_',
-    'isinstance_mock_supported',
-    'patch_all_symbol_imports',
-]
 
 
 class MagicMock_(mock.MagicMock):
@@ -19,8 +19,8 @@ class MagicMock_(mock.MagicMock):
 
     def __init__(self, *args, _name_: Optional[str] = None, **kwargs):
         if _name_ is None:
-            _name_ = ''
-        name_attr = kwargs.pop('name', None)
+            _name_ = ""
+        name_attr = kwargs.pop("name", None)
         super().__init__(*args, name=_name_, **kwargs)
         self.name = name_attr
 
@@ -38,8 +38,9 @@ def isinstance_mock_supported(__obj, __class_or_tuple):
 
 
 def patch_all_symbol_imports(
-        target_symbol: Any, match_prefix: Optional[str] = None,
-        skip_substring: Optional[str] = None
+    target_symbol: Any,
+    match_prefix: Optional[str] = None,
+    skip_substring: Optional[str] = None,
 ):
     """
     Iterate through every visible module (in sys.modules) that starts with
@@ -79,13 +80,8 @@ def patch_all_symbol_imports(
     # Iterate through all currently imported modules
     # Make a copy in case it changes
     for module in list(sys.modules.values()):
-        name_matches = (
-                match_prefix is None
-                or module.__name__.startswith(match_prefix)
-        )
-        should_skip = (
-            skip_substring is not None and skip_substring in module.__name__
-        )
+        name_matches = match_prefix is None or module.__name__.startswith(match_prefix)
+        should_skip = skip_substring is not None and skip_substring in module.__name__
         if not name_matches or should_skip:
             continue
 
@@ -94,8 +90,8 @@ def patch_all_symbol_imports(
         for local_name, local in list(module.__dict__.items()):
             if local is target_symbol:
                 # Patch this symbol local to the module
-                patchers.append(mock.patch(
-                    f'{module.__name__}.{local_name}', autospec=True
-                ))
+                patchers.append(
+                    mock.patch(f"{module.__name__}.{local_name}", autospec=True)
+                )
 
     return patchers

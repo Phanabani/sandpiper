@@ -1,38 +1,37 @@
 from decimal import Decimal
 import logging
-import regex
 from typing import NoReturn
 
 import discord
 import discord.ext.commands as commands
+import regex
 
-from sandpiper.common.embeds import *
 from sandpiper.common.IANA import get_country_flag_emoji_from_timezone
+from sandpiper.common.embeds import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
 from sandpiper.conversion.time_conversion import *
 import sandpiper.conversion.unit_conversion as unit_conversion
 from sandpiper.user_data import DatabaseUnavailable, UserData
 
-logger = logging.getLogger('sandpiper.unit_conversion')
+logger = logging.getLogger("sandpiper.unit_conversion")
 
 conversion_pattern = regex.compile(
     # Skip anything inside a code block
-    r'(?<!\\)`+(?s:.*?)`+(*SKIP)(*FAIL)|'
+    r"(?<!\\)`+(?s:.*?)`+(*SKIP)(*FAIL)|"
     # Match a {conversion block}
-    r'{ *'
-    r'(?P<quantity>[^>]+?) *'
-    r'(?:> *(?P<out_unit>\S.*?) *)?'
-    r'}'
+    r"{ *"
+    r"(?P<quantity>[^>]+?) *"
+    r"(?:> *(?P<out_unit>\S.*?) *)?"
+    r"}"
 )
 
 
 class Conversion(commands.Cog):
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.Cog.listener(name='on_message')
+    @commands.Cog.listener(name="on_message")
     async def conversions(self, msg: discord.Message):
         """
         Scan a message for conversion strings.
@@ -50,7 +49,7 @@ class Conversion(commands.Cog):
         await self.convert_measurements(msg.channel, conversion_strs)
 
     async def convert_time(
-            self, msg: discord.Message, time_strs: list[tuple[str, str]]
+        self, msg: discord.Message, time_strs: list[tuple[str, str]]
     ) -> list[tuple[str, str]]:
         """
         Convert a list of time strings (like "5:45 PM") to different users'
@@ -61,7 +60,7 @@ class Conversion(commands.Cog):
         :returns: a list of strings that could not be converted
         """
 
-        user_data: UserData = self.bot.get_cog('UserData')
+        user_data: UserData = self.bot.get_cog("UserData")
         if user_data is None:
             # User data cog couldn't be retrieved, so consider all conversions
             # failed
@@ -79,9 +78,9 @@ class Conversion(commands.Cog):
 
         if runtime_msgs.exceptions:
             # Send embed with any errors that happened during conversion
-            await ErrorEmbed(
-                [str(e) for e in runtime_msgs.exceptions], join='\n'
-            ).send(msg.channel)
+            await ErrorEmbed([str(e) for e in runtime_msgs.exceptions], join="\n").send(
+                msg.channel
+            )
             return failed
 
         if converted_times:
@@ -97,21 +96,20 @@ class Conversion(commands.Cog):
 
                 for timezone_out, times in conversions:
                     # Print the converted times for each timezone on a new line
-                    times = '  |  '.join(
-                        f'`{time.strftime(time_format)}`' for time in times
+                    times = "  |  ".join(
+                        f"`{time.strftime(time_format)}`" for time in times
                     )
                     flag = get_country_flag_emoji_from_timezone(timezone_out)
-                    output.append(f'{flag}  **{timezone_out}**  -  {times}')
+                    output.append(f"{flag}  **{timezone_out}**  -  {times}")
 
-                output.append('')
+                output.append("")
 
-            await msg.channel.send('\n'.join(output[:-1]))
+            await msg.channel.send("\n".join(output[:-1]))
 
         return failed
 
     async def convert_measurements(
-            self, channel: discord.TextChannel,
-            quantity_strs: list[tuple[str, str]]
+        self, channel: discord.TextChannel, quantity_strs: list[tuple[str, str]]
     ) -> NoReturn:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
@@ -131,18 +129,18 @@ class Conversion(commands.Cog):
             )
             if isinstance(q, tuple):
                 # We parsed as a quantity and got a conversion
-                conversions.append(f'`{q[0]:.2f~P}` = `{q[1]:.2f~P}`')
+                conversions.append(f"`{q[0]:.2f~P}` = `{q[1]:.2f~P}`")
             elif isinstance(q, Decimal):
                 # We parsed as dimensionless and got a numeric type back
-                conversions.append(f'`{qstr}` = `{q}`')
+                conversions.append(f"`{qstr}` = `{q}`")
             else:
                 failed.append((qstr, unit))
 
         if runtime_msgs.exceptions:
             # Send embed with any errors that happened during conversion
-            await ErrorEmbed(
-                [str(e) for e in runtime_msgs.exceptions], join='\n'
-            ).send(channel)
+            await ErrorEmbed([str(e) for e in runtime_msgs.exceptions], join="\n").send(
+                channel
+            )
 
         if conversions:
-            await channel.send('\n'.join(conversions))
+            await channel.send("\n".join(conversions))

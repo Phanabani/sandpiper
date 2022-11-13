@@ -1,3 +1,5 @@
+__all__ = ["Birthdays"]
+
 import asyncio
 import datetime as dt
 import logging
@@ -12,23 +14,20 @@ import pytz
 from sandpiper.birthdays.message import format_birthday_message
 from sandpiper.common.discord import AutoOrder, cheap_user_hash
 from sandpiper.common.time import sort_dates_no_year, utc_now
-from sandpiper.user_data import (
-    UserData, Database, PrivacyType,
-    common_pronouns
-)
+from sandpiper.user_data import Database, PrivacyType, UserData, common_pronouns
 
-__all__ = ['Birthdays']
-
-logger = logging.getLogger('sandpiper.birthdays')
+logger = logging.getLogger("sandpiper.birthdays")
 
 
 class Birthdays(commands.Cog):
-
     def __init__(
-            self, bot: commands.Bot, *, message_templates_no_age: list[str],
-            message_templates_with_age: list[str],
-            past_birthdays_day_range: int,
-            upcoming_birthdays_day_range: int
+        self,
+        bot: commands.Bot,
+        *,
+        message_templates_no_age: list[str],
+        message_templates_with_age: list[str],
+        past_birthdays_day_range: int,
+        upcoming_birthdays_day_range: int,
     ):
         """Send happy birthday messages to users."""
         self.bot = bot
@@ -46,9 +45,9 @@ class Birthdays(commands.Cog):
         task.add_done_callback(self._handle_task_exception)
 
     async def _get_database(self) -> Database:
-        user_data: Optional[UserData] = self.bot.get_cog('UserData')
+        user_data: Optional[UserData] = self.bot.get_cog("UserData")
         if user_data is None:
-            raise RuntimeError('UserData cog is not loaded.')
+            raise RuntimeError("UserData cog is not loaded.")
         return await user_data.get_database()
 
     def _get_random_message(self, age=False):
@@ -66,9 +65,7 @@ class Birthdays(commands.Cog):
 
     async def _try_cancel_task(self, user_id):
         if user_id in self.tasks:
-            logger.info(
-                f"Canceling birthday notification task (user={user_id})"
-            )
+            logger.info(f"Canceling birthday notification task (user={user_id})")
             self.tasks[user_id].cancel()
             del self.tasks[user_id]
 
@@ -100,8 +97,9 @@ class Birthdays(commands.Cog):
         # account
         scheduled_count = 0
         birthdays_today_tomorrow = await db.get_birthdays_range(
-            today - dt.timedelta(days=1), today + dt.timedelta(days=1),
-            max_last_notification_time=now - dt.timedelta(hours=24)
+            today - dt.timedelta(days=1),
+            today + dt.timedelta(days=1),
+            max_last_notification_time=now - dt.timedelta(hours=24),
         )
         for user_id, birthday in birthdays_today_tomorrow:
             if await self.schedule_birthday(user_id, birthday, now=now):
@@ -109,8 +107,7 @@ class Birthdays(commands.Cog):
         logger.info(f"{scheduled_count} birthdays scheduled for today")
 
     async def schedule_birthday(
-            self, user_id: int, birthday: dt.date,
-            *, now: Optional[dt.datetime] = None
+        self, user_id: int, birthday: dt.date, *, now: Optional[dt.datetime] = None
     ) -> bool:
         """
         Schedule a task that will wish this user happy birthday if their
@@ -161,8 +158,10 @@ class Birthdays(commands.Cog):
         # Otherwise, if we missed their midnight but it's still their birthday,
         # we can send immediately (negative delta will not sleep)
         now_local: dt.datetime = now.astimezone(timezone)
-        if (midnight_delta < dt.timedelta(0)
-                and now_local.date() == birthday_this_year.date()):
+        if (
+            midnight_delta < dt.timedelta(0)
+            and now_local.date() == birthday_this_year.date()
+        ):
             self._create_birthday_task(user_id, midnight_delta)
             return True
 
@@ -183,9 +182,7 @@ class Birthdays(commands.Cog):
         )
         await asyncio.sleep(delta.total_seconds())
 
-        logger.info(
-            f"Sending birthday notifications for user (user={user_id})"
-        )
+        logger.info(f"Sending birthday notifications for user (user={user_id})")
         db = await self._get_database()
         user: discord.User = self.bot.get_user(user_id)
         if user is None:
@@ -216,7 +213,7 @@ class Birthdays(commands.Cog):
             # but we need to pick one, so this is the best we can do for now
             pronouns = pronouns[0]
         else:
-            pronouns = common_pronouns['they']
+            pronouns = common_pronouns["they"]
 
         age = None
         if (await db.get_privacy_age(user_id)) is PrivacyType.PUBLIC:
@@ -260,8 +257,11 @@ class Birthdays(commands.Cog):
             else:
                 bday_msg_template = self._get_random_message(age=age is not None)
             bday_msg = format_birthday_message(
-                bday_msg_template, user_id=user_id,
-                name=name, pronouns=pronouns, age=age
+                bday_msg_template,
+                user_id=user_id,
+                name=name,
+                pronouns=pronouns,
+                age=age,
             )
             await bday_channel.send(bday_msg)
 
@@ -269,8 +269,7 @@ class Birthdays(commands.Cog):
         await db.set_last_birthday_notification(user_id, utc_now())
 
     async def get_past_upcoming_birthdays(
-            self, past_birthdays_day_range: int = 7,
-            upcoming_birthdays_day_range: int = 14
+        self, past_birthdays_day_range: int = 7, upcoming_birthdays_day_range: int = 14
     ) -> tuple[list[tuple[int, dt.date]], list[tuple[int, dt.date]]]:
         """
         Get two lists of past and upcoming birthdays. This may be used in a
@@ -286,9 +285,7 @@ class Birthdays(commands.Cog):
         today = now.date()
         past_delta = dt.timedelta(days=past_birthdays_day_range)
         upcoming_delta = dt.timedelta(days=upcoming_birthdays_day_range)
-        past_birthdays = await db.get_birthdays_range(
-            today - past_delta, today
-        )
+        past_birthdays = await db.get_birthdays_range(today - past_delta, today)
         upcoming_birthdays = await db.get_birthdays_range(
             today + dt.timedelta(days=1), today + upcoming_delta
         )
@@ -309,10 +306,7 @@ class Birthdays(commands.Cog):
 
         # Either of these two conditions means the birthday must be canceled
         # and we will not reschedule
-        if (
-                birthday is None
-                or birthday_privacy is PrivacyType.PRIVATE
-        ):
+        if birthday is None or birthday_privacy is PrivacyType.PRIVATE:
             await self._try_cancel_task(user_id)
             return
 
@@ -321,20 +315,21 @@ class Birthdays(commands.Cog):
     # region Commands
 
     auto_order = AutoOrder()
-    PAST_BIRTHDAY_EMOJIS = '🔷'
-    UPCOMING_BIRTHDAY_EMOJIS = '🎂🍰🧁🎈🎁🎉🎊'
+    PAST_BIRTHDAY_EMOJIS = "🔷"
+    UPCOMING_BIRTHDAY_EMOJIS = "🎂🍰🧁🎈🎁🎉🎊"
 
     @auto_order
     @commands.group(
-        name='birthdays', invoke_without_command=False,
+        name="birthdays",
+        invoke_without_command=False,
         brief="Birthday commands.",
-        help="Commands for viewing birthdays."
+        help="Commands for viewing birthdays.",
     )
     async def birthdays(self, ctx: commands.Context):
         pass
 
     async def format_bday_upcoming(
-            self, user_id: int, guild: discord.Guild, past: bool
+        self, user_id: int, guild: discord.Guild, past: bool
     ) -> Optional[str]:
         db = await self._get_database()
 
@@ -363,8 +358,7 @@ class Birthdays(commands.Cog):
 
     @auto_order
     @birthdays.command(
-        name='upcoming', aliases=('soon',),
-        help="View upcoming birthdays."
+        name="upcoming", aliases=("soon",), help="View upcoming birthdays."
     )
     async def birthdays_upcoming(self, ctx: commands.Context):
         past_raw, upcoming_raw = await self.get_past_upcoming_birthdays(
@@ -374,17 +368,13 @@ class Birthdays(commands.Cog):
 
         past = []
         for user_id, _ in sort_dates_no_year(past_raw, lambda x: x[1], now):
-            bday_str = await self.format_bday_upcoming(
-                user_id, ctx.guild, past=True
-            )
+            bday_str = await self.format_bday_upcoming(user_id, ctx.guild, past=True)
             if bday_str:
                 past.append(bday_str)
 
         upcoming = []
         for user_id, _ in sort_dates_no_year(upcoming_raw, lambda x: x[1], now):
-            bday_str = await self.format_bday_upcoming(
-                user_id, ctx.guild, past=False
-            )
+            bday_str = await self.format_bday_upcoming(user_id, ctx.guild, past=False)
             if bday_str:
                 upcoming.append(bday_str)
 
@@ -398,12 +388,12 @@ class Birthdays(commands.Cog):
             msg.extend(past)
 
         if past and upcoming:
-            msg.append('')
+            msg.append("")
 
         if upcoming:
             msg.append(f"Upcoming birthdays:")
             msg.extend(upcoming)
 
-        await ctx.send('\n'.join(msg))
+        await ctx.send("\n".join(msg))
 
     # endregion

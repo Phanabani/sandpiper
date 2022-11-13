@@ -1,43 +1,41 @@
+__all__ = [
+    "DEFAULT_FLAG",
+    "country_code_to_country_name",
+    "timezone_to_country_code",
+    "to_regional_indicator",
+    "get_country_flag_emoji",
+    "get_country_flag_emoji_from_timezone",
+]
+
 from operator import setitem
 from pathlib import Path
 from typing import Callable, NoReturn, Union
 
 from sandpiper.common.time import TimezoneType
 
-__all__ = (
-    'DEFAULT_FLAG',
-    'country_code_to_country_name',
-    'timezone_to_country_code',
-    'to_regional_indicator',
-    'get_country_flag_emoji',
-    'get_country_flag_emoji_from_timezone'
-)
-
-DEFAULT_FLAG = ':flag_white:'
+DEFAULT_FLAG = ":flag_white:"
 
 
-def _parse_db_file(
-        file_name, per_line: Callable[[dict, list[str]], NoReturn]
-) -> dict:
+def _parse_db_file(file_name, per_line: Callable[[dict, list[str]], NoReturn]) -> dict:
     file = Path(__file__).parent / file_name
     if not file.exists():
         raise FileNotFoundError(f"Can't find IANA database file {file}")
 
     out = {}
-    with file.open('rt') as f:
+    with file.open("rt") as f:
         for line in f:
-            if line.startswith('#'):
+            if line.startswith("#"):
                 continue
-            per_line(out, line.strip('\n').split('\t'))
+            per_line(out, line.strip("\n").split("\t"))
 
     return out
 
 
 country_code_to_country_name: dict[str, str] = _parse_db_file(
-    'iso3166.tab', lambda d, fields: setitem(d, fields[0], fields[1])
+    "iso3166.tab", lambda d, fields: setitem(d, fields[0], fields[1])
 )
 timezone_to_country_code: dict[str, str] = _parse_db_file(
-    'zone.tab', lambda d, fields: setitem(d, fields[2], fields[0])
+    "zone.tab", lambda d, fields: setitem(d, fields[2], fields[0])
 )
 
 
@@ -51,7 +49,7 @@ def to_regional_indicator(char: str) -> str:
 def get_country_flag_emoji(country_id: str) -> str:
     if len(country_id) != 2:
         raise ValueError(f"country_id must be a 2-character string")
-    return ''.join(to_regional_indicator(i) for i in country_id)
+    return "".join(to_regional_indicator(i) for i in country_id)
 
 
 def get_country_flag_emoji_from_timezone(tz: Union[str, TimezoneType]):

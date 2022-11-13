@@ -27,38 +27,39 @@ Her current features include:
     - [Bios](#bios)
     - [Birthday notifications](#birthday-notifications)
 - [Developers](#developers)
+- [Changelog](#changelog)
 - [Planned features](#planned-features)
 - [Inspiration](#inspiration)
 - [License](#license)
 
 ## Install
 
+### Prerequisites
+
+- [Poetry](https://python-poetry.org/docs/#installation) – dependency manager
+- (Optional) pyenv – Python version manager
+    - [pyenv](https://github.com/pyenv/pyenv) (Linux, Mac)
+    - [pyenv-win](https://github.com/pyenv-win/pyenv-win) (Windows)
+- (Optional) [PM2](https://pm2.keymetrics.io/docs/usage/quick-start) – process manager
+
+### Install Sandpiper
+
 To get started, clone the repo.
 
-```shell script
+```shell
 git clone https://github.com/phanabani/sandpiper.git
 cd sandpiper
 ```
 
-[Install Pipenv](https://pipenv.pypa.io/en/latest/install/#installing-pipenv).
-After installing for the first time, you may have to do some extra steps to
-be able to use the `pipenv` command in your shell. Read the note in the
-Pipenv installation page for more info.
+Install the dependencies with Poetry. Sandpiper requires Python 3.10.
 
 ```shell
-python -m pip install --user pipenv
-```
+# If you're using pyenv, run the following to init a Poetry environment using
+# the correct Python version
+poetry env use $(pyenv which python)
 
-Install the dependencies with Pipenv. Sandpiper requires Python 3.9+.
-
-```shell
-# If Python 3.9 is your default version:
-pipenv sync
-
-# If Python 3.9 is NOT your default version, you should specify the path to
-# your Python 3.9 executable
-pipenv sync --python "/usr/bin/python3.9"
-pipenv sync --python "C:\Miniconda3\envs\python39\python.exe"
+# Install dependencies
+poetry install --no-root --no-dev
 ```
 
 ## Usage
@@ -80,10 +81,10 @@ See [config](#config) for more info.
 
 #### Basic
 
-In the top level directory, simply run Sandpiper as a Python module with Pipenv.
+In the top level directory, simply run Sandpiper as a Python module with Poetry.
 
 ```shell script
-pipenv run python -m sandpiper
+poetry run python -m sandpiper
 ```
 
 #### With PM2
@@ -108,9 +109,15 @@ Sandpiper requires the following permissions to run normally:
 
 These correspond to the permission integer `19456`.
 
-Sandpiper also requires the [server members privileged intent](https://discord.com/developers/docs/topics/gateway#privileged-intents)
-to allow for Discord username/server nickname lookup in the `whois` command.
-You can enable it on the bot page of your application (https:\/\/discord.com/developers/applications/<client_id>/bot).
+Sandpiper also requires the following [privileged intents](https://discord.com/developers/docs/topics/gateway#privileged-intents):
+
+- Server members
+  - For Discord username/server nickname lookup in the `whois` command
+- Message content
+  - For running commands (will be replaced by slash commands) 
+  - For searching messages for unit/time conversion strings
+
+You can enable these on the bot page of your application (`https://discord.com/developers/applications/CLIENT_ID/bot`).
 
 ## Config
 
@@ -326,11 +333,11 @@ message:
 
 ### Installation
 
-Follow the installation steps in [install](#install) and use Pipenv to 
+Follow the installation steps in [install](#install) and use Poetry to 
 install the development dependencies:
 
 ```bash
-pipenv sync --dev
+poetry install --no-root
 ```
 
 ### Testing
@@ -338,19 +345,23 @@ pipenv sync --dev
 #### Run unit tests
 
 ```bash
-pipenv run python -m pytest --pyargs sandpiper
+poetry run python -m pytest --pyargs sandpiper
 # or run tests with profiling (--profile-svg to generate svg image):
-pipenv run python -m pytest --pyargs --profile sandpiper
+poetry run python -m pytest --pyargs --profile sandpiper
 ```
 
 #### Run tests with code coverage
 
 ```bash
-pipenv run coverage run -m pytest --pyargs sandpiper
-pipenv run coverage html
+poetry run coverage run -m pytest --pyargs sandpiper
+poetry run coverage html
 ```
 
 Open `htmlcov/index.html` to view the coverage report.
+
+## Changelog
+
+Check out Sandpiper's version history in [CHANGELOG.md](CHANGELOG.md)!
 
 ## Planned features
 
@@ -362,6 +373,11 @@ Open `htmlcov/index.html` to view the coverage report.
   - [X] Timezone
 - [X] Time conversion
 - [X] Birthday notifications
+- [X] Thread support
+- [ ] Slash commands
+- [ ] Conversion editing/deletion
+- [ ] Time conversion images
+- [ ] Currency conversions
 
 ## Inspiration
 

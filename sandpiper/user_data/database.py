@@ -1,18 +1,19 @@
+__all__ = [
+    "DEFAULT_PRIVACY",
+    "DatabaseError",
+    "UserNotInDatabase",
+    "Database",
+]
+
 from abc import ABCMeta, abstractmethod
 import datetime as dt
 from typing import Annotated, Optional
 
 import pytz
 
+from sandpiper.common.time import TimezoneType, utc_now
 from .enums import PrivacyType
 from .pronouns import Pronouns
-from sandpiper.common.time import TimezoneType, utc_now
-
-__all__ = [
-    'DEFAULT_PRIVACY',
-    'DatabaseError', 'UserNotInDatabase',
-    'Database',
-]
 
 DEFAULT_PRIVACY = PrivacyType.PRIVATE
 
@@ -26,7 +27,6 @@ class UserNotInDatabase(DatabaseError):
 
 
 class Database(metaclass=ABCMeta):
-
     @abstractmethod
     async def connect(self):
         pass
@@ -77,27 +77,19 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_preferred_name(
-            self, user_id: int, new_preferred_name: Optional[str]
-    ):
+    async def set_preferred_name(self, user_id: int, new_preferred_name: Optional[str]):
         pass
 
     @abstractmethod
-    async def get_privacy_preferred_name(
-            self, user_id: int
-    ) -> Optional[PrivacyType]:
+    async def get_privacy_preferred_name(self, user_id: int) -> Optional[PrivacyType]:
         pass
 
     @abstractmethod
-    async def set_privacy_preferred_name(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
+    async def set_privacy_preferred_name(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
-    async def find_users_by_preferred_name(
-            self, name: str
-    ) -> list[tuple[int, str]]:
+    async def find_users_by_preferred_name(self, name: str) -> list[tuple[int, str]]:
         pass
 
     # endregion
@@ -116,9 +108,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_pronouns(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
+    async def set_privacy_pronouns(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     async def get_pronouns_parsed(self, user_id: int) -> list[Pronouns]:
@@ -139,9 +129,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_birthday(
-            self, user_id: int, new_birthday: Optional[dt.date]
-    ):
+    async def set_birthday(self, user_id: int, new_birthday: Optional[dt.date]):
         pass
 
     @abstractmethod
@@ -149,16 +137,16 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_birthday(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
+    async def set_privacy_birthday(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
     async def get_birthdays_range(
-            self, start: dt.date, end: dt.date,
-            max_last_notification_time: Optional[dt.date] = None
-    ) -> list[tuple[Annotated[int, 'user_id'], dt.date]]:
+        self,
+        start: dt.date,
+        end: dt.date,
+        max_last_notification_time: Optional[dt.date] = None,
+    ) -> list[tuple[Annotated[int, "user_id"], dt.date]]:
         """
         Get a list of (user_id, birthday) for all users with birthdays between
         `start` and `end`, inclusive. If `start` is later than `end`, the check
@@ -181,14 +169,12 @@ class Database(metaclass=ABCMeta):
     # region Age
 
     @staticmethod
-    def _calculate_age(
-            birthday: dt.date, tz: TimezoneType, at_time: dt.datetime
-    ):
+    def _calculate_age(birthday: dt.date, tz: TimezoneType, at_time: dt.datetime):
         # The user's birthday in `at_time`'s year at midnight (localized to
         # their timezone)
-        birthday_this_year = tz.localize(dt.datetime(
-            at_time.year, birthday.month, birthday.day, 0, 0
-        ))
+        birthday_this_year = tz.localize(
+            dt.datetime(at_time.year, birthday.month, birthday.day, 0, 0)
+        )
         year_diff = at_time.year - birthday.year
         if at_time < birthday_this_year:
             # They haven't reached their birthday for this year
@@ -226,9 +212,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_timezone(
-            self, user_id: int, new_timezone: Optional[TimezoneType]
-    ):
+    async def set_timezone(self, user_id: int, new_timezone: Optional[TimezoneType]):
         pass
 
     @abstractmethod
@@ -236,9 +220,7 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_privacy_timezone(
-            self, user_id: int, new_privacy: PrivacyType
-    ):
+    async def set_privacy_timezone(self, user_id: int, new_privacy: PrivacyType):
         pass
 
     @abstractmethod
@@ -253,23 +235,19 @@ class Database(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def set_last_birthday_notification(
-            self, user_id: int, new_date: dt.datetime
-    ):
+    async def set_last_birthday_notification(self, user_id: int, new_date: dt.datetime):
         pass
 
     # endregion
     # region Guild settings
 
     @abstractmethod
-    async def get_guild_birthday_channel(
-            self, guild_id: int
-    ) -> Optional[int]:
+    async def get_guild_birthday_channel(self, guild_id: int) -> Optional[int]:
         pass
 
     @abstractmethod
     async def set_guild_birthday_channel(
-            self, guild_id: int, new_birthday_channel: Optional[int]
+        self, guild_id: int, new_birthday_channel: Optional[int]
     ):
         pass
 

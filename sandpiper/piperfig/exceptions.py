@@ -1,13 +1,14 @@
-from typing import Any
+__all__ = [
+    "ConfigSchemaError",
+    "ConfigParsingError",
+    "MissingFieldError",
+    "ParsingError",
+]
 
-__all__ = (
-    'ConfigSchemaError', 'ConfigParsingError', 'MissingFieldError',
-    'ParsingError'
-)
+from typing import Any
 
 
 class ConfigSchemaError(Exception):
-
     def __init__(self, cls: type, field_name: str, msg: str):
         self.cls = cls
         self.field_name = field_name
@@ -25,7 +26,6 @@ class ConfigParsingError(Exception):
 
 
 class MissingFieldError(ConfigParsingError):
-
     def __init__(self, qualified_name: str):
         self.qualified_name = qualified_name
 
@@ -34,10 +34,12 @@ class MissingFieldError(ConfigParsingError):
 
 
 class ParsingError(ConfigParsingError):
-
     def __init__(
-            self, value: Any, target_type: type, base_exc: Exception,
-            qualified_name: str = ''
+        self,
+        value: Any,
+        target_type: type,
+        base_exc: Exception,
+        qualified_name: str = "",
     ):
         self.value = value
         self.target_type = target_type
@@ -48,6 +50,6 @@ class ParsingError(ConfigParsingError):
         return (
             f"Failed to parse config value ("
             f"qualified_name={self.qualified_name} value={self.value!r} "
-            f"target_type={self.target_type} exc=\"{self.base_exc}\""
+            f'target_type={self.target_type} exc="{self.base_exc}"'
             f")"
         )

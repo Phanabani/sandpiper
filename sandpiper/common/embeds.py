@@ -1,26 +1,32 @@
+__all__ = [
+    "SimpleEmbed",
+    "SuccessEmbed",
+    "WarningEmbed",
+    "ErrorEmbed",
+    "InfoEmbed",
+    "SpecialEmbed",
+]
+
 from typing import Optional, Union
 
 import discord
-
-__all__ = [
-    'SimpleEmbed',
-    'SuccessEmbed', 'WarningEmbed', 'ErrorEmbed',
-    'InfoEmbed', 'SpecialEmbed',
-]
 
 T_Field = tuple[str, str, bool]
 
 
 class SimpleEmbed:
 
-    title = ''
+    title = ""
     color = 0x000000
 
     def __init__(
-            self, msg: Union[None, str, list[str]] = None,
-            fields: list[T_Field] = None,
-            *, title: Optional[str] = None, color: Optional[int] = None,
-            join: str = '\n'
+        self,
+        msg: Union[None, str, list[str]] = None,
+        fields: list[T_Field] = None,
+        *,
+        title: Optional[str] = None,
+        color: Optional[int] = None,
+        join: str = "\n",
     ):
         """
         :param msg: the message to add to the embed. May be a list of str
@@ -36,9 +42,7 @@ class SimpleEmbed:
         elif isinstance(msg, str):
             msg = [msg]
         elif not isinstance(msg, list):
-            raise TypeError(
-                f"message must be None or of type (str, list[str])"
-            )
+            raise TypeError(f"message must be None or of type (str, list[str])")
         self.message_parts: list[str] = msg
 
         if fields is None:
@@ -69,13 +73,11 @@ class SimpleEmbed:
 
         :param messageable: a messageable interface to send the embed to
         """
-        desc = discord.Embed.Empty
+        desc = None
         if self.message_parts:
             desc = self.join_str.join(self.message_parts)
 
-        embed = discord.Embed(
-            title=self.title, description=desc, color=self.color
-        )
+        embed = discord.Embed(title=self.title, description=desc, color=self.color)
 
         if self.fields:
             for name, value, inline in self.fields:
@@ -86,24 +88,24 @@ class SimpleEmbed:
 
 class SuccessEmbed(SimpleEmbed):
     color = 0x57FCA5
-    title = 'Success'
+    title = "Success"
 
 
 class WarningEmbed(SimpleEmbed):
     color = 0xE7D900
-    title = 'Warning'
+    title = "Warning"
 
 
 class ErrorEmbed(SimpleEmbed):
     color = 0xFF0000
-    title = 'Error'
+    title = "Error"
 
 
 class InfoEmbed(SimpleEmbed):
     color = 0x5E5FFF
-    title = 'Info'
+    title = "Info"
 
 
 class SpecialEmbed(SimpleEmbed):
     color = 0xF656F1
-    title = 'Announcement'
+    title = "Announcement"

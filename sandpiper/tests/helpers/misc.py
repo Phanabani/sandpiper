@@ -1,15 +1,11 @@
+__all__ = ["assert_in", "assert_regex", "assert_one_if_list", "assert_count_equal"]
+
 from collections import Counter
 from collections.abc import Iterable
 import re
 from typing import NoReturn, TypeVar, Union
 
-__all__ = [
-    'assert_in', 'assert_regex',
-    'assert_one_if_list',
-    'assert_count_equal'
-]
-
-V = TypeVar('V')
+V = TypeVar("V")
 
 
 def assert_in(str_: str, *substrings: str) -> NoReturn:
@@ -29,9 +25,9 @@ def assert_regex(str_: str, *patterns: str) -> NoReturn:
     """
     __tracebackhide__ = True
     for pattern in patterns:
-        assert re.search(pattern, str_), (
-            f'Pattern "{pattern}" did not match any part of "{str_}"'
-        )
+        assert re.search(
+            pattern, str_
+        ), f'Pattern "{pattern}" did not match any part of "{str_}"'
 
 
 def assert_one_if_list(x: Union[list[V], V]) -> V:

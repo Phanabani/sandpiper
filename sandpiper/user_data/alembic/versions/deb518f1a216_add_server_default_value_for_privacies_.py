@@ -11,22 +11,22 @@ from sqlalchemy.engine import Connection
 
 # revision identifiers, used by Alembic.
 
-revision = 'deb518f1a216'
-down_revision = 'a2d3dc3c170e'
+revision = "deb518f1a216"
+down_revision = "a2d3dc3c170e"
 branch_labels = None
 depends_on = None
 
 DEFAULT_PRIVACY = 0  # == PrivacyType.PRIVATE
 privacy_cols = (
-    'privacy_preferred_name',
-    'privacy_pronouns',
-    'privacy_birthday',
-    'privacy_age',
-    'privacy_timezone'
+    "privacy_preferred_name",
+    "privacy_pronouns",
+    "privacy_birthday",
+    "privacy_age",
+    "privacy_timezone",
 )
 # Build a little fake table with our privacy columns so we can update them
 users = sa.table(
-    'users',
+    "users",
     *[sa.column(col, sa.SmallInteger) for col in privacy_cols],
 )
 
@@ -37,7 +37,7 @@ def upgrade():
     # op.execute wasn't working
     conn: Connection = op.get_bind()
 
-    with op.batch_alter_table('users') as batch_op:
+    with op.batch_alter_table("users") as batch_op:
         for col in privacy_cols:
             # Replace all null fields with the new default value of 0 (which
             # was already being returned programmatically as the default)
@@ -51,14 +51,13 @@ def upgrade():
             # new table and copy all data over because SQLite doesn't have much
             # functionality in terms of alter column :(
             batch_op.alter_column(
-                col, nullable=False,
-                server_default=sa.text(str(DEFAULT_PRIVACY))
+                col, nullable=False, server_default=sa.text(str(DEFAULT_PRIVACY))
             )
 
 
 def downgrade():
     # The replacement of null fields with the new default is destructive but
     # backwards-compatible, so we will not be doing anything about that change
-    with op.batch_alter_table('users') as batch_op:
+    with op.batch_alter_table("users") as batch_op:
         for col in privacy_cols:
             batch_op.alter_column(col, nullable=True, server_default=None)

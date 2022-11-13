@@ -1,12 +1,12 @@
+__all__ = ["UserData", "DatabaseUnavailable"]
+
 import logging
 
 import discord.ext.commands as commands
 
 from .database import Database
 
-__all__ = ['UserData', 'DatabaseUnavailable']
-
-logger = logging.getLogger('sandpiper.user_data')
+logger = logging.getLogger("sandpiper.user_data")
 
 
 class DatabaseUnavailable(Exception):
@@ -32,8 +32,8 @@ class UserData(commands.Cog):
         :raises DatabaseUnavailable: if database is not set or connected
         """
         if self._database is None:
-            raise DatabaseUnavailable('Database adapter is not set.')
+            raise DatabaseUnavailable("Database adapter is not set.")
         if not await self._database.connected():
-            raise DatabaseUnavailable('Database is not connected.')
+            raise DatabaseUnavailable("Database is not connected.")
         await self._database.ready()
         return self._database

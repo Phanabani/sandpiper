@@ -12,7 +12,7 @@
 
 let shell;
 let args;
-const command = 'pipenv run python -m sandpiper';
+const command = 'poetry run python -m sandpiper';
 
 switch (process.platform) {
     case 'win32':

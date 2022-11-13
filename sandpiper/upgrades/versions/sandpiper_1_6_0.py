@@ -2,19 +2,18 @@ import logging
 
 import discord
 
-from ..upgrades import UpgradeHandler
 from sandpiper.common.discord import find_user_in_mutual_guilds
 from sandpiper.common.embeds import *
 from sandpiper.common.misc import listify
 from sandpiper.user_data import Database, PrivacyType
+from ..upgrades import UpgradeHandler
 
 logger = logging.getLogger(__name__)
 
 
 class Sandpiper_1_6_0(UpgradeHandler):
-
     def version(self) -> str:
-        return '1.6.0'
+        return "1.6.0"
 
     async def on_upgrade(self):
         db = await self._get_database()
@@ -37,12 +36,14 @@ class Sandpiper_1_6_0(UpgradeHandler):
             return
 
         # General info about the birthday announcements
-        mutual_guilds = listify([m.guild.name for m in find_user_in_mutual_guilds(
-            self.bot, self.bot.user.id, user_id
-        )], 2)
-        embed = SpecialEmbed(
-            title='Birthday announcements update 🥳', join='\n\n'
+        mutual_guilds = listify(
+            [
+                m.guild.name
+                for m in find_user_in_mutual_guilds(self.bot, self.bot.user.id, user_id)
+            ],
+            2,
         )
+        embed = SpecialEmbed(title="Birthday announcements update 🥳", join="\n\n")
         embed.append(
             f"Hey!! I'm a bot from {mutual_guilds}. I've just gotten a "
             f"birthday announcement feature. I can announce your birthday "
@@ -85,8 +86,7 @@ class Sandpiper_1_6_0(UpgradeHandler):
         # something
         if age_privacy is PrivacyType.PUBLIC:
             logger.info(
-                f"User's age is public; switching it to private "
-                f"(user_id={user_id})"
+                f"User's age is public; switching it to private " f"(user_id={user_id})"
             )
             await db.set_privacy_age(user_id, PrivacyType.PRIVATE)
 
@@ -96,7 +96,7 @@ class Sandpiper_1_6_0(UpgradeHandler):
             return
 
         # General info about age in the announcement
-        embed = SpecialEmbed(title='Age in birthday announcement', join='\n\n')
+        embed = SpecialEmbed(title="Age in birthday announcement", join="\n\n")
         embed.append(
             "I can also announce your new age in your birthday message "
             "if your age privacy is set to public!"

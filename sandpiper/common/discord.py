@@ -1,3 +1,13 @@
+__all__ = [
+    "AutoOrder",
+    "date_handler",
+    "privacy_handler",
+    "cheap_user_hash",
+    "find_user_in_mutual_guilds",
+    "find_users_by_display_name",
+    "find_users_by_username",
+]
+
 from datetime import date
 import logging
 from typing import Optional
@@ -5,17 +15,10 @@ from typing import Optional
 import discord
 from discord.ext.commands import BadArgument, Command
 
-from .time import parse_date
 from sandpiper.user_data.enums import PrivacyType
+from .time import parse_date
 
-__all__ = [
-    'AutoOrder', 'date_handler', 'privacy_handler',
-    'cheap_user_hash',
-    'find_user_in_mutual_guilds', 'find_users_by_display_name',
-    'find_users_by_username'
-]
-
-logger = logging.getLogger('sandpiper.common.discord')
+logger = logging.getLogger("sandpiper.common.discord")
 
 
 class AutoOrder:
@@ -47,7 +50,7 @@ class AutoOrder:
             # Order by parent's commands count
             order = len(command.parent.commands) - 1
 
-        command.__original_kwargs__['order'] = order
+        command.__original_kwargs__["order"] = order
         return command
 
 
@@ -72,12 +75,15 @@ def privacy_handler(privacy_str: str) -> PrivacyType:
         return PrivacyType[privacy_str]
     except KeyError:
         privacy_names = [n.lower() for n in PrivacyType.__members__.keys()]
-        raise BadArgument(f'Privacy must be one of {privacy_names}')
+        raise BadArgument(f"Privacy must be one of {privacy_names}")
 
 
 def find_user_in_mutual_guilds(
-    client: discord.Client, whos_looking: int, for_whom: int,
-    *, short_circuit: bool = False
+    client: discord.Client,
+    whos_looking: int,
+    for_whom: int,
+    *,
+    short_circuit: bool = False,
 ) -> list[discord.Member]:
     """
     Find a user who shares mutual guild's with someone else.
@@ -100,8 +106,9 @@ def find_user_in_mutual_guilds(
     return found_members
 
 
-def find_users_by_username(client: discord.Client,
-                           name: str) -> [list[tuple[int, str]]]:
+def find_users_by_username(
+    client: discord.Client, name: str
+) -> [list[tuple[int, str]]]:
     """
     Search for users by their Discord username.
 
@@ -113,14 +120,17 @@ def find_users_by_username(client: discord.Client,
     name = name.casefold()
     for user in client.users:
         user: discord.User
-        if name in f'{user.name.casefold()}#{user.discriminator}':
-            users.append((user.id, f'{user.name}#{user.discriminator}'))
+        if name in f"{user.name.casefold()}#{user.discriminator}":
+            users.append((user.id, f"{user.name}#{user.discriminator}"))
     return users
 
 
 def find_users_by_display_name(
-    client: discord.Client, whos_looking: int, name: str,
-    *, guild: Optional[discord.Guild] = None,
+    client: discord.Client,
+    whos_looking: int,
+    name: str,
+    *,
+    guild: Optional[discord.Guild] = None,
 ) -> [list[tuple[int, str]]]:
     """
     Search for users by their display name (nickname in a guild). You may pass

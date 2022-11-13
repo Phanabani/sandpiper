@@ -1,7 +1,7 @@
-from textwrap import dedent
-import unittest.mock as mock
 from pathlib import Path
+from textwrap import dedent
 from typing import Annotated
+import unittest.mock as mock
 
 import pytest
 
@@ -21,22 +21,24 @@ def dedent_strip(str_: str) -> str:
 
 
 class TestMisc:
-
     def test_no_annotated(self):
-        with pytest.raises(ConfigSchemaError, match=r'Annotated'):
+        with pytest.raises(ConfigSchemaError, match=r"Annotated"):
+
             class C(ConfigSchema):
                 field: FromType(int, str)
 
     def test_bad_origin(self):
         with pytest.raises(ConfigSchemaError):
+
             class C(ConfigSchema):
-                field: Annotated[Path, '']
+                field: Annotated[Path, ""]
 
     @pytest.mark.skip(
         "I'm not sure how to handle this yet, but it's a bit of an edge case"
     )
     def test_bounded_before_fromtype(self):
         with pytest.raises(ConfigSchemaError):
+
             class C(ConfigSchema):
                 field: Annotated[int, Bounded(5, 6), FromType(str, int)]
 
@@ -45,25 +47,29 @@ class TestMisc:
             # noinspection PyTypeHints
             field: Annotated[
                 Path,
-                FromType(str, float), FromType(float, int), FromType(int, str),
-                MaybeRelativePath(Path('/root/dir'))
+                FromType(str, float),
+                FromType(float, int),
+                FromType(int, str),
+                MaybeRelativePath(Path("/root/dir")),
             ]
 
         parsed = C('{"field": "5.3"}')
-        assert parsed.field == Path('/root/dir/5')
+        assert parsed.field == Path("/root/dir/5")
         serialized = parsed.serialize()
         assert_type_value(
-            serialized, str,
-            dedent_strip('''
+            serialized,
+            str,
+            dedent_strip(
+                """
             {
                 "field": "5.0"
             }
-            ''')
+            """
+            ),
         )
 
 
 class TestFromType:
-
     def test_implicit_to(self):
         class C(ConfigSchema):
             field: Annotated[str, FromType(int)]
@@ -75,7 +81,8 @@ class TestFromType:
             C('{"field": "123"}')
 
     def test_multiple_implicit_to_type_err(self):
-        with pytest.raises(ConfigSchemaError, match='implicit'):
+        with pytest.raises(ConfigSchemaError, match="implicit"):
+
             class C(ConfigSchema):
                 field: Annotated[str, FromType(int), FromType(str)]
 
@@ -95,6 +102,7 @@ class TestFromType:
 
     def test_explicit_to_type_mismatch(self):
         with pytest.raises(ConfigSchemaError):
+
             class C(ConfigSchema):
                 field: Annotated[str, FromType(int, float)]
 
@@ -103,6 +111,7 @@ class TestFromType:
         # the last FromType, however I think it's difficult to understand
         # what's going on if more transformers come after it
         with pytest.raises(ConfigSchemaError):
+
             class C(ConfigSchema):
                 field: Annotated[int, FromType(str), Bounded(2, 4)]
 
@@ -118,6 +127,7 @@ class TestFromType:
 
     def test_invalid_from_type(self):
         with pytest.raises(ConfigSchemaError):
+
             class C(ConfigSchema):
                 field: Annotated[int, FromType(Path, int)]
 
@@ -133,7 +143,6 @@ class TestFromType:
 
 
 class TestBounded:
-
     def test_min(self):
         class C(ConfigSchema):
             field: Annotated[int, Bounded(5, None)]
@@ -194,6 +203,7 @@ class TestBounded:
 
     def test_min_greater_than_max(self):
         with pytest.raises(ValueError):
+
             class C(ConfigSchema):
                 field: Annotated[int, Bounded(2, 1)]
 
@@ -209,42 +219,41 @@ class TestBounded:
 
 
 # Let's use Posix paths for our tests
-@mock.patch('pathlib.os.name', 'posix')
-@mock.patch('pathlib._PosixFlavour.is_supported', True)
+@mock.patch("pathlib.os.name", "posix")
+@mock.patch("pathlib._PosixFlavour.is_supported", True)
 class TestMaybeRelativePath:
-
     def test_relative(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: Annotated[Path, MaybeRelativePath(Path('/root/dir'))]
+            field: Annotated[Path, MaybeRelativePath(Path("/root/dir"))]
 
         parsed = C('{"field": "relative/path"}')
-        assert parsed.field == Path('/root/dir/relative/path')
+        assert parsed.field == Path("/root/dir/relative/path")
 
     def test_relative_with_dot(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: Annotated[Path, MaybeRelativePath(Path('/root/dir'))]
+            field: Annotated[Path, MaybeRelativePath(Path("/root/dir"))]
 
         parsed = C('{"field": "./relative/path"}')
-        assert parsed.field == Path('/root/dir/relative/path')
+        assert parsed.field == Path("/root/dir/relative/path")
 
     def test_absolute(self):
         class C(ConfigSchema):
             # noinspection PyTypeHints
-            field: Annotated[Path, MaybeRelativePath(Path('/root/dir'))]
+            field: Annotated[Path, MaybeRelativePath(Path("/root/dir"))]
 
         parsed = C('{"field": "/absolute/path"}')
-        assert parsed.field == Path('/absolute/path')
+        assert parsed.field == Path("/absolute/path")
 
     def test_back_relative(self):
-        trans = MaybeRelativePath(Path('/root/dir'))
-        path = Path('/root/dir/relative/path')
+        trans = MaybeRelativePath(Path("/root/dir"))
+        path = Path("/root/dir/relative/path")
         back = trans.transform_back(path)
-        assert_type_value(back, str, 'relative/path')
+        assert_type_value(back, str, "relative/path")
 
     def test_back_absolute(self):
-        trans = MaybeRelativePath(Path('/root/dir'))
-        path = Path('/absolute/path')
+        trans = MaybeRelativePath(Path("/root/dir"))
+        path = Path("/absolute/path")
         back = trans.transform_back(path)
-        assert_type_value(back, str, '/absolute/path')
+        assert_type_value(back, str, "/absolute/path")

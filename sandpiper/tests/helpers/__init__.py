@@ -1,3 +1,1 @@
-from . import discord
-from . import misc
-from . import mocking
+from . import discord, misc, mocking
