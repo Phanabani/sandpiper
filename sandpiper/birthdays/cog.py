@@ -12,7 +12,7 @@ import pytz
 from sandpiper.birthdays.message import format_birthday_message
 from sandpiper.common.discord import AutoOrder, cheap_user_hash
 from sandpiper.common.time import sort_dates_no_year, utc_now
-from sandpiper.user_data import UserData, Database, PrivacyType, common_pronouns
+from sandpiper.user_data import Database, PrivacyType, UserData, common_pronouns
 
 __all__ = ["Birthdays"]
 

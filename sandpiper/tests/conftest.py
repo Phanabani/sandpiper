@@ -9,9 +9,10 @@ import discord.ext.commands as commands
 import pytest
 import pytz
 
+from sandpiper.user_data import DatabaseSQLite
 from .helpers.discord import *
 from .helpers.mocking import MagicMock_, patch_all_symbol_imports
-from sandpiper.user_data import DatabaseSQLite
+
 
 # region Discord arrange fixtures
 

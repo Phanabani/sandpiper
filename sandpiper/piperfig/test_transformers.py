@@ -1,7 +1,7 @@
-from textwrap import dedent
-import unittest.mock as mock
 from pathlib import Path
+from textwrap import dedent
 from typing import Annotated
+import unittest.mock as mock
 
 import pytest
 

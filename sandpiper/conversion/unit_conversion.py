@@ -3,8 +3,7 @@ import logging
 import re
 from typing import Union
 
-from pint import UndefinedUnitError as PintUndefinedUnitError
-from pint import UnitRegistry, Unit
+from pint import UndefinedUnitError as PintUndefinedUnitError, Unit, UnitRegistry
 from pint.quantity import Quantity
 
 from sandpiper.common.misc import RuntimeMessages

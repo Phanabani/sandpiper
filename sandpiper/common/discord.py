@@ -5,8 +5,8 @@ from typing import Optional
 import discord
 from discord.ext.commands import BadArgument, Command
 
-from .time import parse_date
 from sandpiper.user_data.enums import PrivacyType
+from .time import parse_date
 
 __all__ = [
     "AutoOrder",

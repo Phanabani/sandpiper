@@ -6,8 +6,8 @@ from types import MethodType
 
 # noinspection PyPep8Naming
 from typing import (
-    Any,
     Annotated,
+    Any,
     Literal,
     NoReturn,
     TextIO,

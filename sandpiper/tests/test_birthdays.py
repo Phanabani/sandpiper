@@ -8,11 +8,11 @@ from discord.ext import commands
 import pytest
 import pytz
 
-from .helpers.misc import *
-from .helpers.mocking import *
 from sandpiper.birthdays import Birthdays
 from sandpiper.common.time import TimezoneType
 from sandpiper.user_data import PrivacyType, UserData
+from .helpers.misc import *
+from .helpers.mocking import *
 
 pytest.skip(
     "I struggled a lot with writing these tests, and I still can't get them to "

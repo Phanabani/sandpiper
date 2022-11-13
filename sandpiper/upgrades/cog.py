@@ -3,10 +3,10 @@ from typing import Optional
 
 import discord.ext.commands as commands
 
-from .versions import all_upgrade_handlers
-from .upgrades import do_upgrades
 from sandpiper import __version__ as current_version
 from sandpiper.user_data import UserData
+from .upgrades import do_upgrades
+from .versions import all_upgrade_handlers
 
 __all__ = ["Upgrades"]
 

@@ -3,11 +3,9 @@ from logging.config import fileConfig
 from pathlib import Path
 import sys
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 sandpiper_root_dir = Path(__file__, "../../../..")
 sys.path.insert(0, str(sandpiper_root_dir.absolute()))

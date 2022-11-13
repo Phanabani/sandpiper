@@ -1,5 +1,5 @@
-import sqlalchemy as sa
 from sqlalchemy import Column
+import sqlalchemy as sa
 
 from .base import Base
 

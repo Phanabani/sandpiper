@@ -16,11 +16,11 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
+from sandpiper.common.time import TimezoneType
 from . import alembic_utils as alembic_utils
 from .database import *
 from .enums import PrivacyType
 from .models import Base, Guild, SandpiperMeta, User
-from sandpiper.common.time import TimezoneType
 
 logger = logging.getLogger(__name__)
 

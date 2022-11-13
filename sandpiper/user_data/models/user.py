@@ -1,5 +1,5 @@
-import sqlalchemy as sa
 from sqlalchemy import Column, Index
+import sqlalchemy as sa
 
 from ._types import Snowflake
 from .base import Base

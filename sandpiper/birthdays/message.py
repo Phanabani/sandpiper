@@ -4,7 +4,6 @@ from typing import Optional
 
 from sandpiper.user_data import Pronouns, common_pronouns
 
-
 base_ordinal_suffix = "th"
 ordinal_suffixes = {1: "st", 2: "nd", 3: "rd"}
 
