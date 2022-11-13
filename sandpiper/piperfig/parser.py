@@ -1,10 +1,10 @@
+__all__ = ["ConfigSchema"]
+
 from functools import cached_property
 from io import TextIOBase
 import json
 import sys
 from types import MethodType
-
-# noinspection PyPep8Naming
 from typing import (
     Annotated,
     Any,
