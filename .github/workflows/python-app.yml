@@ -27,7 +27,7 @@ jobs:
         
         pipx install poetry
         
-        poetry install flake8
+        poetry add flake8
         if [ -f poetry.lock ]; then poetry install --no-root; fi
 
     - name: Lint with flake8
