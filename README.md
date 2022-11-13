@@ -27,6 +27,7 @@ Her current features include:
     - [Bios](#bios)
     - [Birthday notifications](#birthday-notifications)
 - [Developers](#developers)
+- [Changelog](#changelog)
 - [Planned features](#planned-features)
 - [Inspiration](#inspiration)
 - [License](#license)
@@ -357,6 +358,10 @@ poetry run coverage html
 ```
 
 Open `htmlcov/index.html` to view the coverage report.
+
+## Changelog
+
+Check out Sandpiper's version history in [CHANGELOG.md](CHANGELOG.md)!
 
 ## Planned features
 
