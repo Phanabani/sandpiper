@@ -1,12 +1,3 @@
-from dataclasses import dataclass
-import datetime as dt
-import re
-from typing import Optional, Union, cast
-
-from fuzzywuzzy import fuzz, process as fuzzy_process
-import pytz
-import tzlocal
-
 __all__ = [
     "TimezoneType",
     "no_zeropad",
@@ -21,6 +12,15 @@ __all__ = [
     "TimezoneMatches",
     "fuzzy_match_timezone",
 ]
+
+from dataclasses import dataclass
+import datetime as dt
+import re
+from typing import Optional, Union, cast
+
+from fuzzywuzzy import fuzz, process as fuzzy_process
+import pytz
+import tzlocal
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 

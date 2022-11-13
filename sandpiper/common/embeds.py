@@ -1,7 +1,3 @@
-from typing import Optional, Union
-
-import discord
-
 __all__ = [
     "SimpleEmbed",
     "SuccessEmbed",
@@ -10,6 +6,10 @@ __all__ = [
     "InfoEmbed",
     "SpecialEmbed",
 ]
+
+from typing import Optional, Union
+
+import discord
 
 T_Field = tuple[str, str, bool]
 

@@ -1,9 +1,9 @@
+__all__ = ["assert_in", "assert_regex", "assert_one_if_list", "assert_count_equal"]
+
 from collections import Counter
 from collections.abc import Iterable
 import re
 from typing import NoReturn, TypeVar, Union
-
-__all__ = ["assert_in", "assert_regex", "assert_one_if_list", "assert_count_equal"]
 
 V = TypeVar("V")
 

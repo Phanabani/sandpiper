@@ -1,6 +1,6 @@
-from typing import NoReturn, Union
+__all__ = ["qualified", "typecheck"]
 
-__all__ = ("qualified", "typecheck")
+from typing import NoReturn, Union
 
 
 def qualified(parent: str, name: str) -> str:

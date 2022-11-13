@@ -1,6 +1,6 @@
-import sqlalchemy.types as types
-
 __all__ = ["Snowflake"]
+
+import sqlalchemy.types as types
 
 
 class Snowflake(types.TypeDecorator):

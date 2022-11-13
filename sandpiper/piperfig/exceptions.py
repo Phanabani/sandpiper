@@ -1,11 +1,11 @@
-from typing import Any
-
-__all__ = (
+__all__ = [
     "ConfigSchemaError",
     "ConfigParsingError",
     "MissingFieldError",
     "ParsingError",
-)
+]
+
+from typing import Any
 
 
 class ConfigSchemaError(Exception):

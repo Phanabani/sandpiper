@@ -1,3 +1,5 @@
+__all__ = ["Sandpiper", "run_bot"]
+
 import logging
 from pathlib import Path
 import sys
@@ -7,8 +9,6 @@ import discord.ext.commands as commands
 
 from .config import SandpiperConfig
 from .help import HelpCommand
-
-__all__ = ("Sandpiper", "run_bot")
 
 logger = logging.getLogger("sandpiper")
 

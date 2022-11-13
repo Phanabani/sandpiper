@@ -1,14 +1,14 @@
-import sys
-from typing import Any, Optional
-from unittest import mock
-
-import pytest
-
 __all__ = [
     "MagicMock_",
     "isinstance_mock_supported",
     "patch_all_symbol_imports",
 ]
+
+import sys
+from typing import Any, Optional
+from unittest import mock
+
+import pytest
 
 
 class MagicMock_(mock.MagicMock):

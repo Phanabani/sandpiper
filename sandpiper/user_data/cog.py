@@ -1,10 +1,10 @@
+__all__ = ["UserData", "DatabaseUnavailable"]
+
 import logging
 
 import discord.ext.commands as commands
 
 from .database import Database
-
-__all__ = ["UserData", "DatabaseUnavailable"]
 
 logger = logging.getLogger("sandpiper.user_data")
 

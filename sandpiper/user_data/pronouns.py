@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+__all__ = ["Pronouns", "common_pronouns"]
+
 from dataclasses import astuple, dataclass
 import re
-
-__all__ = ["Pronouns", "common_pronouns"]
 
 _slashed_group_pattern = re.compile(r"[a-zA-Z]+(?: *[/\\] *[a-zA-Z]+)*")
 

@@ -1,3 +1,11 @@
+__all__ = [
+    "PrivacyExplanation",
+    "BirthdayExplanations",
+    "info_str",
+    "user_info_str",
+    "user_names_str",
+]
+
 from typing import Any, Optional
 
 import discord
@@ -6,14 +14,6 @@ from discord.ext import commands
 from sandpiper.common.discord import find_user_in_mutual_guilds
 from sandpiper.common.misc import join
 from sandpiper.user_data import Database, PrivacyType
-
-__all__ = [
-    "PrivacyExplanation",
-    "BirthdayExplanations",
-    "info_str",
-    "user_info_str",
-    "user_names_str",
-]
 
 privacy_emojis = {PrivacyType.PRIVATE: "⛔", PrivacyType.PUBLIC: "✅"}
 

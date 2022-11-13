@@ -1,17 +1,17 @@
-from operator import setitem
-from pathlib import Path
-from typing import Callable, NoReturn, Union
-
-from sandpiper.common.time import TimezoneType
-
-__all__ = (
+__all__ = [
     "DEFAULT_FLAG",
     "country_code_to_country_name",
     "timezone_to_country_code",
     "to_regional_indicator",
     "get_country_flag_emoji",
     "get_country_flag_emoji_from_timezone",
-)
+]
+
+from operator import setitem
+from pathlib import Path
+from typing import Callable, NoReturn, Union
+
+from sandpiper.common.time import TimezoneType
 
 DEFAULT_FLAG = ":flag_white:"
 

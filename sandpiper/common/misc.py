@@ -1,7 +1,7 @@
+__all__ = ["join", "prune", "listify", "RuntimeMessages"]
+
 from collections.abc import Iterable, Sequence
 from typing import Optional, Union
-
-__all__ = ["join", "prune", "listify", "RuntimeMessages"]
 
 
 def join(*fragments, sep=""):

@@ -1,10 +1,3 @@
-from typing import NoReturn, Union
-from unittest import mock
-
-import discord
-
-from .misc import assert_in, assert_one_if_list
-
 __all__ = [
     "get_contents",
     "get_embeds",
@@ -14,6 +7,14 @@ __all__ = [
     "assert_info",
     "assert_no_reply",
 ]
+
+from typing import NoReturn, Union
+from unittest import mock
+
+import discord
+
+from .misc import assert_in, assert_one_if_list
+
 
 # region Misc helper functions
 

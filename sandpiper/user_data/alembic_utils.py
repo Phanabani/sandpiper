@@ -1,3 +1,5 @@
+__all__ = ["get_current_heads", "stamp", "upgrade"]
+
 from collections.abc import Callable
 import logging
 from pathlib import Path
@@ -10,8 +12,6 @@ from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from sandpiper.user_data.models import Base
-
-__all__ = ["get_current_heads", "stamp", "upgrade"]
 
 logger = logging.getLogger(__name__)
 

@@ -1,17 +1,17 @@
-from abc import ABCMeta, abstractmethod
-from pathlib import Path
-from typing import Any, Optional, Type, TypeVar, overload
-
-from .misc import typecheck
-
-__all__ = (
+__all__ = [
     "do_transformations",
     "do_transformations_back",
     "ConfigTransformer",
     "FromType",
     "Bounded",
     "MaybeRelativePath",
-)
+]
+
+from abc import ABCMeta, abstractmethod
+from pathlib import Path
+from typing import Any, Optional, Type, TypeVar, overload
+
+from .misc import typecheck
 
 V1 = TypeVar("V1")
 V2 = TypeVar("V2")

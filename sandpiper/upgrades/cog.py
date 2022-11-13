@@ -1,3 +1,5 @@
+__all__ = ["Upgrades"]
+
 import logging
 from typing import Optional
 
@@ -7,8 +9,6 @@ from sandpiper import __version__ as current_version
 from sandpiper.user_data import UserData
 from .upgrades import do_upgrades
 from .versions import all_upgrade_handlers
-
-__all__ = ["Upgrades"]
 
 logger = logging.getLogger(__name__)
 

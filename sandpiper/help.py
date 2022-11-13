@@ -1,9 +1,9 @@
+__all__ = ["HelpCommand"]
+
 from collections.abc import Iterable
 import itertools
 
 from discord.ext.commands import Cog, Command, DefaultHelpCommand, Group
-
-__all__ = ["HelpCommand"]
 
 
 def sort_commands_key(c: Command):

@@ -1,13 +1,3 @@
-from datetime import date
-import logging
-from typing import Optional
-
-import discord
-from discord.ext.commands import BadArgument, Command
-
-from sandpiper.user_data.enums import PrivacyType
-from .time import parse_date
-
 __all__ = [
     "AutoOrder",
     "date_handler",
@@ -17,6 +7,16 @@ __all__ = [
     "find_users_by_display_name",
     "find_users_by_username",
 ]
+
+from datetime import date
+import logging
+from typing import Optional
+
+import discord
+from discord.ext.commands import BadArgument, Command
+
+from sandpiper.user_data.enums import PrivacyType
+from .time import parse_date
 
 logger = logging.getLogger("sandpiper.common.discord")
 

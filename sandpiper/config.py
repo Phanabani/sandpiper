@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ["SandpiperConfig"]
+
 from functools import cached_property
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -8,8 +10,6 @@ from typing import Annotated, Literal
 
 from sandpiper.common.paths import MODULE_PATH
 from sandpiper.piperfig import *
-
-__all__ = ("SandpiperConfig",)
 
 
 class SandpiperConfig(ConfigSchema):

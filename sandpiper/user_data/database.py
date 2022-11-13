@@ -1,3 +1,10 @@
+__all__ = [
+    "DEFAULT_PRIVACY",
+    "DatabaseError",
+    "UserNotInDatabase",
+    "Database",
+]
+
 from abc import ABCMeta, abstractmethod
 import datetime as dt
 from typing import Annotated, Optional
@@ -7,13 +14,6 @@ import pytz
 from sandpiper.common.time import TimezoneType, utc_now
 from .enums import PrivacyType
 from .pronouns import Pronouns
-
-__all__ = [
-    "DEFAULT_PRIVACY",
-    "DatabaseError",
-    "UserNotInDatabase",
-    "Database",
-]
 
 DEFAULT_PRIVACY = PrivacyType.PRIVATE
 

@@ -1,3 +1,5 @@
+__all__ = ["Bios"]
+
 import logging
 from typing import Optional
 
@@ -11,8 +13,6 @@ from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.user_data import *
 from .strings import *
-
-__all__ = ["Bios"]
 
 logger = logging.getLogger("sandpiper.bios")
 

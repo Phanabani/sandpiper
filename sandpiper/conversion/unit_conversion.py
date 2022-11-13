@@ -1,3 +1,5 @@
+__all__ = ["convert_measurement"]
+
 from decimal import Decimal
 import logging
 import re
@@ -8,8 +10,6 @@ from pint.quantity import Quantity
 
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.conversion.unit_map import UnitMap
-
-__all__ = ["convert_measurement"]
 
 logger = logging.getLogger("sandpiper.conversion.unit_conversion")
 

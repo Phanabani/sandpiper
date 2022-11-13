@@ -1,3 +1,5 @@
+__all__ = ["UpgradeHandler", "do_upgrades"]
+
 from abc import ABCMeta, abstractmethod
 import logging
 from typing import Optional, Type
@@ -6,8 +8,6 @@ import discord.ext.commands as commands
 from semver import VersionInfo
 
 from sandpiper.user_data import Database, UserData
-
-__all__ = ["UpgradeHandler", "do_upgrades"]
 
 logger = logging.getLogger(__name__)
 
