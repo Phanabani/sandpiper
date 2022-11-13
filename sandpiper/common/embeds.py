@@ -73,7 +73,7 @@ class SimpleEmbed:
 
         :param messageable: a messageable interface to send the embed to
         """
-        desc = discord.Embed.Empty
+        desc = None
         if self.message_parts:
             desc = self.join_str.join(self.message_parts)
 
