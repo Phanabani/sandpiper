@@ -3,6 +3,7 @@ name = "sandpiper"
 version = "2.1.0"
 description = "A Discord bot that makes it easier to communicate with friends around the world."
 authors = ["Phanabani <phanabani@gmail.com>"]
+repository = "https://github.com/Phanabani/sandpiper"
 license = "MIT"
 readme = "README.md"
 
