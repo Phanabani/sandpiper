@@ -5,8 +5,12 @@ import logging
 import re
 from typing import Union
 
-from pint import UndefinedUnitError as PintUndefinedUnitError, Unit, UnitRegistry
-from pint.quantity import Quantity
+from pint import (
+    Quantity,
+    UndefinedUnitError as PintUndefinedUnitError,
+    Unit,
+    UnitRegistry,
+)
 
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.conversion.unit_map import UnitMap
