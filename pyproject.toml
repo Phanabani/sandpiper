@@ -13,7 +13,7 @@ alembic = "^1.7.5"
 "discord.py" = "^2"
 fuzzywuzzy = {extras = ["speedup"], version = "^0.18.0"}
 pytz = "*"
-regex = "^2021.11.10"
+regex = "2021.11.10"
 semver = "^2.13.0"
 SQLAlchemy = "^1.4.22"
 tzlocal = "^4.1"
