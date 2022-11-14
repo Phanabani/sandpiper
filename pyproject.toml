@@ -19,6 +19,7 @@ semver = "^2.13.0"
 SQLAlchemy = "^1.4.22"
 tzlocal = "^4.1"
 Pint = "^0.20.1"
+pydantic = "^1.10.2"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^6.2"
