@@ -9,8 +9,7 @@ from typing import cast
 import discord
 import discord.ext.commands as commands
 
-from sandpiper.config import Bot as BotConfig
-from . import SandpiperConfig
+from sandpiper.config import Bot as BotConfig, SandpiperConfig
 from .help import HelpCommand
 
 logger = logging.getLogger("sandpiper")
