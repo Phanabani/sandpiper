@@ -7,7 +7,7 @@ import sys
 import discord
 import discord.ext.commands as commands
 
-from sandpiper.config import Bot as BotConfig, SandpiperConfig, loaders
+from sandpiper.config import Bot as BotConfig, SandpiperConfig, loader
 from .help import HelpCommand
 
 logger = logging.getLogger("sandpiper")
@@ -102,7 +102,7 @@ class Sandpiper(commands.Bot):
 def run_bot():
     # Load config
     config_path = Path(__file__).parent / "config.json"
-    config = loaders.load_json(config_path, SandpiperConfig)
+    config = loader.load_json(config_path, SandpiperConfig)
 
     # Some extra steps against accidentally leaking the bot token into the
     # public client
