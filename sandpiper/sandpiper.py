@@ -1,15 +1,13 @@
 __all__ = ["Sandpiper", "run_bot"]
 
-import json
 import logging
 from pathlib import Path
 import sys
-from typing import cast
 
 import discord
 import discord.ext.commands as commands
 
-from sandpiper.config import Bot as BotConfig, SandpiperConfig
+from sandpiper.config import Bot as BotConfig, SandpiperConfig, loaders
 from .help import HelpCommand
 
 logger = logging.getLogger("sandpiper")
@@ -104,9 +102,7 @@ class Sandpiper(commands.Bot):
 def run_bot():
     # Load config
     config_path = Path(__file__).parent / "config.json"
-    with config_path.open() as f:
-        config_obj = json.load(f)
-    config = cast(SandpiperConfig, SandpiperConfig.parse_obj(config_obj))
+    config = loaders.load_json(config_path, SandpiperConfig)
 
     # Some extra steps against accidentally leaking the bot token into the
     # public client
