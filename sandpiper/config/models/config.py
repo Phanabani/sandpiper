@@ -5,8 +5,8 @@ __all__ = ["SandpiperConfig"]
 from pydantic import BaseModel
 
 from sandpiper.common.pydantic_helpers import Factory
-from sandpiper.config.bot import Bot
-from sandpiper.config.logging import Logging
+from sandpiper.config.models.bot import Bot
+from sandpiper.config.models.logging import Logging
 
 
 class SandpiperConfig(BaseModel):
