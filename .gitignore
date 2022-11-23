@@ -1,5 +1,7 @@
 # Project
-/sandpiper/config.json
+config.json
+config.yml
+config.yaml
 /sandpiper/logs
 *.db
 *.db-journal
