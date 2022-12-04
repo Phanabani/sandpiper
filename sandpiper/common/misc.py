@@ -1,4 +1,10 @@
-__all__ = ["join", "prune", "listify", "RuntimeMessages"]
+__all__ = [
+    "join",
+    "prune",
+    "listify",
+    "stringify_list",
+    "RuntimeMessages",
+]
 
 from collections.abc import Iterable, Sequence
 from typing import Optional, Union
@@ -22,6 +28,10 @@ def listify(it: Sequence, trim_after: Optional[int] = None) -> str:
     if trim_after is not None:
         return f"{', '.join(it[:trim_after])}, and {len(it) - trim_after} others"
     return f"{', '.join(it[:-1])}, and {it[-1]}"
+
+
+def stringify_list(list_: list):
+    return f'[{", ".join(str(i) for i in list_)}]'
 
 
 class RuntimeMessages:
