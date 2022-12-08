@@ -1,18 +1,21 @@
 from decimal import Decimal
 import logging
-from typing import NoReturn
+from typing import NoReturn, TYPE_CHECKING
 
 import discord
-import discord.ext.commands as commands
 import regex
 
 from sandpiper.common.IANA import get_country_flag_emoji_from_timezone
+from sandpiper.common.component import Component
 from sandpiper.common.embeds import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
 from sandpiper.conversion.time_conversion import *
 import sandpiper.conversion.unit_conversion as unit_conversion
-from sandpiper.user_data import DatabaseUnavailable, UserData
+from sandpiper.user_data import DatabaseUnavailable
+
+if TYPE_CHECKING:
+    from sandpiper import Sandpiper
 
 logger = logging.getLogger("sandpiper.unit_conversion")
 
@@ -27,18 +30,18 @@ conversion_pattern = regex.compile(
 )
 
 
-class Conversion(commands.Cog):
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
+class Conversion(Component):
+    def __init__(self, sandpiper: Sandpiper):
+        super().__init__(sandpiper)
+        self.sandpiper.add_listener("on_message", self.conversions)
 
-    @commands.Cog.listener(name="on_message")
     async def conversions(self, msg: discord.Message):
         """
         Scan a message for conversion strings.
 
         :param msg: Discord message to scan for conversions
         """
-        if msg.author == self.bot.user:
+        if msg.author == self.sandpiper.user:
             return
 
         conversion_strs = conversion_pattern.findall(msg.content)
@@ -60,9 +63,9 @@ class Conversion(commands.Cog):
         :returns: a list of strings that could not be converted
         """
 
-        user_data: UserData = self.bot.get_cog("UserData")
+        user_data = self.sandpiper.components.user_data
         if user_data is None:
-            # User data cog couldn't be retrieved, so consider all conversions
+            # User data component couldn't be retrieved, so consider all conversions
             # failed
             return time_strs
 

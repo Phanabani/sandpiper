@@ -34,6 +34,8 @@ class Components:
     async def setup(self):
         self.user_data = UserData(self._sandpiper)
 
+        self.conversion = Conversion(self._sandpiper)
+
     async def teardown(self):
         pass
 
