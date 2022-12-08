@@ -24,8 +24,8 @@ class UserData(Component):
         await db.connect()
         self.set_database_adapter(db)
 
-        await self.client.wait_until_ready()
-        db.bot_user_id = self.client.user.id
+        await self.sandpiper.wait_until_ready()
+        db.bot_user_id = self.sandpiper.user.id
 
     async def teardown(self):
         """Disconnects from the database"""

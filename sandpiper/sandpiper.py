@@ -26,12 +26,11 @@ class Components:
     upgrades: Upgrades | None = None
     user_data: UserData | None = None
 
-    def __init__(self, client: discord.Client, config: BotConfig):
-        self._client = client
-        self._config = config
+    def __init__(self, sandpiper: Sandpiper):
+        self._sandpiper = sandpiper
 
     async def setup(self):
-        self.user_data = UserData(self._client, self, self._config)
+        self.user_data = UserData(self._sandpiper)
 
     async def teardown(self):
         pass
@@ -59,7 +58,7 @@ class Sandpiper(discord.Client):
             help_command=HelpCommand(),
         )
 
-        self.components = Components(self, config)
+        self.components = Components(self)
 
     async def setup_hook(self) -> None:
         self.loop.set_debug(True)

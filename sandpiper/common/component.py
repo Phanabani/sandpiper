@@ -1,21 +1,13 @@
 import abc
 from typing import TYPE_CHECKING
 
-import discord
-
-from sandpiper.config import Bot as BotConfig
-
 if TYPE_CHECKING:
-    from sandpiper import Components
+    from sandpiper import Sandpiper
 
 
 class Component(abc.ABC):
-    def __init__(
-        self, client: discord.Client, components: Components, config: BotConfig
-    ):
-        self.client = client
-        self.components = components
-        self.config = config
+    def __init__(self, sandpiper: Sandpiper):
+        self.sandpiper = sandpiper
 
     @abc.abstractmethod
     async def setup(self):
