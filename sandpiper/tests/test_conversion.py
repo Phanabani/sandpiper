@@ -8,7 +8,7 @@ import pytest
 import pytz
 
 from sandpiper.common.time import TimezoneType, utc_now
-from sandpiper.conversion.cog import Conversion, conversion_pattern
+from sandpiper.conversion.conversion import Conversion, conversion_pattern
 from sandpiper.conversion.unit_conversion import imperial_shorthand_pattern
 from sandpiper.user_data import UserData
 from sandpiper.user_data.enums import PrivacyType

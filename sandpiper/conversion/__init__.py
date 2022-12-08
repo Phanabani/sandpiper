@@ -1,6 +1,6 @@
 from discord.ext.commands import Bot
 
-from .cog import Conversion
+from .conversion import Conversion
 
 
 async def setup(bot: Bot):
