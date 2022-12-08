@@ -1,28 +1,45 @@
-__all__ = ["Sandpiper", "run_bot"]
+from __future__ import annotations
+
+__all__ = ["Sandpiper", "Components", "run_bot"]
 
 import logging
 import sys
 
 import discord
-import discord.ext.commands as commands
 
 from sandpiper.config import Bot as BotConfig
 from sandpiper.config.loader import load_config
+from .bios import Bios
+from .birthdays import Birthdays
+from .conversion import Conversion
 from .help import HelpCommand
+from .upgrades import Upgrades
+from .user_data import UserData
 
 logger = logging.getLogger("sandpiper")
 
 
-# noinspection PyMethodMayBeStatic
-class Sandpiper(commands.Bot):
-    def __init__(self, config: BotConfig):
+class Components:
+    bios: Bios | None = None
+    birthdays: Birthdays | None = None
+    conversion: Conversion | None = None
+    upgrades: Upgrades | None = None
+    user_data: UserData | None = None
 
-        # noinspection PyUnusedLocal
-        def get_prefix(bot: commands.Bot, msg: discord.Message) -> str | list[str]:
-            """Allows prefix-less command invocation in DMs"""
-            if isinstance(msg.channel, discord.DMChannel):
-                return ""
-            return commands.when_mentioned_or(config.command_prefix)(bot, msg)
+    def __init__(self, client: discord.Client, config: BotConfig):
+        self.client = client
+        self.config = config
+
+    async def setup(self):
+        pass
+
+    async def teardown(self):
+        pass
+
+
+# noinspection PyMethodMayBeStatic
+class Sandpiper(discord.Client):
+    def __init__(self, config: BotConfig):
 
         intents = discord.Intents(
             guilds=True, members=True, messages=True, message_content=True
@@ -38,32 +55,19 @@ class Sandpiper(commands.Bot):
             activity=activity,
             log_handler=None,
             # Bot params
-            command_prefix=get_prefix,
             description=config.description,
             help_command=HelpCommand(),
         )
 
-        # Add a dummy command that triggers when the user tries to use the
-        # command prefix in DMs. It's not required in DMs, so it'll tell the
-        # user to just omit it
-        @self.command(name=config.command_prefix.strip(), hidden=True)
-        async def noprefix_notify(ctx: commands.Context, *, rest: str):
-            if ctx.prefix == "":
-                raise commands.BadArgument(
-                    f"You don't need to prefix commands here. " f"Just type `{rest}`."
-                )
-
-        self.modules_config = config.modules
+        self.components = Components(self, config)
 
     async def setup_hook(self) -> None:
         self.loop.set_debug(True)
+        await self.components.setup()
 
-        await self.load_extension("sandpiper.user_data")
-
-        await self.load_extension("sandpiper.bios")
-        await self.load_extension("sandpiper.birthdays")
-        await self.load_extension("sandpiper.conversion")
-        await self.load_extension("sandpiper.upgrades")
+    async def close(self) -> None:
+        await self.components.teardown()
+        await super().close()
 
     async def on_connect(self):
         logger.info("Client connected")
