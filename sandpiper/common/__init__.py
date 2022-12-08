@@ -1,1 +1,1 @@
-from . import IANA, discord, embeds, misc, time
+from . import IANA, component, discord, embeds, misc, time
