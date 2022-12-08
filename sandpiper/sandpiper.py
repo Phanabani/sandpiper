@@ -27,8 +27,8 @@ class Components:
     user_data: UserData | None = None
 
     def __init__(self, client: discord.Client, config: BotConfig):
-        self.client = client
-        self.config = config
+        self._client = client
+        self._config = config
 
     async def setup(self):
         pass
