@@ -37,7 +37,9 @@ class Components:
         self.conversion = Conversion(self._sandpiper)
 
     async def teardown(self):
-        pass
+        await self.conversion.teardown()
+
+        await self.user_data.teardown()
 
 
 T_SupportedListeners = Literal["on_message"]
