@@ -19,11 +19,11 @@ from typing import Optional
 
 from discord.ext.commands import Bot
 
-from .cog import DatabaseUnavailable, UserData
 from .database import *
 from .database_sqlite import DatabaseSQLite
 from .enums import PrivacyType
 from .pronouns import Pronouns, common_pronouns
+from .user_data import DatabaseUnavailable, UserData
 
 if typing.TYPE_CHECKING:
     from sandpiper import Sandpiper

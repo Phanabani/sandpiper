@@ -4,6 +4,7 @@ import logging
 
 import discord.ext.commands as commands
 
+from sandpiper.common.component import Component
 from .database import Database
 
 logger = logging.getLogger("sandpiper.user_data")
@@ -13,7 +14,7 @@ class DatabaseUnavailable(Exception):
     pass
 
 
-class UserData(commands.Cog):
+class UserData(Component):
 
     _database: Database = None
 
