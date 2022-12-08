@@ -2,12 +2,14 @@ __all__ = ["UserData", "DatabaseUnavailable"]
 
 import logging
 
-import discord.ext.commands as commands
-
 from sandpiper.common.component import Component
-from .database import Database
+from sandpiper.common.paths import MODULE_PATH
+from sandpiper.user_data import DatabaseSQLite
+from sandpiper.user_data.database import Database
 
 logger = logging.getLogger("sandpiper.user_data")
+
+DB_FILE = MODULE_PATH / "sandpiper.db"
 
 
 class DatabaseUnavailable(Exception):
@@ -15,11 +17,24 @@ class DatabaseUnavailable(Exception):
 
 
 class UserData(Component):
-
     _database: Database = None
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
+    async def setup(self):
+        db = DatabaseSQLite(DB_FILE)
+        await db.connect()
+        self.set_database_adapter(db)
+
+        await self.client.wait_until_ready()
+        db.bot_user_id = self.client.user.id
+
+    async def teardown(self):
+        """Disconnects from the database"""
+        try:
+            db = await self.get_database()
+        except DatabaseUnavailable:
+            pass
+        else:
+            await db.disconnect()
 
     def set_database_adapter(self, database: Database):
         self._database = database

@@ -31,7 +31,7 @@ class Components:
         self._config = config
 
     async def setup(self):
-        pass
+        self.user_data = UserData(self._client, self, self._config)
 
     async def teardown(self):
         pass
