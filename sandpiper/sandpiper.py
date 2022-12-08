@@ -2,8 +2,10 @@ from __future__ import annotations
 
 __all__ = ["Sandpiper", "Components", "run_bot"]
 
+from collections import defaultdict
 import logging
 import sys
+from typing import Callable, Literal
 
 import discord
 
@@ -36,6 +38,9 @@ class Components:
         pass
 
 
+T_SupportedListeners = Literal["on_message"]
+
+
 # noinspection PyMethodMayBeStatic
 class Sandpiper(discord.Client):
     def __init__(self, config: BotConfig):
@@ -58,6 +63,7 @@ class Sandpiper(discord.Client):
             help_command=HelpCommand(),
         )
 
+        self._sandpiper_listeners = defaultdict(list)
         self.components = Components(self)
 
     async def setup_hook(self) -> None:
@@ -100,6 +106,13 @@ class Sandpiper(discord.Client):
                 f"Unhandled in {event_method} (args: {args} kwargs: {kwargs})",
                 exc_info=True,
             )
+
+    async def add_listener(self, listener_type: T_SupportedListeners, fn: Callable):
+        self._sandpiper_listeners[listener_type].append(fn)
+
+    async def on_message(self, message: discord.Message):
+        for listener in self._sandpiper_listeners["on_message"]:
+            await listener(message)
 
 
 def run_bot():
