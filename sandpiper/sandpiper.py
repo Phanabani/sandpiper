@@ -35,9 +35,11 @@ class Components:
         self.user_data = UserData(self._sandpiper)
 
         self.conversion = Conversion(self._sandpiper)
+        self.upgrades = Upgrades(self._sandpiper)
 
     async def teardown(self):
         await self.conversion.teardown()
+        await self.upgrades.teardown()
 
         await self.user_data.teardown()
 

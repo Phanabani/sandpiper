@@ -30,7 +30,7 @@ class Sandpiper_1_6_0(UpgradeHandler):
             f"(user_id={user_id})"
         )
 
-        user: discord.User = self.bot.get_user(user_id)
+        user: discord.User = self.sandpiper.get_user(user_id)
         if user is None:
             logger.info(f"Can't find user {user_id} in any guild")
             return
@@ -39,7 +39,9 @@ class Sandpiper_1_6_0(UpgradeHandler):
         mutual_guilds = listify(
             [
                 m.guild.name
-                for m in find_user_in_mutual_guilds(self.bot, self.bot.user.id, user_id)
+                for m in find_user_in_mutual_guilds(
+                    self.sandpiper, self.sandpiper.user.id, user_id
+                )
             ],
             2,
         )
@@ -90,7 +92,7 @@ class Sandpiper_1_6_0(UpgradeHandler):
             )
             await db.set_privacy_age(user_id, PrivacyType.PRIVATE)
 
-        user: discord.User = self.bot.get_user(user_id)
+        user: discord.User = self.sandpiper.get_user(user_id)
         if user is None:
             logger.info(f"Can't find user {user_id} in any guild")
             return
