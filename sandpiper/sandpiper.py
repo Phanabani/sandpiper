@@ -32,16 +32,26 @@ class Components:
         self._sandpiper = sandpiper
 
     async def setup(self):
-        self.user_data = UserData(self._sandpiper)
-
         self.conversion = Conversion(self._sandpiper)
         self.upgrades = Upgrades(self._sandpiper)
+        self.user_data = UserData(self._sandpiper)
+
+        await self.user_data.setup()
+
+        await self.conversion.setup()
+        await self.upgrades.setup()
 
     async def teardown(self):
         await self.conversion.teardown()
         await self.upgrades.teardown()
 
         await self.user_data.teardown()
+
+        self.bios = None
+        self.birthdays = None
+        self.conversion = None
+        self.upgrades = None
+        self.user_data = None
 
 
 T_SupportedListeners = Literal["on_message"]
