@@ -1,1 +1,2 @@
-from .upgrades import Upgrades
+from .upgrade_handler import *
+from .upgrades import *

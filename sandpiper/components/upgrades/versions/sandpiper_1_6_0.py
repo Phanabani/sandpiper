@@ -5,8 +5,8 @@ import discord
 from sandpiper.common.discord import find_user_in_mutual_guilds
 from sandpiper.common.embeds import *
 from sandpiper.common.misc import listify
+from sandpiper.components.upgrades import UpgradeHandler
 from sandpiper.components.user_data import Database, PrivacyType
-from ..upgrades import UpgradeHandler
 
 logger = logging.getLogger(__name__)
 
