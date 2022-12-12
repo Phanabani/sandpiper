@@ -36,6 +36,16 @@ class Bot(BaseModel):
         "https://github.com/phanabani/sandpiper#commands-and-features"
     )
 
+    class _Commands(BaseModel):
+        guilds: list[int] = Factory(
+            list,
+            description=(
+                "Guilds to immediately push new commands to (helpful for debugging)"
+            ),
+        )
+
+    commands: _Commands = Factory(_Commands)
+
     class _Modules(BaseModel):
         class _Bios(BaseModel):
             allow_public_setting: bool = False

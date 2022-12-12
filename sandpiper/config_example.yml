@@ -3,8 +3,10 @@ bot:
   description: 'A bot that makes it easier to communicate with friends around the
     world.
 
-    Visit my GitHub page for more info about commands and features: 
+    Visit my GitHub page for more info about commands and features:
     https://github.com/phanabani/sandpiper#commands-and-features'
+  commands:
+    guilds: []
   modules:
     bios:
       allow_public_setting: false
