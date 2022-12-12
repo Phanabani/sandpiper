@@ -10,9 +10,8 @@ from sandpiper.common.component import Component
 from sandpiper.common.embeds import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
-from sandpiper.conversion.time_conversion import *
-import sandpiper.conversion.unit_conversion as unit_conversion
-from sandpiper.user_data import DatabaseUnavailable
+import sandpiper.components.conversion.unit_conversion as unit_conversion
+from sandpiper.components.user_data import DatabaseUnavailable
 
 if TYPE_CHECKING:
     from sandpiper import Sandpiper

@@ -6,12 +6,12 @@ import discord
 from discord.ext.commands import BadArgument
 import discord.ext.commands as commands
 
+from sandpiper.common.component import Component
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
-from sandpiper.user_data import *
+from sandpiper.components.user_data import *
 from .strings import *
-from ..common.component import Component
 
 logger = logging.getLogger("sandpiper.bios")
 

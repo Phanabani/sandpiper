@@ -10,7 +10,7 @@ import discord
 
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import *
-from sandpiper.user_data import Database
+from sandpiper.components.user_data import Database
 
 logger = logging.getLogger("sandpiper.conversion.time_conversion")
 

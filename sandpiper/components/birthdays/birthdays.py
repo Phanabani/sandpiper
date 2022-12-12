@@ -10,11 +10,11 @@ import discord
 from discord.ext.tasks import loop
 import pytz
 
-from sandpiper.birthdays.message import format_birthday_message
 from sandpiper.common.component import Component
 from sandpiper.common.discord import AutoOrder, cheap_user_hash
 from sandpiper.common.time import sort_dates_no_year, utc_now
-from sandpiper.user_data import Database, PrivacyType, common_pronouns
+from sandpiper.components.birthdays.message import format_birthday_message
+from sandpiper.components.user_data import Database, PrivacyType, common_pronouns
 
 logger = logging.getLogger("sandpiper.birthdays")
 

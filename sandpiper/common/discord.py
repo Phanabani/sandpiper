@@ -15,7 +15,7 @@ from typing import Optional
 import discord
 from discord.ext.commands import BadArgument, Command
 
-from sandpiper.user_data.enums import PrivacyType
+from sandpiper.components.user_data import PrivacyType
 from .time import parse_date
 
 logger = logging.getLogger("sandpiper.common.discord")

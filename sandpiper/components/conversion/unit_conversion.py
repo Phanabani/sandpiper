@@ -13,7 +13,7 @@ from pint import (
 )
 
 from sandpiper.common.misc import RuntimeMessages
-from sandpiper.conversion.unit_map import UnitMap
+from sandpiper.components.conversion.unit_map import UnitMap
 
 logger = logging.getLogger("sandpiper.conversion.unit_conversion")
 

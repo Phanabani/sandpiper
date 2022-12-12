@@ -4,8 +4,8 @@ import logging
 
 from sandpiper.common.component import Component
 from sandpiper.common.paths import MODULE_PATH
-from sandpiper.user_data import DatabaseSQLite
-from sandpiper.user_data.database import Database
+from sandpiper.components.user_data import DatabaseSQLite
+from sandpiper.components.user_data.database import Database
 
 logger = logging.getLogger("sandpiper.user_data")
 

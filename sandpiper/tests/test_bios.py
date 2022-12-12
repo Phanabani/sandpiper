@@ -7,9 +7,8 @@ import discord.ext.commands as commands
 import pytest
 import pytz
 
-from sandpiper.bios import Bios
-from sandpiper.bios.strings import BirthdayExplanations
-from sandpiper.user_data import *
+from sandpiper.components.bios import Bios, BirthdayExplanations
+from sandpiper.components.user_data import *
 from .helpers.discord import *
 from .helpers.misc import *
 

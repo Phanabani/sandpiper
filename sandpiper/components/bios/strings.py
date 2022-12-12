@@ -13,7 +13,7 @@ from discord.ext import commands
 
 from sandpiper.common.discord import find_user_in_mutual_guilds
 from sandpiper.common.misc import join
-from sandpiper.user_data import Database, PrivacyType
+from sandpiper.components.user_data import Database, PrivacyType
 
 privacy_emojis = {PrivacyType.PRIVATE: "⛔", PrivacyType.PUBLIC: "✅"}
 

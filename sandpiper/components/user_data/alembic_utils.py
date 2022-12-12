@@ -11,7 +11,7 @@ from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
-from sandpiper.user_data.models import Base
+from sandpiper.components.user_data.models import Base
 
 logger = logging.getLogger(__name__)
 

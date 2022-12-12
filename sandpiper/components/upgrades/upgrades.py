@@ -8,8 +8,8 @@ from semver import VersionInfo
 
 from sandpiper._version import __version__
 from sandpiper.common.component import Component
-from sandpiper.upgrades.versions import all_upgrade_handlers
-from sandpiper.user_data import Database, UserData
+from sandpiper.components.upgrades.versions import all_upgrade_handlers
+from sandpiper.components.user_data import Database, UserData
 
 if TYPE_CHECKING:
     from sandpiper import Sandpiper

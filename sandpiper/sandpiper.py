@@ -9,14 +9,14 @@ from typing import Callable, Literal
 
 import discord
 
+from sandpiper.components.bios import Bios
+from sandpiper.components.birthdays import Birthdays
+from sandpiper.components.conversion import Conversion
+from sandpiper.components.upgrades import Upgrades
+from sandpiper.components.user_data import UserData
 from sandpiper.config import Bot as BotConfig
 from sandpiper.config.loader import load_config
-from .bios import Bios
-from .birthdays import Birthdays
-from .conversion import Conversion
 from .help import HelpCommand
-from .upgrades import Upgrades
-from .user_data import UserData
 
 logger = logging.getLogger("sandpiper")
 
