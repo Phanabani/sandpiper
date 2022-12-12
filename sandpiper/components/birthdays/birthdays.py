@@ -30,7 +30,7 @@ class Birthdays(Component):
     tasks: dict[int, asyncio.Task]
 
     async def setup(self):
-        config = self.sandpiper.config.modules.birthdays
+        config = self.sandpiper.config.components.birthdays
         self.message_templates_no_age = config.message_templates_no_age
         self.message_templates_with_age = config.message_templates_with_age
         self.past_birthdays_day_range = config.past_birthdays_day_range

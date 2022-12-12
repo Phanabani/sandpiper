@@ -45,7 +45,7 @@ class Bios(Component):
     auto_order = AutoOrder()
 
     async def setup(self):
-        config = self.sandpiper.config.modules.bios
+        config = self.sandpiper.config.components.bios
         self.allow_public_setting = config.allow_public_setting
 
     async def _get_database(self) -> Database:

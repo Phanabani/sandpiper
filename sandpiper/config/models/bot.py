@@ -1,6 +1,6 @@
 __all__ = ["Bot"]
 
-from pydantic import BaseModel, conint
+from pydantic import BaseModel, Field, conint
 
 from sandpiper.common.pydantic_helpers import Factory
 
@@ -46,7 +46,7 @@ class Bot(BaseModel):
 
     commands: _Commands = Factory(_Commands)
 
-    class _Modules(BaseModel):
+    class _Components(BaseModel):
         class _Bios(BaseModel):
             allow_public_setting: bool = False
 
@@ -60,4 +60,4 @@ class Bot(BaseModel):
 
         birthdays: _Birthdays = Factory(_Birthdays)
 
-    modules: _Modules = Factory(_Modules)
+    components: _Components = Field(_Components, alias="modules")
