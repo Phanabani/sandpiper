@@ -16,7 +16,7 @@ from sandpiper.components.upgrades import Upgrades
 from sandpiper.components.user_data import UserData
 from sandpiper.config import Bot as BotConfig
 from sandpiper.config.loader import load_config
-from .help import HelpCommand
+from sandpiper.help import HelpCommand
 
 logger = logging.getLogger("sandpiper")
 
