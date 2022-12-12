@@ -1,18 +1,17 @@
 __all__ = ["Bios"]
 
 import logging
-from typing import Optional
 
 import discord
 from discord.ext.commands import BadArgument
 import discord.ext.commands as commands
 
-from sandpiper.birthdays import Birthdays
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.user_data import *
 from .strings import *
+from ..common.component import Component
 
 logger = logging.getLogger("sandpiper.bios")
 
@@ -27,16 +26,17 @@ def maybe_dm_only():
     return commands.check(predicate)
 
 
-class Bios(commands.Cog):
+class Bios(Component):
+    """
+    Store some info about yourself to help your friends get to know you
+    more easily! These commands can be used in DMs with Sandpiper for
+    your privacy.
 
-    __cog_cleaned_doc__ = (
-        "Store some info about yourself to help your friends get to know you "
-        "more easily! These commands can be used in DMs with Sandpiper for "
-        "your privacy."
-        "\n\n"
-        "Some of this info is used by other Sandpiper features, such as "
-        "time conversion and birthday notifications."
-    )
+    Some of this info is used by other Sandpiper features, such as
+    time conversion and birthday notifications.
+    """
+
+    allow_public_setting: bool
 
     _show_aliases = ("get",)
     _set_aliases = ()
@@ -44,12 +44,12 @@ class Bios(commands.Cog):
 
     auto_order = AutoOrder()
 
-    def __init__(self, bot: commands.Bot, *, allow_public_setting: bool = False):
-        self.bot = bot
-        self.allow_public_setting = allow_public_setting
+    async def setup(self):
+        config = self.sandpiper.config.modules.bios
+        self.allow_public_setting = config.allow_public_setting
 
     async def _get_database(self) -> Database:
-        user_data: Optional[UserData] = self.bot.get_cog("UserData")
+        user_data = self.sandpiper.components.user_data
         if user_data is None:
             raise RuntimeError("UserData cog is not loaded.")
         return await user_data.get_database()
@@ -91,7 +91,7 @@ class Bios(commands.Cog):
         )
 
     @commands.Cog.listener("on_command_completion")
-    async def notify_birthdays_cog(self, ctx: commands.Context):
+    async def notify_birthdays_component(self, ctx: commands.Context):
         if ctx.command_failed:
             # Not sure if this is possible here but might as well check
             return
@@ -107,12 +107,11 @@ class Bios(commands.Cog):
                 f"Notifying birthdays cog about change from command "
                 f"{ctx.command.qualified_name} (user_id={ctx.author.id})"
             )
-            birthdays_cog: Birthdays
-            birthdays_cog = self.bot.get_cog("Birthdays")
-            if birthdays_cog is None:
+            birthdays = self.sandpiper.components.birthdays
+            if birthdays is None:
                 logger.debug("No birthdays cog loaded; skipping change notification")
                 return
-            await birthdays_cog.notify_change(ctx.author.id)
+            await birthdays.notify_change(ctx.author.id)
 
     @auto_order
     @commands.group(

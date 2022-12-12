@@ -32,6 +32,7 @@ class Components:
         self._sandpiper = sandpiper
 
     async def setup(self):
+        self.bios = Bios(self._sandpiper)
         self.birthdays = Birthdays(self._sandpiper)
         self.conversion = Conversion(self._sandpiper)
         self.upgrades = Upgrades(self._sandpiper)
@@ -39,11 +40,13 @@ class Components:
 
         await self.user_data.setup()
 
+        await self.bios.setup()
         await self.birthdays.setup()
         await self.conversion.setup()
         await self.upgrades.setup()
 
     async def teardown(self):
+        await self.bios.teardown()
         await self.birthdays.teardown()
         await self.conversion.teardown()
         await self.upgrades.teardown()
