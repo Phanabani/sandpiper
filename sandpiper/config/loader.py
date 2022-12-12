@@ -3,16 +3,13 @@ __all__ = ["load_config"]
 import json
 import logging
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any
 
-from pydantic import BaseModel
 import yaml
 
 from sandpiper.common.misc import stringify_list
 from sandpiper.config.constants import CONFIG_DIR, LEGACY_CONFIG_DIR
 from sandpiper.config.models import SandpiperConfig
-
-T_Model = TypeVar("T_Model", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +64,7 @@ def try_get_legacy_config_file(current_config_dir) -> Path | None:
     return None
 
 
-def load_config(config_dir: Path | None = None) -> T_Model:
+def load_config(config_dir: Path | None = None) -> SandpiperConfig:
     config_dir = config_dir or CONFIG_DIR
 
     config_file = try_find_config(config_dir)
