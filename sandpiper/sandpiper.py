@@ -38,6 +38,7 @@ class Components:
         self.upgrades = Upgrades(self._sandpiper)
         self.user_data = UserData(self._sandpiper)
 
+        # Other components need UserData, so load it first
         await self.user_data.setup()
 
         await self.bios.setup()
@@ -46,6 +47,7 @@ class Components:
         await self.upgrades.setup()
 
     async def teardown(self):
+        # Teardown in reverse order from setup
         await self.bios.teardown()
         await self.birthdays.teardown()
         await self.conversion.teardown()
