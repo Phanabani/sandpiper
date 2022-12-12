@@ -148,7 +148,7 @@ def run_bot():
     # Some extra steps against accidentally leaking the bot token into the
     # public client
     bot_token = config.bot_token
-    config.bot_token = None
+    config.bot_token = ""
 
     # Sandpiper logging
     logger = logging.getLogger("sandpiper")
