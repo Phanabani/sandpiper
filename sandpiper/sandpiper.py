@@ -32,16 +32,19 @@ class Components:
         self._sandpiper = sandpiper
 
     async def setup(self):
+        self.birthdays = Birthdays(self._sandpiper)
         self.conversion = Conversion(self._sandpiper)
         self.upgrades = Upgrades(self._sandpiper)
         self.user_data = UserData(self._sandpiper)
 
         await self.user_data.setup()
 
+        await self.birthdays.setup()
         await self.conversion.setup()
         await self.upgrades.setup()
 
     async def teardown(self):
+        await self.birthdays.teardown()
         await self.conversion.teardown()
         await self.upgrades.teardown()
 
@@ -81,6 +84,7 @@ class Sandpiper(discord.Client):
 
         self._sandpiper_listeners = defaultdict(list)
         self.components = Components(self)
+        self.config = config
 
     async def setup_hook(self) -> None:
         self.loop.set_debug(True)

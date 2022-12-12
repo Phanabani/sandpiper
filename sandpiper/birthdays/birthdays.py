@@ -7,45 +7,45 @@ import random
 from typing import Optional
 
 import discord
-import discord.ext.commands as commands
-import discord.ext.tasks as tasks
+from discord.ext.tasks import loop
 import pytz
 
 from sandpiper.birthdays.message import format_birthday_message
+from sandpiper.common.component import Component
 from sandpiper.common.discord import AutoOrder, cheap_user_hash
 from sandpiper.common.time import sort_dates_no_year, utc_now
-from sandpiper.user_data import Database, PrivacyType, UserData, common_pronouns
+from sandpiper.user_data import Database, PrivacyType, common_pronouns
 
 logger = logging.getLogger("sandpiper.birthdays")
 
 
-class Birthdays(commands.Cog):
-    def __init__(
-        self,
-        bot: commands.Bot,
-        *,
-        message_templates_no_age: list[str],
-        message_templates_with_age: list[str],
-        past_birthdays_day_range: int,
-        upcoming_birthdays_day_range: int,
-    ):
-        """Send happy birthday messages to users."""
-        self.bot = bot
-        self.message_templates_no_age = message_templates_no_age
-        self.message_templates_with_age = message_templates_with_age
-        self.past_birthdays_day_range = past_birthdays_day_range
-        self.upcoming_birthdays_day_range = upcoming_birthdays_day_range
-        self.tasks: dict[int, asyncio.Task] = {}
-        asyncio.run_coroutine_threadsafe(self.init_daily_loop(), self.bot.loop)
+class Birthdays(Component):
+    """Send happy birthday messages to users."""
+
+    message_templates_no_age: list[str]
+    message_templates_with_age: list[str]
+    past_birthdays_day_range: int
+    upcoming_birthdays_day_range: int
+    tasks: dict[int, asyncio.Task]
+
+    async def setup(self):
+        config = self.sandpiper.config.modules.birthdays
+        self.message_templates_no_age = config.message_templates_no_age
+        self.message_templates_with_age = config.message_templates_with_age
+        self.past_birthdays_day_range = config.past_birthdays_day_range
+        self.upcoming_birthdays_day_range = config.upcoming_birthdays_day_range
+
+        self.tasks = {}
+        await self.init_daily_loop()
 
     def _create_birthday_task(self, user_id: int, midnight_delta: dt.timedelta):
-        self.tasks[user_id] = task = self.bot.loop.create_task(
+        self.tasks[user_id] = task = self.sandpiper.loop.create_task(
             self.send_birthday_message(user_id, midnight_delta)
         )
         task.add_done_callback(self._handle_task_exception)
 
     async def _get_database(self) -> Database:
-        user_data: Optional[UserData] = self.bot.get_cog("UserData")
+        user_data = self.sandpiper.components.user_data
         if user_data is None:
             raise RuntimeError("UserData cog is not loaded.")
         return await user_data.get_database()
@@ -70,10 +70,10 @@ class Birthdays(commands.Cog):
             del self.tasks[user_id]
 
     async def init_daily_loop(self):
-        await self.bot.wait_until_ready()
+        await self.sandpiper.wait_until_ready()
         self.daily_loop.start()
 
-    @tasks.loop(hours=24)
+    @loop(hours=24)
     async def daily_loop(self):
         await self.schedule_todays_birthdays()
 
@@ -184,18 +184,18 @@ class Birthdays(commands.Cog):
 
         logger.info(f"Sending birthday notifications for user (user={user_id})")
         db = await self._get_database()
-        user: discord.User = self.bot.get_user(user_id)
+        user: discord.User = self.sandpiper.get_user(user_id)
         if user is None:
             logger.info(
                 f"Tried to send birthday message, but user is not in any "
                 f"guilds with Sandpiper (user={user_id})"
             )
             return
-        if user is self.bot.user:
+        if user is self.sandpiper.user:
             # Sandpiper herself, for easter egg below
-            guilds = self.bot.guilds
+            guilds = self.sandpiper.guilds
         else:
-            guilds: list[discord.Guild] = user.mutual_guilds
+            guilds = user.mutual_guilds
 
         # Get some user info to use in the message
 
@@ -236,7 +236,7 @@ class Birthdays(commands.Cog):
                 continue
 
             bday_channel: discord.TextChannel
-            bday_channel = self.bot.get_channel(bday_channel_id)
+            bday_channel = self.sandpiper.get_channel(bday_channel_id)
             if bday_channel is None:
                 logger.debug(
                     f"Birthday channel does not exist (guild={guild.id} "
@@ -247,7 +247,7 @@ class Birthdays(commands.Cog):
             if not has_preferred_name:
                 name = member.display_name
 
-            if user_id == self.bot.user.id:
+            if user_id == self.sandpiper.user.id:
                 # Little easter egg for Sandpiper's birthday
                 bday_msg_template = (
                     "hey! it's.... wait, it's my birthday!! thanks for the "
@@ -333,7 +333,7 @@ class Birthdays(commands.Cog):
     ) -> Optional[str]:
         db = await self._get_database()
 
-        user = self.bot.get_user(user_id)
+        user = self.sandpiper.get_user(user_id)
         if user is None:
             return None
         if not guild.get_member(user_id):
