@@ -1,6 +1,5 @@
 bot_token: YOUR_BOT_TOKEN
 bot:
-  command_prefix: '!piper '
   description: 'A bot that makes it easier to communicate with friends around the
     world.
 

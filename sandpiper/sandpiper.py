@@ -8,6 +8,7 @@ import sys
 from typing import Callable, Literal
 
 import discord
+from discord.app_commands import CommandTree
 
 from sandpiper.components.bios import Bios
 from sandpiper.components.birthdays import Birthdays
@@ -73,7 +74,7 @@ class Sandpiper(discord.Client):
             guilds=True, members=True, messages=True, message_content=True
         )
         allowed_mentions = discord.AllowedMentions(users=True)
-        activity = discord.Game(f"{config.command_prefix}help")
+        activity = discord.Game(f"hi! c:")
 
         super().__init__(
             # Client params
@@ -88,6 +89,7 @@ class Sandpiper(discord.Client):
         )
 
         self._sandpiper_listeners = defaultdict(list)
+        self.command_tree = CommandTree(self)
         self.components = Components(self)
         self.config = config
 

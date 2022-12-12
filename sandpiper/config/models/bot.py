@@ -30,7 +30,6 @@ message_templates_with_age = [
 
 
 class Bot(BaseModel):
-    command_prefix: str = "!piper "
     description: str = (
         "A bot that makes it easier to communicate with friends around the world.\n"
         "Visit my GitHub page for more info about commands and features: "
