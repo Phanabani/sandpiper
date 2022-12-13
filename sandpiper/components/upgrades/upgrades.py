@@ -6,6 +6,7 @@ from semver import VersionInfo
 
 from sandpiper._version import __version__
 from sandpiper.common.component import Component
+from sandpiper.common.logging import warn_component_none
 from sandpiper.components.upgrades.versions import all_upgrade_handlers
 
 logger = logging.getLogger(__name__)
@@ -19,10 +20,7 @@ class Upgrades(Component):
     async def do_upgrades(self):
         user_data = self.sandpiper.components.user_data
         if user_data is None:
-            logger.warning(
-                f"Failed to get the UserData component; skipping upgrade handlers."
-            )
-            return
+            return warn_component_none(logger, "UserData", "skipping upgrade handlers")
 
         db = await user_data.get_database()
         await db.ready()
