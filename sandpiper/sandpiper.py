@@ -2,7 +2,9 @@ from __future__ import annotations
 
 __all__ = ["Sandpiper", "Components", "run_bot"]
 
+from asyncio import Task
 from collections import defaultdict
+from collections.abc import Coroutine
 import logging
 import sys
 from typing import Callable, Literal
@@ -31,8 +33,20 @@ class Components:
 
     def __init__(self, sandpiper: Sandpiper):
         self._sandpiper = sandpiper
+        self._setup_task_ref: Task | None = None
+        self._teardown_task_ref: Task | None = None
+
+    async def _create_task(self, fn: Coroutine) -> Task:
+        return self._sandpiper.loop.create_task(fn)
 
     async def setup(self):
+        self._setup_task_ref = self._sandpiper.loop.create_task(self._setup_task())
+
+    async def _setup_task(self):
+        if self._teardown_task_ref:
+            self._teardown_task_ref.cancel()
+            self._teardown_task_ref = None
+
         self.bios = Bios(self._sandpiper)
         self.birthdays = Birthdays(self._sandpiper)
         self.conversion = Conversion(self._sandpiper)
@@ -48,6 +62,13 @@ class Components:
         await self.upgrades.setup()
 
     async def teardown(self):
+        self._teardown_task_ref = self._create_task(self._teardown_task())
+
+    async def _teardown_task(self):
+        if self._setup_task_ref:
+            self._setup_task_ref.cancel()
+            self._setup_task_ref = None
+
         # Teardown in reverse order from setup
         await self.bios.teardown()
         await self.birthdays.teardown()
