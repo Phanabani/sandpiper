@@ -13,7 +13,7 @@ from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
 from .strings import *
 
-logger = logging.getLogger("sandpiper.bios")
+logger = logging.getLogger(__name__)
 
 
 def maybe_dm_only():
@@ -45,8 +45,12 @@ class Bios(Component):
     auto_order = AutoOrder()
 
     async def setup(self):
+        logger.debug("Setting up")
+
         config = self.sandpiper.config.components.bios
         self.allow_public_setting = config.allow_public_setting
+
+        logger.debug("Setup complete")
 
     async def _get_database(self) -> Database:
         user_data = self.sandpiper.components.user_data

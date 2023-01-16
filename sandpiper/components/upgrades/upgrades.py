@@ -14,8 +14,12 @@ logger = logging.getLogger(__name__)
 
 class Upgrades(Component):
     async def setup(self):
+        logger.debug("Setting up")
+
         await self.sandpiper.wait_until_ready()
         await self.do_upgrades()
+
+        logger.debug("Setup complete")
 
     async def do_upgrades(self):
         user_data = self.sandpiper.components.user_data

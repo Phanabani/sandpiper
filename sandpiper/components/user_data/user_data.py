@@ -7,7 +7,7 @@ from sandpiper.common.paths import MODULE_PATH
 from sandpiper.components.user_data import DatabaseSQLite
 from sandpiper.components.user_data.database import Database
 
-logger = logging.getLogger("sandpiper.user_data")
+logger = logging.getLogger(__name__)
 
 DB_FILE = MODULE_PATH / "sandpiper.db"
 
@@ -20,6 +20,8 @@ class UserData(Component):
     _database: Database = None
 
     async def setup(self):
+        logger.debug("Setting up")
+
         db = DatabaseSQLite(DB_FILE)
         await db.connect()
         self.set_database_adapter(db)
@@ -27,14 +29,20 @@ class UserData(Component):
         await self.sandpiper.wait_until_ready()
         db.bot_user_id = self.sandpiper.user.id
 
+        logger.debug("Setup complete")
+
     async def teardown(self):
         """Disconnects from the database"""
+        logger.debug("Tearing down")
+
         try:
             db = await self.get_database()
         except DatabaseUnavailable:
             pass
         else:
             await db.disconnect()
+
+        logger.debug("Teardown complete")
 
     def set_database_adapter(self, database: Database):
         self._database = database

@@ -17,7 +17,7 @@ from sandpiper.common.time import sort_dates_no_year, utc_now
 from sandpiper.components.birthdays.message import format_birthday_message
 from sandpiper.components.user_data import Database, PrivacyType, common_pronouns
 
-logger = logging.getLogger("sandpiper.birthdays")
+logger = logging.getLogger(__name__)
 
 
 class Birthdays(Component):
@@ -30,6 +30,8 @@ class Birthdays(Component):
     tasks: dict[int, asyncio.Task]
 
     async def setup(self):
+        logger.debug("Setting up")
+
         config = self.sandpiper.config.components.birthdays
         self.message_templates_no_age = config.message_templates_no_age
         self.message_templates_with_age = config.message_templates_with_age
@@ -38,6 +40,8 @@ class Birthdays(Component):
 
         self.tasks = {}
         await self.init_daily_loop()
+
+        logger.debug("Setup complete")
 
     def _create_birthday_task(self, user_id: int, midnight_delta: dt.timedelta):
         self.tasks[user_id] = task = self.sandpiper.loop.create_task(

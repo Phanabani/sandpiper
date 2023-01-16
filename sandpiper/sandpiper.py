@@ -43,6 +43,8 @@ class Components:
         self._setup_task_ref = self._sandpiper.loop.create_task(self._setup_task())
 
     async def _setup_task(self):
+        logger.debug("Setting up components")
+
         if self._teardown_task_ref:
             self._teardown_task_ref.cancel()
             self._teardown_task_ref = None
@@ -61,10 +63,14 @@ class Components:
         await self.conversion.setup()
         await self.upgrades.setup()
 
+        logger.debug("Component setup complete")
+
     async def teardown(self):
         self._teardown_task_ref = self._create_task(self._teardown_task())
 
     async def _teardown_task(self):
+        logger.debug("Tearing down components")
+
         if self._setup_task_ref:
             self._setup_task_ref.cancel()
             self._setup_task_ref = None
@@ -82,6 +88,8 @@ class Components:
         self.conversion = None
         self.upgrades = None
         self.user_data = None
+
+        logger.debug("Component teardown complete")
 
 
 T_SupportedListeners = Literal["on_message"]
