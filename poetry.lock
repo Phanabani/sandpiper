@@ -409,6 +409,14 @@ python-versions = "*"
 ptyprocess = ">=0.5"
 
 [[package]]
+name = "phanas-pydantic-helpers"
+version = "1.0.0"
+description = "A collection of helper functions/classes for Pydantic."
+category = "main"
+optional = false
+python-versions = ">=3.10,<4.0"
+
+[[package]]
 name = "pickleshare"
 version = "0.7.5"
 description = "Tiny 'shelve'-like database with concurrency support"
@@ -775,7 +783,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "49b636080212a310ab061d2e5ff297aeee9e746fc707a8d59a079f0fc579f859"
+content-hash = "b3856cf534a0d531d65d54eb1ab6eaf965553a6b1a320fdc4fd21007115284b8"
 
 [metadata.files]
 aiohttp = [
@@ -1387,6 +1395,10 @@ parso = [
 pexpect = [
     {file = "pexpect-4.8.0-py2.py3-none-any.whl", hash = "sha256:0b48a55dcb3c05f3329815901ea4fc1537514d6ba867a152b581d69ae3710937"},
     {file = "pexpect-4.8.0.tar.gz", hash = "sha256:fc65a43959d153d0114afe13997d439c22823a27cefceb5ff35c2178c6784c0c"},
+]
+phanas-pydantic-helpers = [
+    {file = "phanas-pydantic-helpers-1.0.0.tar.gz", hash = "sha256:3a15f92d6707a678822db19ad4c3c3c37a73cecf58b94e5bdee3568be5c09d8f"},
+    {file = "phanas_pydantic_helpers-1.0.0-py3-none-any.whl", hash = "sha256:633cf599e7ee5b2259515eb9f412987b785d13a053b638253b8e68c6d066be2f"},
 ]
 pickleshare = [
     {file = "pickleshare-0.7.5-py2.py3-none-any.whl", hash = "sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"},
