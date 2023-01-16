@@ -4,12 +4,10 @@ from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from typing import Literal
 
+from phanas_pydantic_helpers import maybe_relative_path
 from pydantic import BaseModel, conint
 
 from sandpiper.common.paths import MODULE_PATH
-from sandpiper.common.pydantic_helpers import (
-    maybe_relative_path,
-)
 
 _logging_levels = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 

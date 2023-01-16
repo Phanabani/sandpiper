@@ -1,8 +1,7 @@
 __all__ = ["Bot"]
 
+from phanas_pydantic_helpers import Factory
 from pydantic import BaseModel, Field, conint
-
-from sandpiper.common.pydantic_helpers import Factory
 
 message_templates_no_age = [
     "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
