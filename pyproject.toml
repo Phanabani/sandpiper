@@ -10,7 +10,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 
-aiosqlite = "^0.17.0"
+aiosqlite = "^0.18.0"
 alembic = "^1.7.5"
 "discord.py" = "^2"
 fuzzywuzzy = {extras = ["speedup"], version = "^0.18.0"}
