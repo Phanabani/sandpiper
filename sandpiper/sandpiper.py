@@ -191,4 +191,4 @@ def run_bot():
 
     # Run bot
     sandpiper = Sandpiper(config.bot)
-    sandpiper.run(bot_token)
+    sandpiper.run(bot_token, log_handler=None)
