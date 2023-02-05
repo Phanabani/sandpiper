@@ -17,7 +17,6 @@ message_templates_with_age = [
     "Hey!! It's {name}'s birthday! {They} turned {age} today. Happy birthday {ping}!",
     #
     "{name}! It's your birthday!! I can't believe you're already {age} ;u; "
-    #
     "Hope it's a great one {ping}!",
     #
     "omg! did yall know it's {name}'s birthday?? {Theyre} {age} now! happy birthday "
