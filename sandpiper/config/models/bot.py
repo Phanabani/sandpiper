@@ -3,6 +3,8 @@ __all__ = ["Bot"]
 from phanas_pydantic_helpers import Factory
 from pydantic import BaseModel, Field, conint
 
+from sandpiper.config.models._field_types import SnowflakeField
+
 message_templates_no_age = [
     "Hey!! It's {name}'s birthday! Happy birthday {ping}!",
     #
@@ -35,7 +37,7 @@ class Bot(BaseModel):
     )
 
     class _Commands(BaseModel):
-        guilds: list[int] = Factory(
+        guilds: list[SnowflakeField] = Factory(
             list,
             description=(
                 "Guilds to immediately push new commands to (helpful for debugging)"
