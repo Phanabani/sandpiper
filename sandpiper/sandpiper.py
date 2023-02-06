@@ -10,7 +10,7 @@ import sys
 from typing import Callable, Literal
 
 import discord
-from discord.app_commands import CommandTree
+from discord.app_commands import Command, CommandTree, ContextMenu, Group
 
 from sandpiper.components.bios import Bios
 from sandpiper.components.birthdays import Birthdays
@@ -63,6 +63,8 @@ class Components:
         await self.conversion.setup()
         await self.upgrades.setup()
 
+        await self._sandpiper.on_components_setup_complete()
+
         logger.debug("Component setup complete")
 
     async def teardown(self):
@@ -103,7 +105,7 @@ class Sandpiper(discord.Client):
             guilds=True, members=True, messages=True, message_content=True
         )
         allowed_mentions = discord.AllowedMentions(users=True)
-        activity = discord.Game(f"hi! c:")
+        activity = discord.Game(f"with twigs")
 
         super().__init__(
             # Client params
@@ -118,7 +120,7 @@ class Sandpiper(discord.Client):
         )
 
         self._sandpiper_listeners = defaultdict(list)
-        self.command_tree = CommandTree(self)
+        self._command_tree = CommandTree(self)
         self.components = Components(self)
         self.config = config
 
@@ -163,8 +165,19 @@ class Sandpiper(discord.Client):
                 exc_info=True,
             )
 
-    async def add_listener(self, listener_type: T_SupportedListeners, fn: Callable):
+    async def on_components_setup_complete(self):
+        logger.info("Syncing commands")
+        for guild in self.config.commands.guilds:
+            await self._command_tree.sync(guild=guild)
+
+    def add_listener(self, listener_type: T_SupportedListeners, fn: Callable):
         self._sandpiper_listeners[listener_type].append(fn)
+
+    def add_command(self, command: Command | ContextMenu | Group, /):
+        logger.debug(f"Adding command {command}")
+        self._command_tree.add_command(
+            command, guilds=self.config.commands.guilds, override=True
+        )
 
     async def on_message(self, message: discord.Message):
         for listener in self._sandpiper_listeners["on_message"]:
