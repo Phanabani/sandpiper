@@ -14,10 +14,9 @@ from sandpiper.components.user_data import PrivacyType
 
 if TYPE_CHECKING:
     from sandpiper import Sandpiper
+
+    # noinspection PyUnresolvedReferences
     from sandpiper.components.birthdays import Birthdays
-else:
-    Sandpiper = None
-    Birthdays = None
 
 PAST_BIRTHDAY_EMOJIS = "🔷"
 UPCOMING_BIRTHDAY_EMOJIS = "🎂🍰🧁🎈🎁🎉🎊"
@@ -54,10 +53,10 @@ async def format_bday_upcoming(
 
 @birthdays_group.command(description="View upcoming birthdays")
 async def upcoming(inter: discord.Interaction) -> None:
-    sandpiper = cast(Sandpiper, inter.client)
+    sandpiper = cast("Sandpiper", inter.client)
     if (birthdays := sandpiper.components.birthdays) is None:
         return warn_component_none(logger, "Birthdays")
-    birthdays = cast(Birthdays, birthdays)
+    birthdays = cast("Birthdays", birthdays)
     response = cast(InteractionResponse, inter.response)
 
     past_raw, upcoming_raw = await birthdays.get_past_upcoming_birthdays(
