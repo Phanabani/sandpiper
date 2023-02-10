@@ -10,13 +10,16 @@ __all__ = [
 
 from datetime import date
 import logging
-from typing import Optional
+from typing import Optional, TYPE_CHECKING, cast
 
 import discord
 from discord.ext.commands import BadArgument, Command
 
 from sandpiper.components.user_data import PrivacyType
 from .time import parse_date
+
+if TYPE_CHECKING:
+    from sandpiper import Sandpiper
 
 logger = logging.getLogger("sandpiper.common.discord")
 
@@ -161,3 +164,10 @@ def find_users_by_display_name(
             search_guild(guild)
 
     return users
+
+
+def piper(client_or_interaction: discord.Client | discord.Interaction) -> Sandpiper:
+    """Cast a client to Sandpiper"""
+    if isinstance(client_or_interaction, discord.Interaction):
+        client_or_interaction = client_or_interaction.client
+    return cast("Sandpiper", client_or_interaction)
