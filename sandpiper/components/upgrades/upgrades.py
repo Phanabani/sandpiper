@@ -5,8 +5,7 @@ import logging
 from semver import VersionInfo
 
 from sandpiper._version import __version__
-from sandpiper.common.component import Component
-from sandpiper.common.logging import warn_component_none
+from sandpiper.common.component import Component, MissingComponentError
 from sandpiper.components.upgrades.versions import all_upgrade_handlers
 
 logger = logging.getLogger(__name__)
@@ -22,9 +21,12 @@ class Upgrades(Component):
         logger.debug("Setup complete")
 
     async def do_upgrades(self):
-        user_data = self.sandpiper.components.user_data
-        if user_data is None:
-            return warn_component_none(logger, "UserData", "skipping upgrade handlers")
+        try:
+            user_data = self.sandpiper.components.user_data
+        except MissingComponentError as e:
+            e.extra_info = "skipping upgrade handlers"
+            logger.warning(str(e))
+            return
 
         db = await user_data.get_database()
         await db.ready()

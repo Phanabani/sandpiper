@@ -8,8 +8,7 @@ from typing import Optional, TYPE_CHECKING
 
 from semver import VersionInfo
 
-from sandpiper.common.logging import warn_component_none
-from sandpiper.components.user_data import Database, UserData
+from sandpiper.components.user_data import Database
 
 if TYPE_CHECKING:
     from sandpiper import Sandpiper
@@ -40,10 +39,7 @@ class UpgradeHandler(metaclass=ABCMeta):
         )
 
     async def _get_database(self) -> Optional[Database]:
-        user_data: UserData = self.sandpiper.components.user_data
-        if user_data is None:
-            return warn_component_none(logger, "UserData")
-        db = await user_data.get_database()
+        db = await self.sandpiper.components.user_data.get_database()
         await db.ready()
         return db
 

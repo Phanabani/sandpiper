@@ -6,8 +6,7 @@ from typing import Optional, TYPE_CHECKING, cast
 import discord
 from discord import InteractionResponse
 
-from sandpiper.common.discord import cheap_user_hash
-from sandpiper.common.logging import warn_component_none
+from sandpiper.common.discord import cheap_user_hash, piper
 from sandpiper.common.time import sort_dates_no_year, utc_now
 from sandpiper.components.birthdays.commands.birthdays import birthdays_group
 from sandpiper.components.user_data import PrivacyType
@@ -53,10 +52,8 @@ async def format_bday_upcoming(
 
 @birthdays_group.command(description="View upcoming birthdays")
 async def upcoming(inter: discord.Interaction) -> None:
-    sandpiper = cast("Sandpiper", inter.client)
-    if (birthdays := sandpiper.components.birthdays) is None:
-        return warn_component_none(logger, "Birthdays")
-    birthdays = cast("Birthdays", birthdays)
+    sandpiper = piper(inter)
+    birthdays = sandpiper.components.birthdays
     response = cast(InteractionResponse, inter.response)
 
     past_raw, upcoming_raw = await birthdays.get_past_upcoming_birthdays(
