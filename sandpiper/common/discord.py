@@ -21,7 +21,7 @@ from .time import parse_date
 if TYPE_CHECKING:
     from sandpiper import Sandpiper
 
-logger = logging.getLogger("sandpiper.common.discord")
+logger = logging.getLogger(__name__)
 
 
 class AutoOrder:
