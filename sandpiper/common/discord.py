@@ -8,6 +8,7 @@ __all__ = [
     "find_user_in_mutual_guilds",
     "find_users_by_display_name",
     "find_users_by_username",
+    "piper",
 ]
 
 from datetime import date
