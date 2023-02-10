@@ -7,9 +7,10 @@ __all__ = [
     "SpecialEmbed",
 ]
 
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import discord
+from discord import Interaction, InteractionResponse
 
 T_Field = tuple[str, str, bool]
 
@@ -67,7 +68,7 @@ class SimpleEmbed:
             raise TypeError("msg must be of type str")
         self.message_parts.append(msg)
 
-    async def send(self, messageable: discord.abc.Messageable):
+    async def send(self, messageable: discord.abc.Messageable | Interaction):
         """
         Send the embed to `messageable`.
 
@@ -83,7 +84,11 @@ class SimpleEmbed:
             for name, value, inline in self.fields:
                 embed.add_field(name=name, value=value, inline=inline)
 
-        await messageable.send(embed=embed)
+        if isinstance(messageable, Interaction):
+            response = cast(InteractionResponse, messageable.response)
+            await response.send_message(embed=embed)
+        else:
+            await messageable.send(embed=embed)
 
 
 class SuccessEmbed(SimpleEmbed):
