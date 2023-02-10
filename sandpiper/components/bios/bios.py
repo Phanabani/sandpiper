@@ -11,6 +11,8 @@ from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
+# noinspection PyCompatibility
+from . import commands as bios_commands
 from .strings import *
 
 logger = logging.getLogger(__name__)
@@ -49,6 +51,8 @@ class Bios(Component):
 
         config = self.sandpiper.config.components.bios
         self.allow_public_setting = config.allow_public_setting
+
+        self.sandpiper.add_command(bios_commands.bios_group)
 
         logger.debug("Setup complete")
 
@@ -124,42 +128,6 @@ class Bios(Component):
     )
     async def bio(self, ctx: commands.Context):
         pass
-
-    @auto_order
-    @bio.command(
-        name="show",
-        aliases=_show_aliases,
-        brief="Show all stored info.",
-        help="Display all of your personal info stored in Sandpiper.",
-    )
-    @maybe_dm_only()
-    async def bio_show(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-
-        preferred_name = await db.get_preferred_name(user_id)
-        pronouns = await db.get_pronouns(user_id)
-        birthday = await db.get_birthday(user_id)
-        birthday = format_date(birthday)
-        age = await db.get_age(user_id)
-        age = age if age is not None else "N/A"
-        timezone = await db.get_timezone(user_id)
-
-        p_preferred_name = await db.get_privacy_preferred_name(user_id)
-        p_pronouns = await db.get_privacy_pronouns(user_id)
-        p_birthday = await db.get_privacy_birthday(user_id)
-        p_age = await db.get_privacy_age(user_id)
-        p_timezone = await db.get_privacy_timezone(user_id)
-
-        await InfoEmbed(
-            [
-                user_info_str("Name", preferred_name, p_preferred_name),
-                user_info_str("Pronouns", pronouns, p_pronouns),
-                user_info_str("Birthday", birthday, p_birthday),
-                user_info_str("Age", age, p_age),
-                user_info_str("Timezone", timezone, p_timezone),
-            ]
-        ).send(ctx)
 
     @auto_order
     @bio.command(
