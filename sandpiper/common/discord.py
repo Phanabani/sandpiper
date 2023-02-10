@@ -104,7 +104,7 @@ def find_user_in_mutual_guilds(
             member = g.get_member(for_whom)
             if member:
                 if short_circuit:
-                    return member
+                    return [member]
                 found_members.append(member)
     return found_members
 
