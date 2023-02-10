@@ -7,11 +7,12 @@ from collections import defaultdict
 from collections.abc import Coroutine
 import logging
 import sys
-from typing import Callable, Literal
+from typing import Callable, Literal, TypeVar
 
 import discord
 from discord.app_commands import Command, CommandTree, ContextMenu, Group
 
+from sandpiper.common.component import Component, MissingComponentError
 from sandpiper.components.bios import Bios
 from sandpiper.components.birthdays import Birthdays
 from sandpiper.components.conversion import Conversion
@@ -23,18 +24,46 @@ from sandpiper.help import HelpCommand
 
 logger = logging.getLogger("sandpiper")
 
+T_Component = TypeVar("T_Component", bound=Component)
+
 
 class Components:
-    bios: Bios | None = None
-    birthdays: Birthdays | None = None
-    conversion: Conversion | None = None
-    upgrades: Upgrades | None = None
-    user_data: UserData | None = None
+    _bios: Bios | None = None
+    _birthdays: Birthdays | None = None
+    _conversion: Conversion | None = None
+    _upgrades: Upgrades | None = None
+    _user_data: UserData | None = None
 
     def __init__(self, sandpiper: Sandpiper):
         self._sandpiper = sandpiper
         self._setup_task_ref: Task | None = None
         self._teardown_task_ref: Task | None = None
+
+    @staticmethod
+    def try_get(attr: T_Component | None, type_: type[T_Component]) -> T_Component:
+        if attr is None:
+            raise MissingComponentError(type_.__name__)
+        return attr
+
+    @property
+    def bios(self) -> Bios:
+        return self.try_get(self._bios, Bios)
+
+    @property
+    def birthdays(self) -> Birthdays:
+        return self.try_get(self._birthdays, Birthdays)
+
+    @property
+    def conversion(self) -> Conversion:
+        return self.try_get(self._conversion, Conversion)
+
+    @property
+    def upgrades(self) -> Upgrades:
+        return self.try_get(self._upgrades, Upgrades)
+
+    @property
+    def user_data(self) -> UserData:
+        return self.try_get(self._user_data, UserData)
 
     async def _create_task(self, fn: Coroutine) -> Task:
         return self._sandpiper.loop.create_task(fn)
@@ -49,19 +78,19 @@ class Components:
             self._teardown_task_ref.cancel()
             self._teardown_task_ref = None
 
-        self.bios = Bios(self._sandpiper)
-        self.birthdays = Birthdays(self._sandpiper)
-        self.conversion = Conversion(self._sandpiper)
-        self.upgrades = Upgrades(self._sandpiper)
-        self.user_data = UserData(self._sandpiper)
+        self._bios = Bios(self._sandpiper)
+        self._birthdays = Birthdays(self._sandpiper)
+        self._conversion = Conversion(self._sandpiper)
+        self._upgrades = Upgrades(self._sandpiper)
+        self._user_data = UserData(self._sandpiper)
 
         # Other components need UserData, so load it first
-        await self.user_data.setup()
+        await self._user_data.setup()
 
-        await self.bios.setup()
-        await self.birthdays.setup()
-        await self.conversion.setup()
-        await self.upgrades.setup()
+        await self._bios.setup()
+        await self._birthdays.setup()
+        await self._conversion.setup()
+        await self._upgrades.setup()
 
         await self._sandpiper.on_components_setup_complete()
 
@@ -78,18 +107,18 @@ class Components:
             self._setup_task_ref = None
 
         # Teardown in reverse order from setup
-        await self.bios.teardown()
-        await self.birthdays.teardown()
-        await self.conversion.teardown()
-        await self.upgrades.teardown()
+        await self._bios.teardown()
+        await self._birthdays.teardown()
+        await self._conversion.teardown()
+        await self._upgrades.teardown()
 
-        await self.user_data.teardown()
+        await self._user_data.teardown()
 
-        self.bios = None
-        self.birthdays = None
-        self.conversion = None
-        self.upgrades = None
-        self.user_data = None
+        self._bios = None
+        self._birthdays = None
+        self._conversion = None
+        self._upgrades = None
+        self._user_data = None
 
         logger.debug("Component teardown complete")
 
