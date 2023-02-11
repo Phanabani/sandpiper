@@ -14,7 +14,7 @@ aiosqlite = "^0.18.0"
 alembic = "^1.7.5"
 "discord.py" = "^2"
 fuzzywuzzy = {extras = ["speedup"], version = "^0.18.0"}
-phanas-pydantic-helpers = "^1.0.0"
+phanas-pydantic-helpers = "^2.1.0"
 Pint = "^0.20.1"
 pydantic = "^1.10.2"
 pytz = "*"
