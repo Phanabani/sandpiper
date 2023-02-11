@@ -8,7 +8,7 @@ import discord
 
 from sandpiper.common.discord import piper
 from sandpiper.common.embeds import SuccessEmbed
-from sandpiper.components.bios.commands.bios import bios_group
+from .bios_group import bios_group
 
 logger = logging.getLogger(__name__)
 

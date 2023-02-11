@@ -9,8 +9,8 @@ import discord
 from sandpiper.common.discord import piper
 from sandpiper.common.embeds import InfoEmbed
 from sandpiper.common.time import format_date
-from sandpiper.components.bios.commands.bios import bios_group
 from sandpiper.components.bios.strings import user_info_str
+from .bios_group import bios_group
 
 logger = logging.getLogger(__name__)
 
