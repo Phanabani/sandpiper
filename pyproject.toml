@@ -38,6 +38,11 @@ ruff = "^0.0.244"
 [tool.ruff]
 ignore = ["F403", "F405"]
 
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]  # Ignore unused imports in packages
+"**/commands/**/*.py" = ["F401"]  # Ignore unused imports in commands (needed for string casting)
+"test_*.py" = ["F841"]  # Ignore unused variables in unit tests
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
