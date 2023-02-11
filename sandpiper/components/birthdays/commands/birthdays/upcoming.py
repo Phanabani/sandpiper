@@ -8,8 +8,8 @@ from discord import InteractionResponse
 
 from sandpiper.common.discord import cheap_user_hash, piper
 from sandpiper.common.time import sort_dates_no_year, utc_now
-from sandpiper.components.birthdays.commands.birthdays import birthdays_group
 from sandpiper.components.user_data import PrivacyType
+from .birthdays_group import birthdays_group
 
 if TYPE_CHECKING:
     from sandpiper import Sandpiper
