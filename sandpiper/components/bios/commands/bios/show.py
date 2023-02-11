@@ -23,10 +23,7 @@ async def show(inter: discord.Interaction) -> None:
     """
     "Display all of your personal info stored in Sandpiper."
     """
-    user_data = piper(inter).components.user_data
-    if (db := await user_data.get_database()) is None:
-        return
-
+    db = await piper(inter).components.user_data.get_database()
     user_id = inter.user.id
 
     preferred_name = await db.get_preferred_name(user_id)
