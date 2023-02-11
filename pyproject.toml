@@ -35,6 +35,9 @@ pytest-profiling = "^1.7.0"
 yappi = "^1.3.3"
 ruff = "^0.0.244"
 
+[tool.ruff]
+ignore = ["F403", "F405"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
