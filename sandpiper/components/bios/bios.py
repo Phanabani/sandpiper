@@ -122,14 +122,6 @@ class Bios(Component):
                 return
             await birthdays.notify_change(ctx.author.id)
 
-    @auto_order
-    @commands.group(
-        brief="Personal info commands.",
-        help="Commands for managing all of your personal info at once.",
-    )
-    async def bio(self, ctx: commands.Context):
-        pass
-
     # Privacy setters
 
     @auto_order
