@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 import discord
 
@@ -10,10 +9,6 @@ from sandpiper.common.embeds import InfoEmbed
 from sandpiper.common.time import format_date
 from sandpiper.components.bios.commands.bios import bios_group
 from sandpiper.components.bios.strings import user_info_str
-
-if TYPE_CHECKING:
-    # noinspection PyUnresolvedReferences
-    from sandpiper.components.user_data import Database, UserData
 
 logger = logging.getLogger(__name__)
 
