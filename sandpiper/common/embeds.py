@@ -43,13 +43,13 @@ class SimpleEmbed:
         elif isinstance(msg, str):
             msg = [msg]
         elif not isinstance(msg, list):
-            raise TypeError(f"message must be None or of type (str, list[str])")
+            raise TypeError("message must be None or of type (str, list[str])")
         self.message_parts: list[str] = msg
 
         if fields is None:
             fields = []
         elif not isinstance(fields, list):
-            raise TypeError(f"fields must be None or of type list")
+            raise TypeError("fields must be None or of type list")
         self.fields: list[T_Field] = fields
 
         if title is not None:

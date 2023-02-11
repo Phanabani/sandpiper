@@ -12,12 +12,12 @@ class UnitMap(Generic[T]):
 
     def __init__(self, *, two_way: dict[T, T], one_way: dict[T, T] = None):
         if not isinstance(two_way, dict):
-            raise ValueError(f"two_way must be a dict")
+            raise ValueError("two_way must be a dict")
         self._two_way = self._create_bidict(two_way)
 
         one_way = one_way or ()
         if not isinstance(one_way, dict):
-            raise ValueError(f"one_way must be dict")
+            raise ValueError("one_way must be dict")
         self._one_way = {}
         for key, value in one_way.items():
             if key in self._two_way:

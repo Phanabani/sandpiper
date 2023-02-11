@@ -42,13 +42,13 @@ timezone_to_country_code: dict[str, str] = _parse_db_file(
 def to_regional_indicator(char: str) -> str:
     code = ord(char)
     if code < 65 or code > 90:
-        raise ValueError(f"char must be a single char from A-Z")
+        raise ValueError("char must be a single char from A-Z")
     return chr(code + 127397)
 
 
 def get_country_flag_emoji(country_id: str) -> str:
     if len(country_id) != 2:
-        raise ValueError(f"country_id must be a 2-character string")
+        raise ValueError("country_id must be a 2-character string")
     return "".join(to_regional_indicator(i) for i in country_id)
 
 

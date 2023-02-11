@@ -442,14 +442,14 @@ class TestSet:
     # region Name
 
     async def test_name_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds(f"name set Greg")
+        embeds = await invoke_cmd_get_embeds("name set Greg")
         await self._assert_private(
             embeds, message, database.get_preferred_name, "Greg", "name"
         )
 
     async def test_name_public(self, database, message, invoke_cmd_get_embeds):
         await database.set_privacy_preferred_name(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"name set Greg")
+        embeds = await invoke_cmd_get_embeds("name set Greg")
         await self._assert_public(embeds, message, database.get_preferred_name, "Greg")
 
     async def test_name_too_long_err(self, database, invoke_cmd_get_embeds):
@@ -460,14 +460,14 @@ class TestSet:
     # region Pronouns
 
     async def test_pronouns_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds(f"pronouns set He/Him")
+        embeds = await invoke_cmd_get_embeds("pronouns set He/Him")
         await self._assert_private(
             embeds, message, database.get_pronouns, "He/Him", "pronouns"
         )
 
     async def test_pronouns_public(self, database, message, invoke_cmd_get_embeds):
         await database.set_privacy_pronouns(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"pronouns set He/Him")
+        embeds = await invoke_cmd_get_embeds("pronouns set He/Him")
         await self._assert_public(embeds, message, database.get_pronouns, "He/Him")
 
     async def test_pronouns_too_long_err(self, database, invoke_cmd_get_embeds):
@@ -481,7 +481,7 @@ class TestSet:
         self, database, message, invoke_cmd_get_embeds
     ):
         await database.set_privacy_age(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"birthday set 2000-02-14")
+        embeds = await invoke_cmd_get_embeds("birthday set 2000-02-14")
         await self._assert_private(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14), "birthday"
         )
@@ -494,7 +494,7 @@ class TestSet:
         self, database, message, invoke_cmd_get_embeds
     ):
         await database.set_privacy_age(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"birthday set 2000-02-14")
+        embeds = await invoke_cmd_get_embeds("birthday set 2000-02-14")
         await self._assert_private(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14), "birthday"
         )
@@ -507,7 +507,7 @@ class TestSet:
         self, database, message, invoke_cmd_get_embeds
     ):
         await database.set_privacy_birthday(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"birthday set 2000-02-14")
+        embeds = await invoke_cmd_get_embeds("birthday set 2000-02-14")
         await self._assert_public(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14)
         )
@@ -521,7 +521,7 @@ class TestSet:
     ):
         await database.set_privacy_age(message.author.id, PrivacyType.PUBLIC)
         await database.set_privacy_birthday(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"birthday set 2000-02-14")
+        embeds = await invoke_cmd_get_embeds("birthday set 2000-02-14")
         await self._assert_public(
             embeds, message, database.get_birthday, dt.date(2000, 2, 14)
         )
@@ -534,14 +534,14 @@ class TestSet:
     # region Age
 
     async def test_age(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds(f"age set 20")
+        embeds = await invoke_cmd_get_embeds("age set 20")
         assert_error(embeds)
 
     # endregion
     # region Timezone
 
     async def test_timezone_private(self, database, message, invoke_cmd_get_embeds):
-        embeds = await invoke_cmd_get_embeds(f"timezone set new york")
+        embeds = await invoke_cmd_get_embeds("timezone set new york")
         await self._assert_private(
             embeds,
             message,
@@ -552,7 +552,7 @@ class TestSet:
 
     async def test_timezone_public(self, database, message, invoke_cmd_get_embeds):
         await database.set_privacy_timezone(message.author.id, PrivacyType.PUBLIC)
-        embeds = await invoke_cmd_get_embeds(f"timezone set new york")
+        embeds = await invoke_cmd_get_embeds("timezone set new york")
         await self._assert_public(
             embeds, message, database.get_timezone, pytz.timezone("America/New_York")
         )
@@ -928,7 +928,7 @@ class TestAllowPublicBioSetting:
         self, database, message, invoke_cmd_get_embeds, send_in_guild
     ):
         with pytest.raises(commands.PrivateMessageOnly):
-            await invoke_cmd_get_embeds(f"name set Greg")
+            await invoke_cmd_get_embeds("name set Greg")
 
     async def test_allow_set(
         self,
@@ -938,5 +938,5 @@ class TestAllowPublicBioSetting:
         send_in_guild,
         allow_public_bio_setting,
     ):
-        embeds = await invoke_cmd_get_embeds(f"name set Greg")
+        embeds = await invoke_cmd_get_embeds("name set Greg")
         assert_success(embeds)

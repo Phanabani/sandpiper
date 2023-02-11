@@ -122,10 +122,10 @@ class DatabaseSQLite(Database):
 
         else:
             err_msg = (
-                f"Database is in an unexpected state. There appears to be "
-                f"data in it but it is untracked by Alembic and it cannot "
-                f"be automatically handled. You may have to manually stamp "
-                f"the Alembic revision."
+                "Database is in an unexpected state. There appears to be "
+                "data in it but it is untracked by Alembic and it cannot "
+                "be automatically handled. You may have to manually stamp "
+                "the Alembic revision."
             )
             logger.fatal(err_msg)
             raise RuntimeError(err_msg)
@@ -231,7 +231,7 @@ class DatabaseSQLite(Database):
     # region Sandpiper meta
 
     async def get_sandpiper_version(self) -> str:
-        logger.info(f"Getting Sandpiper version")
+        logger.info("Getting Sandpiper version")
         async with self._session_maker() as session, session.begin():
             return (
                 await session.execute(
@@ -260,7 +260,7 @@ class DatabaseSQLite(Database):
             await session.execute(sa.delete(User).where(User.user_id == user_id))
 
     async def get_all_user_ids(self) -> list[int]:
-        logger.info(f"Getting all user IDs")
+        logger.info("Getting all user IDs")
         async with self._session_maker() as session, session.begin():
             return (await session.execute(sa.select(User.user_id))).scalars().all()
 
@@ -421,7 +421,7 @@ class DatabaseSQLite(Database):
         await self._set_user_privacy_field("timezone", user_id, new_privacy)
 
     async def get_all_timezones(self) -> list[tuple[int, TimezoneType]]:
-        logger.info(f"Getting all user timezones")
+        logger.info("Getting all user timezones")
         async with self._session_maker() as session, session.begin():
             stmt = (
                 sa.select(User.user_id, User.timezone)

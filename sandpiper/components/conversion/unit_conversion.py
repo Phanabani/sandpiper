@@ -166,7 +166,7 @@ def convert_measurement(
             return None
 
     if isinstance(quantity, Decimal):
-        logger.info(f"Parsed as a decimal")
+        logger.info("Parsed as a decimal")
         return quantity
 
     if not isinstance(quantity, Quantity):
