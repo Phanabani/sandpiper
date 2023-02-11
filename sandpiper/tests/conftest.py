@@ -229,11 +229,11 @@ def make_guild(new_id, guilds, guilds_map):
         guild.name = name
 
         guild.members = []
-        guild._members_map = members_map = {}
+        guild._members_map = {}
         guild.get_member.side_effect = lambda id: guild._members_map.get(id, None)
 
         guild.channels = []
-        guild._channels_map = channels_map = {}
+        guild._channels_map = {}
         guild.get_channel.side_effect = lambda id: guild._channels_map.get(id, None)
 
         guilds.append(guild)
