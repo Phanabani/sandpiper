@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 sandpiper_root_dir = Path(__file__, "../../../../..")
 sys.path.insert(0, str(sandpiper_root_dir.absolute()))
-from sandpiper.components.user_data.models import Base
+from sandpiper.components.user_data.models import Base  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
