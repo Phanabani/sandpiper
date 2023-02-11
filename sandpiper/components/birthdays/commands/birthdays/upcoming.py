@@ -89,7 +89,7 @@ async def upcoming(inter: discord.Interaction) -> None:
         msg.append("")
 
     if upcoming:
-        msg.append(f"Upcoming birthdays:")
+        msg.append("Upcoming birthdays:")
         msg.extend(upcoming)
 
     await response.send_message("\n".join(msg))

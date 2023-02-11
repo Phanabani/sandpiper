@@ -134,7 +134,7 @@ class Sandpiper(discord.Client):
             guilds=True, members=True, messages=True, message_content=True
         )
         allowed_mentions = discord.AllowedMentions(users=True)
-        activity = discord.Game(f"with twigs")
+        activity = discord.Game("with twigs")
 
         super().__init__(
             # Client params
