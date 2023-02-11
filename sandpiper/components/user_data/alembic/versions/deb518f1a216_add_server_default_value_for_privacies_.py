@@ -45,8 +45,11 @@ def upgrade():
             # was already being returned programmatically as the default)
             conn.execute(
                 users.update()
-                .where(getattr(users.c, col) == None)
-                .values({col: DEFAULT_PRIVACY})
+                # I'm not sure why I didn't use `is` here, but I don't want to
+                # change it since I can't test this easily
+                .where(getattr(users.c, col) == None).values(  # noqa
+                    {col: DEFAULT_PRIVACY}
+                )
             )
             # Then make the field non-nullable, and set the server-side default
             # With the SQLite backend, this op is going to create an entirely
