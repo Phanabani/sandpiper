@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @bios_group.command(description="Show all stored info.")
 async def show(inter: discord.Interaction) -> None:
     """
-    "Display all of your personal info stored in Sandpiper."
+    Display all of your personal info stored in Sandpiper.
     """
     db = await piper(inter).components.user_data.get_database()
     user_id = inter.user.id
