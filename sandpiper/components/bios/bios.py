@@ -11,6 +11,7 @@ from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
+
 # noinspection PyCompatibility
 from . import commands as bios_commands
 from .strings import *
@@ -128,20 +129,6 @@ class Bios(Component):
     )
     async def bio(self, ctx: commands.Context):
         pass
-
-    @auto_order
-    @bio.command(
-        name="delete",
-        aliases=_delete_aliases,
-        brief="Delete all stored info.",
-        help="Delete all of your personal info stored in Sandpiper.",
-    )
-    @maybe_dm_only()
-    async def bio_delete(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.delete_user(user_id)
-        await SuccessEmbed("Deleted all of your personal info!").send(ctx)
 
     # Privacy setters
 
