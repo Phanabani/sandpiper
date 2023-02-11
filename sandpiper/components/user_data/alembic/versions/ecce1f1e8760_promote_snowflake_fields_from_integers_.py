@@ -1,4 +1,6 @@
-"""Promote snowflake fields from integers to strings, since SQLite only stores signed 64-bit ints.
+"""
+Promote snowflake fields from integers to strings, since SQLite only stores
+signed 64-bit ints.
 
 Revision ID: ecce1f1e8760
 Revises: deb518f1a216

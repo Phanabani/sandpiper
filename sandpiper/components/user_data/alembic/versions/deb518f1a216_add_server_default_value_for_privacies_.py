@@ -1,4 +1,6 @@
-"""Add server default value for privacies, make them not null, and update existing null fields to the default.
+"""
+Add server default value for privacies, make them not null, and update existing
+null fields to the default.
 
 Revision ID: deb518f1a216
 Revises: a2d3dc3c170e
