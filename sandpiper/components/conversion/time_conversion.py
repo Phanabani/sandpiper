@@ -133,7 +133,7 @@ async def convert_time_to_user_timezones(
             # Failed to parse as a time, so pass it on to unit conversion
             failed.append((tstr, timezone_out_str))
             continue
-        except:
+        except Exception:
             logger.warning(
                 f"Unhandled exception while parsing time string " f"(string={tstr!r})",
                 exc_info=True,
