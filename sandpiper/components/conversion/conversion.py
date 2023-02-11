@@ -12,6 +12,9 @@ from sandpiper.common.component import Component
 from sandpiper.common.embeds import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format
+from sandpiper.components.conversion.time_conversion import (
+    convert_time_to_user_timezones,
+)
 import sandpiper.components.conversion.unit_conversion as unit_conversion
 from sandpiper.components.user_data import DatabaseUnavailable
 
