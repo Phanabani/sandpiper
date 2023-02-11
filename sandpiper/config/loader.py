@@ -84,7 +84,7 @@ def load_config(config_dir: Path | None = None) -> SandpiperConfig:
         config_file = legacy_config_file
     logger.debug(f"Using config file {config_file}")
 
-    match config_file.suffix:
+    match config_file.suffix:  # noqa: E999
         case ".json":
             config_obj = parse_json(config_file)
         case ".yaml" | ".yml":
