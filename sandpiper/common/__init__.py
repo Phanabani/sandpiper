@@ -1,1 +1,2 @@
-from . import IANA, component, discord, embeds, misc, time
+# noinspection PyCompatibility
+from . import IANA, component, discord, embeds, exceptions, misc, time
