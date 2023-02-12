@@ -11,7 +11,6 @@ from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
-
 # noinspection PyCompatibility
 from . import commands as bios_commands
 from .strings import *
@@ -128,64 +127,6 @@ class Bios(Component):
                 logger.debug("No birthdays cog loaded; skipping change notification")
                 return
             await birthdays.notify_change(ctx.author.id)
-
-    # Pronouns
-
-    @auto_order
-    @commands.group(
-        name="pronouns",
-        invoke_without_command=False,
-        brief="Pronouns commands.",
-        help="Commands for managing your pronouns.",
-    )
-    async def pronouns(self, ctx: commands.Context):
-        pass
-
-    @auto_order
-    @pronouns.command(name="show", aliases=_show_aliases, help="Display your pronouns.")
-    @maybe_dm_only()
-    async def pronouns_show(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        pronouns = await db.get_pronouns(user_id)
-        privacy = await db.get_privacy_pronouns(user_id)
-        await InfoEmbed(user_info_str("Pronouns", pronouns, privacy)).send(ctx)
-
-    @auto_order
-    @pronouns.command(
-        name="set",
-        aliases=_set_aliases,
-        brief="Set your pronouns.",
-        help="Set your pronouns. Must be 64 characters or less.",
-        example="pronouns set She/Her",
-    )
-    @maybe_dm_only()
-    async def pronouns_set(self, ctx: commands.Context, *, new_pronouns: str):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        if len(new_pronouns) > 64:
-            raise BadArgument(
-                f"Pronouns must be 64 characters or less (yours: "
-                f"{len(new_pronouns)})."
-            )
-        await db.set_pronouns(user_id, new_pronouns)
-        embed = SuccessEmbed("Pronouns set!", join="\n\n")
-
-        if await db.get_privacy_pronouns(user_id) == PrivacyType.PRIVATE:
-            embed.append(PrivacyExplanation.get("pronouns"))
-
-        await embed.send(ctx)
-
-    @auto_order
-    @pronouns.command(
-        name="delete", aliases=_delete_aliases, help="Delete your pronouns."
-    )
-    @maybe_dm_only()
-    async def pronouns_delete(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.set_pronouns(user_id, None)
-        await SuccessEmbed("Pronouns deleted!").send(ctx)
 
     # Birthday
 
