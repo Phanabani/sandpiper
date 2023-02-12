@@ -11,6 +11,7 @@ from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
+
 # noinspection PyCompatibility
 from . import commands as bios_commands
 from .strings import *
@@ -127,65 +128,6 @@ class Bios(Component):
                 logger.debug("No birthdays cog loaded; skipping change notification")
                 return
             await birthdays.notify_change(ctx.author.id)
-
-    # Name
-
-    @auto_order
-    @commands.group(
-        name="name",
-        invoke_without_command=False,
-        brief="Preferred name commands.",
-        help="Commands for managing your preferred name.",
-    )
-    async def name(self, ctx: commands.Context):
-        pass
-
-    @auto_order
-    @name.command(
-        name="show", aliases=_show_aliases, help="Display your preferred name."
-    )
-    @maybe_dm_only()
-    async def name_show(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        preferred_name = await db.get_preferred_name(user_id)
-        privacy = await db.get_privacy_preferred_name(user_id)
-        await InfoEmbed(user_info_str("Name", preferred_name, privacy)).send(ctx)
-
-    @auto_order
-    @name.command(
-        name="set",
-        aliases=_set_aliases,
-        brief="Set your preferred name.",
-        help="Set your preferred name. Must be 64 characters or less.",
-        example="name set Phana",
-    )
-    @maybe_dm_only()
-    async def name_set(self, ctx: commands.Context, *, new_name: str):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        if len(new_name) > 64:
-            raise BadArgument(
-                f"Name must be 64 characters or less (yours: {len(new_name)})."
-            )
-        await db.set_preferred_name(user_id, new_name)
-        embed = SuccessEmbed("Preferred name set!", join="\n\n")
-
-        if await db.get_privacy_preferred_name(user_id) is PrivacyType.PRIVATE:
-            embed.append(PrivacyExplanation.get("name"))
-
-        await embed.send(ctx)
-
-    @auto_order
-    @name.command(
-        name="delete", aliases=_delete_aliases, help="Delete your preferred name."
-    )
-    @maybe_dm_only()
-    async def name_delete(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.set_preferred_name(user_id, None)
-        await SuccessEmbed("Preferred name deleted!").send(ctx)
 
     # Pronouns
 
