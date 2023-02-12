@@ -11,7 +11,6 @@ from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
-
 # noinspection PyCompatibility
 from . import commands as bios_commands
 from .strings import *
@@ -60,6 +59,7 @@ class Bios(Component):
         self.sandpiper.add_command(bios_commands.birthday_group)
         self.sandpiper.add_command(bios_commands.age_group)
         self.sandpiper.add_command(bios_commands.timezone_group)
+        self.sandpiper.add_command(bios_commands.birthday_channel_group)
 
         logger.debug("Setup complete")
 
