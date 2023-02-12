@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @bios_group.command()
 async def delete(inter: discord.Interaction) -> None:
     """
-    Delete all of your personal info stored in Sandpiper.
+    Delete all of your personal info stored in Sandpiper
     """
     user_id, db = await get_id_and_db(inter)
 

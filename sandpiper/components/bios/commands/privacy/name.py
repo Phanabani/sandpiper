@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @privacy_group.command()
 async def name(inter: discord.Interaction, new_privacy: PrivacyType) -> None:
     """
-    Set the privacy of your preferred name to either 'private' or " "'public'
+    Set the privacy of your preferred name to either 'private' or 'public'
     """
     user_id, db = await get_id_and_db(inter)
 
