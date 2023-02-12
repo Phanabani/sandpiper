@@ -54,6 +54,7 @@ class Bios(Component):
         self.allow_public_setting = config.allow_public_setting
 
         self.sandpiper.add_command(bios_commands.bios_group)
+        self.sandpiper.add_command(bios_commands.privacy_group)
 
         logger.debug("Setup complete")
 
