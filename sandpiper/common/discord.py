@@ -16,9 +16,16 @@ import logging
 from typing import Optional, TYPE_CHECKING, cast
 
 import discord
-from discord.ext.commands import BadArgument, Command
+from discord.ext.commands import BadArgument, Command as ExtCommand
 
-from sandpiper.components.user_data import PrivacyType
+from sandpiper.components.user_data import (
+    DatabaseError,
+    DatabaseUnavailable,
+    PrivacyType,
+    UserNotInDatabase,
+)
+from .embeds import ErrorEmbed, InfoEmbed
+from .exceptions import UserError
 from .time import parse_date
 
 if TYPE_CHECKING:
@@ -46,7 +53,7 @@ class AutoOrder:
     def __init__(self):
         self.top_level_order = 0
 
-    def __call__(self, command: Command):
+    def __call__(self, command: ExtCommand):
         if command.parent is None:
             # Use state to order these top-level commands since the cog isn't
             # bound yet and therefore we can't query the command count
