@@ -11,8 +11,7 @@ from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
 from sandpiper.common.time import format_date, fuzzy_match_timezone
 from sandpiper.components.user_data import *
-# noinspection PyCompatibility
-from . import commands as bios_commands
+from . import commands as bios_commands  # noqa
 from .strings import *
 
 logger = logging.getLogger(__name__)
