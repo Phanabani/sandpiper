@@ -4,6 +4,8 @@
 *config*.yaml
 !config_example.json
 !config_example.yml
+# External tool configs
+!.*config*.*
 
 logs/
 *.db
