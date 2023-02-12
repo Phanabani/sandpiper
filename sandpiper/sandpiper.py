@@ -10,9 +10,10 @@ import sys
 from typing import Callable, Literal, TypeVar
 
 import discord
-from discord.app_commands import Command, CommandTree, ContextMenu, Group
+from discord.app_commands import Command, ContextMenu, Group
 
 from sandpiper.common.component import Component, MissingComponentError
+from sandpiper.common.discord import LoggingCommandTree
 from sandpiper.components.bios import Bios
 from sandpiper.components.birthdays import Birthdays
 from sandpiper.components.conversion import Conversion
@@ -149,7 +150,7 @@ class Sandpiper(discord.Client):
         )
 
         self._sandpiper_listeners = defaultdict(list)
-        self._command_tree = CommandTree(self)
+        self._command_tree = LoggingCommandTree(self)
         self.components = Components(self)
         self.config = config
 

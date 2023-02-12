@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = [
     "AutoOrder",
+    "LoggingCommandTree",
     "date_handler",
     "privacy_handler",
     "cheap_user_hash",
@@ -16,6 +17,14 @@ import logging
 from typing import Optional, TYPE_CHECKING, cast
 
 import discord
+from discord import Interaction
+from discord.app_commands import (
+    AppCommandError,
+    Command,
+    CommandInvokeError,
+    CommandTree,
+    ContextMenu,
+)
 from discord.ext.commands import BadArgument, Command as ExtCommand
 
 from sandpiper.components.user_data import (
@@ -65,6 +74,52 @@ class AutoOrder:
 
         command.__original_kwargs__["order"] = order
         return command
+
+
+class LoggingCommandTree(CommandTree):
+    async def on_error(
+        self, interaction: Interaction, error: AppCommandError, /
+    ) -> None:
+        inter = interaction
+
+        if not isinstance(error, CommandInvokeError):
+            await ErrorEmbed(str(error)).send(inter)
+            return
+
+        if isinstance(error.original, DatabaseUnavailable):
+            embed = ErrorEmbed(str(DatabaseUnavailable))
+
+        elif isinstance(error.original, UserNotInDatabase):
+            # This user has no row in the database
+            embed = InfoEmbed(
+                "You have no data stored with me. Use the `help` command "
+                "to see all available commands!"
+            )
+
+        elif isinstance(error.original, DatabaseError):
+            embed = ErrorEmbed("Error during database operation.")
+
+        elif isinstance(error.original, UserError):
+            embed = ErrorEmbed(str(error.original))
+
+        else:
+            logger.error(
+                f'Unexpected error in "{inter.command.name}" (data={inter.data})',
+                exc_info=error.original,
+            )
+            embed = ErrorEmbed("Unexpected error.")
+
+        await embed.send(inter)
+
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        # Log interaction
+        inter = interaction
+        if isinstance(inter.command, (Command, ContextMenu)):
+            logging.getLogger(inter.command.module).info(
+                f'Executing command "{inter.command.name}" (author={inter.user} '
+                f"data={inter.data})"
+            )
+        return True
 
 
 def cheap_user_hash(user_id: int) -> int:
