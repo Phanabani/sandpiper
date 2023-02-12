@@ -68,42 +68,6 @@ class Bios(Component):
             raise RuntimeError("UserData cog is not loaded.")
         return await user_data.get_database()
 
-    @commands.Cog.listener()
-    async def on_command_error(
-        self, ctx: commands.Context, error: commands.CommandError
-    ):
-        if isinstance(error, commands.CommandInvokeError):
-            if isinstance(error.original, DatabaseUnavailable):
-                await ErrorEmbed(str(DatabaseUnavailable)).send(ctx)
-
-            elif isinstance(error.original, UserNotInDatabase):
-                # This user has no row in the database
-                await InfoEmbed(
-                    "You have no data stored with me. Use the `help` command "
-                    "to see all available commands!"
-                ).send(ctx)
-
-            elif isinstance(error.original, DatabaseError):
-                await ErrorEmbed("Error during database operation.").send(ctx)
-
-            else:
-                logger.error(
-                    f'Unexpected error in "{ctx.command}" ('
-                    f"content={ctx.message.content!r} "
-                    f"message={ctx.message!r})",
-                    exc_info=error.original,
-                )
-                await ErrorEmbed("Unexpected error.").send(ctx)
-        else:
-            await ErrorEmbed(str(error)).send(ctx)
-
-    @commands.Cog.listener()
-    async def on_command(self, ctx: commands.Context):
-        logger.info(
-            f'Running command "{ctx.command}" (author={ctx.author} '
-            f"content={ctx.message.content!r})"
-        )
-
     @commands.Cog.listener("on_command_completion")
     async def notify_birthdays_component(self, ctx: commands.Context):
         if ctx.command_failed:
