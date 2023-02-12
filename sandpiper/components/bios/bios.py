@@ -59,6 +59,7 @@ class Bios(Component):
         self.sandpiper.add_command(bios_commands.pronouns_group)
         self.sandpiper.add_command(bios_commands.birthday_group)
         self.sandpiper.add_command(bios_commands.age_group)
+        self.sandpiper.add_command(bios_commands.timezone_group)
 
         logger.debug("Setup complete")
 
