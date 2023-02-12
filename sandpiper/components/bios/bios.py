@@ -56,6 +56,7 @@ class Bios(Component):
         self.sandpiper.add_command(bios_commands.bios_group)
         self.sandpiper.add_command(bios_commands.privacy_group)
         self.sandpiper.add_command(bios_commands.name_group)
+        self.sandpiper.add_command(bios_commands.pronouns_group)
 
         logger.debug("Setup complete")
 
