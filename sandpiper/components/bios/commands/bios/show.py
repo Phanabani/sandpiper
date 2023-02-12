@@ -6,11 +6,11 @@ import logging
 
 import discord
 
-from sandpiper.common.discord import piper
 from sandpiper.common.embeds import InfoEmbed
 from sandpiper.common.time import format_date
 from sandpiper.components.bios.strings import user_info_str
 from .bios_group import bios_group
+from .._common.discord import get_id_and_db
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,7 @@ async def show(inter: discord.Interaction) -> None:
     """
     Display all of your personal info stored in Sandpiper.
     """
-    db = await piper(inter).components.user_data.get_database()
-    user_id = inter.user.id
+    user_id, db = await get_id_and_db(inter)
 
     preferred_name = await db.get_preferred_name(user_id)
     pronouns = await db.get_pronouns(user_id)
