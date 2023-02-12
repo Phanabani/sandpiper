@@ -1,2 +1,2 @@
+from . import strings
 from .bios import Bios
-from .strings import *
