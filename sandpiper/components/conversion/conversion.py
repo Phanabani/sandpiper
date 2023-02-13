@@ -7,8 +7,8 @@ from typing import NoReturn, TYPE_CHECKING
 import discord
 import regex
 
-from sandpiper.common.IANA import get_country_flag_emoji_from_timezone
 from sandpiper.common.component import Component
+from sandpiper.common.countries import get_country_flag_emoji_from_timezone
 from sandpiper.common.embeds import *
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import time_format

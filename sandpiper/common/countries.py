@@ -7,36 +7,21 @@ __all__ = [
     "get_country_flag_emoji_from_timezone",
 ]
 
-from operator import setitem
-from pathlib import Path
-from typing import Callable, NoReturn, Union
+from typing import Union
+
+import pytz
 
 from sandpiper.common.time import TimezoneType
 
 DEFAULT_FLAG = ":flag_white:"
 
 
-def _parse_db_file(file_name, per_line: Callable[[dict, list[str]], NoReturn]) -> dict:
-    file = Path(__file__).parent / file_name
-    if not file.exists():
-        raise FileNotFoundError(f"Can't find IANA database file {file}")
-
-    out = {}
-    with file.open("rt") as f:
-        for line in f:
-            if line.startswith("#"):
-                continue
-            per_line(out, line.strip("\n").split("\t"))
-
-    return out
-
-
-country_code_to_country_name: dict[str, str] = _parse_db_file(
-    "iso3166.tab", lambda d, fields: setitem(d, fields[0], fields[1])
-)
-timezone_to_country_code: dict[str, str] = _parse_db_file(
-    "zone.tab", lambda d, fields: setitem(d, fields[2], fields[0])
-)
+country_code_to_country_name = pytz.country_names
+timezone_to_country_code = {
+    tz: country_code
+    for country_code, timezones in pytz.country_timezones.items()
+    for tz in timezones
+}
 
 
 def to_regional_indicator(char: str) -> str:
