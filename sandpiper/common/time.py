@@ -18,8 +18,8 @@ import datetime as dt
 import re
 from typing import Optional, Union, cast
 
-from fuzzywuzzy import fuzz, process as fuzzy_process
 import pytz
+from thefuzz import fuzz, process as fuzzy_process
 import tzlocal
 
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
