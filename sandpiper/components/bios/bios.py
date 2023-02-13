@@ -9,7 +9,7 @@ import discord.ext.commands as commands
 from sandpiper.common.component import Component
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
-from sandpiper.common.time import format_date, fuzzy_match_timezone
+from sandpiper.common.time import fuzzy_match_timezone
 from sandpiper.components.user_data import *
 from . import commands as bios_commands  # noqa
 from .strings import *
@@ -90,84 +90,6 @@ class Bios(Component):
                 logger.debug("No birthdays cog loaded; skipping change notification")
                 return
             await birthdays.notify_change(ctx.author.id)
-
-    # Birthday
-
-    @auto_order
-    @commands.group(
-        name="birthday",
-        invoke_without_command=False,
-        brief="Birthday commands.",
-        help="Commands for managing your birthday.",
-    )
-    async def birthday(self, ctx: commands.Context):
-        pass
-
-    @auto_order
-    @birthday.command(name="show", aliases=_show_aliases, help="Display your birthday.")
-    @maybe_dm_only()
-    async def birthday_show(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        birthday = await db.get_birthday(user_id)
-        birthday = format_date(birthday)
-        privacy = await db.get_privacy_birthday(user_id)
-        await InfoEmbed(user_info_str("Birthday", birthday, privacy)).send(ctx)
-
-    @auto_order
-    @birthday.command(
-        name="set",
-        aliases=_set_aliases,
-        brief="Set your birthday.",
-        help=(
-            "Set your birthday. There are several allowed formats, and some "
-            "allow you to omit your birth year if you are not comfortable with "
-            "adding it (your age will not be calculated)."
-            "\n\n"
-            "See the examples below for valid formats."
-        ),
-        example=(
-            "birthday set 1997-08-27",
-            "birthday set 8 August 1997",
-            "birthday set Aug 8 1997",
-            "birthday set August 8",
-            "birthday set 8 Aug",
-        ),
-    )
-    @maybe_dm_only()
-    async def birthday_set(self, ctx: commands.Context, *, new_birthday: date_handler):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.set_birthday(user_id, new_birthday)
-
-        embed = SuccessEmbed("Birthday set!", join="\n\n")
-
-        # Tell them how their privacy affects their birthday announcement
-        bday_privacy = await db.get_privacy_birthday(user_id)
-        if bday_privacy is PrivacyType.PRIVATE:
-            embed.append(BirthdayExplanations.birthday_is_private_soft_suggest)
-
-        elif bday_privacy is PrivacyType.PUBLIC:
-            embed.append(BirthdayExplanations.birthday_is_public)
-
-            age_privacy = await db.get_privacy_age(user_id)
-            if age_privacy is PrivacyType.PRIVATE:
-                embed.append(BirthdayExplanations.age_is_private)
-            if age_privacy is PrivacyType.PUBLIC:
-                embed.append(BirthdayExplanations.age_is_public)
-
-        await embed.send(ctx)
-
-    @auto_order
-    @birthday.command(
-        name="delete", aliases=_delete_aliases, help="Delete your birthday."
-    )
-    @maybe_dm_only()
-    async def birthday_delete(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.set_birthday(user_id, None)
-        await SuccessEmbed("Birthday deleted!").send(ctx)
 
     # Age
 
