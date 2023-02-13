@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = ["DateTransformer", "TimezoneTransformer"]
 
 from datetime import date
+import logging
 from typing import List, Union
 
 from discord import Interaction
@@ -10,9 +11,10 @@ from discord.app_commands import Choice, Transformer
 import pytz
 from pytz.exceptions import UnknownTimeZoneError
 
-from sandpiper.common.discord.misc import logger
 from sandpiper.common.exceptions import UserError
 from sandpiper.common.time import TimezoneType, fuzzy_match_timezone, parse_date
+
+logger = logging.getLogger(__name__)
 
 
 # noinspection PyAbstractClass,PyMethodMayBeStatic,PyUnusedLocal
