@@ -18,10 +18,12 @@ import discord
 from discord import Interaction, InteractionType
 from discord.app_commands import (
     AppCommandError,
+    CheckFailure,
     Command,
     CommandInvokeError,
     CommandTree,
     ContextMenu,
+    TransformerError,
 )
 from discord.ext.commands import BadArgument, Command as ExtCommand
 
@@ -79,30 +81,31 @@ class LoggingCommandTree(CommandTree):
     ) -> None:
         inter = interaction
 
-        if not isinstance(error, CommandInvokeError):
-            await ErrorEmbed(str(error)).send(inter)
-            return
+        if isinstance(error, CommandInvokeError):
+            error = error.original
+        elif isinstance(error, TransformerError):
+            error = error.__cause__
 
-        if isinstance(error.original, DatabaseUnavailable):
+        if isinstance(error, DatabaseUnavailable):
             embed = ErrorEmbed(str(DatabaseUnavailable))
 
-        elif isinstance(error.original, UserNotInDatabase):
+        elif isinstance(error, UserNotInDatabase):
             # This user has no row in the database
             embed = InfoEmbed(
                 "You have no data stored with me. Use the `help` command "
                 "to see all available commands!"
             )
 
-        elif isinstance(error.original, DatabaseError):
+        elif isinstance(error, DatabaseError):
             embed = ErrorEmbed("Error during database operation.")
 
-        elif isinstance(error.original, UserError):
-            embed = ErrorEmbed(str(error.original))
+        elif isinstance(error, (UserError, CheckFailure)):
+            embed = ErrorEmbed(str(error))
 
         else:
             logger.error(
                 f'Unexpected error in "{inter.command.name}" (data={inter.data})',
-                exc_info=error.original,
+                exc_info=error,
             )
             embed = ErrorEmbed("Unexpected error.")
 
