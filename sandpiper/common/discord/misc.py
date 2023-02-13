@@ -3,7 +3,6 @@ from __future__ import annotations
 __all__ = [
     "AutoOrder",
     "LoggingCommandTree",
-    "DateTransformer",
     "privacy_handler",
     "cheap_user_hash",
     "find_user_in_mutual_guilds",
@@ -12,7 +11,6 @@ __all__ = [
     "piper",
 ]
 
-from datetime import date
 import logging
 from typing import Optional, TYPE_CHECKING, cast
 
@@ -24,19 +22,17 @@ from discord.app_commands import (
     CommandInvokeError,
     CommandTree,
     ContextMenu,
-    Transformer,
 )
 from discord.ext.commands import BadArgument, Command as ExtCommand
 
+from sandpiper.common.embeds import ErrorEmbed, InfoEmbed
+from sandpiper.common.exceptions import UserError
 from sandpiper.components.user_data import (
     DatabaseError,
     DatabaseUnavailable,
     PrivacyType,
     UserNotInDatabase,
 )
-from .embeds import ErrorEmbed, InfoEmbed
-from .exceptions import UserError
-from .time import parse_date
 
 if TYPE_CHECKING:
     from sandpiper import Sandpiper
@@ -125,19 +121,6 @@ class LoggingCommandTree(CommandTree):
 
 def cheap_user_hash(user_id: int) -> int:
     return user_id >> 22
-
-
-# noinspection PyAbstractClass,PyMethodMayBeStatic,PyUnusedLocal
-class DateTransformer(Transformer):
-    async def transform(self, interaction: Interaction, date_str: str) -> date:
-        try:
-            return parse_date(date_str)
-        except ValueError as e:
-            logger.info(f"Failed to parse date (str={date_str!r} reason={e})")
-            raise UserError(
-                "Bad date format. Try something like this: `1997-08-27`, "
-                "`31 Oct`, `June 15 2001`"
-            )
 
 
 def privacy_handler(privacy_str: str) -> PrivacyType:
