@@ -9,7 +9,6 @@ import discord.ext.commands as commands
 from sandpiper.common.component import Component
 from sandpiper.common.discord import *
 from sandpiper.common.embeds import *
-from sandpiper.common.time import fuzzy_match_timezone
 from sandpiper.components.user_data import *
 from . import commands as bios_commands  # noqa
 from .strings import *
@@ -90,103 +89,6 @@ class Bios(Component):
                 logger.debug("No birthdays cog loaded; skipping change notification")
                 return
             await birthdays.notify_change(ctx.author.id)
-
-    # Timezone
-
-    @auto_order
-    @commands.group(
-        name="timezone",
-        invoke_without_command=False,
-        brief="Timezone commands.",
-        help="Commands for managing your timezone.",
-    )
-    async def timezone(self, ctx: commands.Context):
-        pass
-
-    @auto_order
-    @timezone.command(name="show", aliases=_show_aliases, help="Display your timezone.")
-    @maybe_dm_only()
-    async def timezone_show(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        timezone = await db.get_timezone(user_id)
-        privacy = await db.get_privacy_timezone(user_id)
-        await InfoEmbed(user_info_str("Timezone", timezone, privacy)).send(ctx)
-
-    @auto_order
-    @timezone.command(
-        name="set",
-        aliases=_set_aliases,
-        brief="Set your timezone.",
-        help=(
-            "Set your timezone. Don't worry about formatting. Typing the "
-            "name of the nearest major city should be good enough, but you can "
-            "also try your state/country if that doesn't work."
-            "\n\n"
-            "If you're confused, use this website to find your full timezone "
-            "name: http://kevalbhatt.github.io/timezone-picker"
-        ),
-        example=(
-            "timezone set America/New_York",
-            "timezone set new york",
-            "timezone set amsterdam",
-            "timezone set london",
-        ),
-    )
-    @maybe_dm_only()
-    async def timezone_set(self, ctx: commands.Context, *, new_timezone: str):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-
-        tz_matches = fuzzy_match_timezone(
-            new_timezone, best_match_threshold=50, lower_score_cutoff=50, limit=5
-        )
-        if not tz_matches.matches:
-            # No matches
-            raise BadArgument(
-                "Timezone provided doesn't have any close matches. Try "
-                "typing the name of a major city near you or your "
-                "state/country name.\n\n"
-                "If you're stuck, try using this "
-                "[timezone picker](http://kevalbhatt.github.io/timezone-picker/)."
-            )
-
-        if not tz_matches.best_match:
-            # No best match; display other possible matches
-            await ErrorEmbed(
-                [
-                    "Couldn't find a good match for the timezone you entered.",
-                    "\nPossible matches:",
-                    "\n".join([f"- {name}" for name, _ in tz_matches.matches]),
-                ]
-            ).send(ctx)
-            return
-
-        # Display best match with other possible matches
-        await db.set_timezone(user_id, tz_matches.best_match)
-        embed = SuccessEmbed(
-            [
-                f"Timezone set to **{tz_matches.best_match}**!",
-                len(tz_matches.matches) > 1 and "\nOther possible matches:",
-                *[f"- {name}" for name, _ in tz_matches.matches[1:]],
-            ]
-        )
-
-        if await db.get_privacy_timezone(user_id) == PrivacyType.PRIVATE:
-            embed.append("\n" + PrivacyExplanation.get("timezone"))
-
-        await embed.send(ctx)
-
-    @auto_order
-    @timezone.command(
-        name="delete", aliases=_delete_aliases, help="Delete your timezone."
-    )
-    @maybe_dm_only()
-    async def timezone_delete(self, ctx: commands.Context):
-        user_id: int = ctx.author.id
-        db = await self._get_database()
-        await db.set_timezone(user_id, None)
-        await SuccessEmbed("Timezone deleted!").send(ctx)
 
     # region Server commands
 
