@@ -1,6 +1,7 @@
 __all__ = [
     "DEFAULT_FLAG",
-    "country_code_to_country_name",
+    "country_names",
+    "country_name_to_country_code",
     "timezone_to_country_code",
     "to_regional_indicator",
     "get_country_flag_emoji",
@@ -16,7 +17,8 @@ from sandpiper.common.time import TimezoneType
 DEFAULT_FLAG = ":flag_white:"
 
 
-country_code_to_country_name = pytz.country_names
+country_names = tuple(pytz.country_names.values())
+country_name_to_country_code = {name: code for code, name in pytz.country_names.items()}
 timezone_to_country_code = {
     tz: country_code
     for country_code, timezones in pytz.country_timezones.items()
