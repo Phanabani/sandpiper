@@ -15,7 +15,7 @@ import logging
 from typing import Optional, TYPE_CHECKING, cast
 
 import discord
-from discord import Interaction
+from discord import Interaction, InteractionType
 from discord.app_commands import (
     AppCommandError,
     Command,
@@ -111,6 +111,10 @@ class LoggingCommandTree(CommandTree):
     async def interaction_check(self, interaction: Interaction, /) -> bool:
         # Log interaction
         inter = interaction
+
+        if not inter.type == InteractionType.application_command:
+            return True
+
         if isinstance(inter.command, (Command, ContextMenu)):
             logging.getLogger(inter.command.module).info(
                 f'Executing command "{inter.command.name}" (author={inter.user} '
