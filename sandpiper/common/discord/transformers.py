@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-__all__ = ["DateTransformer"]
+__all__ = ["DateTransformer", "TimezoneTransformer"]
 
 from datetime import date
+from typing import List, Union
 
 from discord import Interaction
-from discord.app_commands import Transformer
+from discord.app_commands import Choice, Transformer
+import pytz
+from pytz.exceptions import UnknownTimeZoneError
 
 from sandpiper.common.discord.misc import logger
 from sandpiper.common.exceptions import UserError
-from sandpiper.common.time import parse_date
+from sandpiper.common.time import TimezoneType, fuzzy_match_timezone, parse_date
 
 
 # noinspection PyAbstractClass,PyMethodMayBeStatic,PyUnusedLocal
@@ -23,3 +26,33 @@ class DateTransformer(Transformer):
                 "Bad date format. Try something like this: `1997-08-27`, "
                 "`31 Oct`, `June 15 2001`"
             )
+
+
+# noinspection PyMethodMayBeStatic,PyUnusedLocal
+class TimezoneTransformer(Transformer):
+    MAX_MATCHES = 8
+    BEST_MATCH_THRESHOLD = 75
+    LOWER_SCORE_CUTOFF = 75
+
+    async def autocomplete(
+        self, interaction: Interaction, value: Union[int, float, str], /
+    ) -> List[Choice[int | float | str]]:
+        if len(value) < 3:
+            return []
+
+        tz_matches = fuzzy_match_timezone(
+            value,
+            best_match_threshold=self.BEST_MATCH_THRESHOLD,
+            lower_score_cutoff=self.LOWER_SCORE_CUTOFF,
+            limit=self.MAX_MATCHES,
+        )
+
+        if not tz_matches:
+            return []
+        return [Choice(name=tz[0], value=tz[0]) for tz in tz_matches.matches]
+
+    async def transform(self, interaction: Interaction, tz_name: str) -> TimezoneType:
+        try:
+            return pytz.timezone(tz_name)
+        except UnknownTimeZoneError:
+            raise UserError(f'Timezone "{tz_name}" does not exist')
