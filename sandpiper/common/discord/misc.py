@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __all__ = [
+    "MAX_AUTOCOMPLETE_CHOICES",
     "AutoOrder",
     "LoggingCommandTree",
     "privacy_handler",
@@ -40,6 +41,8 @@ if TYPE_CHECKING:
     from sandpiper import Sandpiper
 
 logger = logging.getLogger(__name__)
+
+MAX_AUTOCOMPLETE_CHOICES = 25
 
 
 class AutoOrder:
