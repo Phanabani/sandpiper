@@ -31,7 +31,6 @@ class PrivacyExplanation:
 
 
 class BirthdayExplanations:
-
     birthday_is_private_soft_suggest = (
         "I can announce when it's your birthday if you change your birthday "
         "privacy to public: `privacy birthday public`"
