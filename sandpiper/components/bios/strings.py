@@ -9,7 +9,6 @@ __all__ = [
 from typing import Any, Optional
 
 import discord
-from discord.ext import commands
 
 from sandpiper.common.discord import find_user_in_mutual_guilds
 from sandpiper.common.misc import join
@@ -64,7 +63,7 @@ def user_info_str(field_name: str, value: Any, privacy: PrivacyType):
 
 
 async def user_names_str(
-    ctx: commands.Context,
+    interaction: discord.Interaction,
     db: Database,
     user_id: int,
     *,
@@ -78,6 +77,8 @@ async def user_names_str(
     or ``display_name`` to optimize the number of operations this function
     has to perform.
     """
+
+    inter = interaction
 
     # Get pronouns
     privacy_pronouns = await db.get_privacy_pronouns(user_id)
@@ -98,21 +99,21 @@ async def user_names_str(
 
     # Get discord username and discriminator
     if username is None:
-        user: discord.User = ctx.bot.get_user(user_id)
+        user: discord.User = inter.client.get_user(user_id)
         if user is not None:
             username = f"{user.name}#{user.discriminator}"
         else:
             username = "`User not found`"
 
-    if ctx.guild is None:
+    if inter.guild is None:
         # Find the user's nicknames on servers they share with the executor
         # of the whois command
-        members = find_user_in_mutual_guilds(ctx.bot, ctx.author.id, user_id)
+        members = find_user_in_mutual_guilds(inter.client, inter.user.id, user_id)
         display_names = ", ".join(m.display_name for m in members)
     else:
         if display_name is None:
             # Find the user's nickname in the current guild ONLY
-            display_names = ctx.guild.get_member(user_id).display_name
+            display_names = inter.guild.get_member(user_id).display_name
         else:
             # Use the passed-in display name
             display_names = display_name
