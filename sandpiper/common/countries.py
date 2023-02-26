@@ -1,6 +1,6 @@
 __all__ = [
     "DEFAULT_FLAG",
-    "CountryProto",
+    "Country",
     "colloquial_country_names",
     "timezone_to_country_code",
     "get_country_flag_emoji_from_timezone",
@@ -17,7 +17,7 @@ from sandpiper.common.time import TimezoneType
 DEFAULT_FLAG = ":flag_white:"
 
 
-class CountryProto(Protocol):
+class Country(Protocol):
     alpha_2: str
     alpha_3: str
     flag: str
@@ -54,15 +54,15 @@ def get_country_flag_emoji_from_timezone(tz: str | TimezoneType) -> str:
         raise TypeError(f"tz must be a str or pytz timezone, got {type(tz)}")
 
     code = timezone_to_country_code.get(tz)
-    country = cast(CountryProto, pycountry.countries.get(alpha_2=code))
+    country = cast(Country, pycountry.countries.get(alpha_2=code))
     if country is None:
         return DEFAULT_FLAG
     return country.flag
 
 
-def fuzzy_match_country(name: str) -> list[CountryProto]:
+def fuzzy_match_country(name: str) -> list[Country]:
     name = colloquial_country_names.get(name.lower(), name)
     try:
-        return cast(list[CountryProto], pycountry.countries.search_fuzzy(name))
+        return cast(list[Country], pycountry.countries.search_fuzzy(name))
     except LookupError:
         return []
