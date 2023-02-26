@@ -1,6 +1,7 @@
 __all__ = [
     "DEFAULT_FLAG",
     "CountryProto",
+    "colloquial_country_names",
     "timezone_to_country_code",
     "get_country_flag_emoji_from_timezone",
 ]
@@ -25,6 +26,18 @@ class CountryProto(Protocol):
     # annotating that properly
     official_name: str | None
 
+
+colloquial_country_names = {
+    "britain": "United Kingdom",
+    "england": "United Kingdom",
+    "north ireland": "United Kingdom",
+    "uk": "United Kingdom",
+    "scotland": "United Kingdom",
+    "wales": "United Kingdom",
+    #
+    "us": "United States",
+    "usa": "United States",
+}
 
 timezone_to_country_code = {
     tz: country_code
