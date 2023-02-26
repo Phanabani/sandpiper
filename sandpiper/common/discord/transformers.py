@@ -24,7 +24,7 @@ class CountryTransformer(Transformer):
     MAX_MATCHES = MAX_AUTOCOMPLETE_CHOICES
 
     async def autocomplete(
-        self, interaction: Interaction, value: int | float | str, /
+        self, interaction: Interaction, value: str, /
     ) -> list[Choice[str]]:
         if len(value) < 2:
             return []
@@ -34,6 +34,7 @@ class CountryTransformer(Transformer):
                 Choice(name=country.name, value=country.alpha_2)
                 for country in country_matches
             ][: self.MAX_MATCHES]
+
         return []
 
     async def transform(
