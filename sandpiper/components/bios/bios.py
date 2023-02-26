@@ -5,21 +5,9 @@ import logging
 import discord.ext.commands as commands
 
 from sandpiper.common.component import Component
-from sandpiper.common.discord import *
-from sandpiper.components.user_data import *
 from . import commands as bios_commands  # noqa
 
 logger = logging.getLogger(__name__)
-
-
-def maybe_dm_only():
-    async def predicate(ctx: commands.Context):
-        bios: Bios = ctx.cog
-        if not bios.allow_public_setting:
-            return await commands.dm_only().predicate(ctx)
-        return True
-
-    return commands.check(predicate)
 
 
 class Bios(Component):
@@ -33,12 +21,6 @@ class Bios(Component):
     """
 
     allow_public_setting: bool
-
-    _show_aliases = ("get",)
-    _set_aliases = ()
-    _delete_aliases = ("clear", "remove")
-
-    auto_order = AutoOrder()
 
     async def setup(self):
         logger.debug("Setting up")
@@ -57,12 +39,6 @@ class Bios(Component):
         self.sandpiper.add_command(bios_commands.whois)
 
         logger.debug("Setup complete")
-
-    async def _get_database(self) -> Database:
-        user_data = self.sandpiper.components.user_data
-        if user_data is None:
-            raise RuntimeError("UserData cog is not loaded.")
-        return await user_data.get_database()
 
     @commands.Cog.listener("on_command_completion")
     async def notify_birthdays_component(self, ctx: commands.Context):
@@ -86,5 +62,3 @@ class Bios(Component):
                 logger.debug("No birthdays cog loaded; skipping change notification")
                 return
             await birthdays.notify_change(ctx.author.id)
-
-    del auto_order
