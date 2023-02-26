@@ -1,19 +1,48 @@
 from __future__ import annotations
 
-__all__ = ["DateTransformer", "TimezoneTransformer"]
+__all__ = ["CountryTransformer", "DateTransformer", "TimezoneTransformer"]
 
 from datetime import date
 import logging
+from typing import cast
 
 from discord import Interaction
 from discord.app_commands import Choice, Transformer
+import pycountry
 import pytz
 from pytz.exceptions import UnknownTimeZoneError
 
+from sandpiper.common.countries import Country, fuzzy_match_country
+from sandpiper.common.discord import MAX_AUTOCOMPLETE_CHOICES
 from sandpiper.common.exceptions import UserError
 from sandpiper.common.time import TimezoneType, fuzzy_match_timezone, parse_date
 
 logger = logging.getLogger(__name__)
+
+
+class CountryTransformer(Transformer):
+    MAX_MATCHES = MAX_AUTOCOMPLETE_CHOICES
+
+    async def autocomplete(
+        self, interaction: Interaction, value: int | float | str, /
+    ) -> list[Choice[str]]:
+        if len(value) < 2:
+            return []
+
+        if country_matches := fuzzy_match_country(value):
+            return [
+                Choice(name=country.name, value=country.alpha_2)
+                for country in country_matches
+            ][: self.MAX_MATCHES]
+        return []
+
+    async def transform(
+        self, interaction: Interaction, country_alpha_2: str
+    ) -> Country:
+        try:
+            return cast(Country, pycountry.countries.get(alpha_2=country_alpha_2))
+        except LookupError:
+            raise UserError(f'Country "{country_alpha_2}" does not exist')
 
 
 # noinspection PyAbstractClass,PyMethodMayBeStatic,PyUnusedLocal
