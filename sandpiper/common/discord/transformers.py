@@ -29,7 +29,6 @@ class DateTransformer(Transformer):
             )
 
 
-# noinspection PyMethodMayBeStatic,PyUnusedLocal
 class TimezoneTransformer(Transformer):
     MAX_MATCHES = 8
     BEST_MATCH_THRESHOLD = 75
@@ -41,15 +40,6 @@ class TimezoneTransformer(Transformer):
         if len(value) < 3:
             return []
 
-        return self._get_by_tz_name(value)
-
-    async def transform(self, interaction: Interaction, tz_name: str) -> TimezoneType:
-        try:
-            return pytz.timezone(tz_name)
-        except UnknownTimeZoneError:
-            raise UserError(f'Timezone "{tz_name}" does not exist')
-
-    def _get_by_tz_name(self, value: int | float | str) -> list[Choice[str]]:
         if tz_matches := fuzzy_match_timezone(
             value,
             best_match_threshold=self.BEST_MATCH_THRESHOLD,
@@ -58,3 +48,9 @@ class TimezoneTransformer(Transformer):
         ):
             return [Choice(name=tz[0], value=tz[0]) for tz in tz_matches.matches]
         return []
+
+    async def transform(self, interaction: Interaction, tz_name: str) -> TimezoneType:
+        try:
+            return pytz.timezone(tz_name)
+        except UnknownTimeZoneError:
+            raise UserError(f'Timezone "{tz_name}" does not exist')
