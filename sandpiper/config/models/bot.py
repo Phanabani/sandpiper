@@ -1,7 +1,7 @@
 __all__ = ["Bot"]
 
 from phanas_pydantic_helpers import Factory
-from pydantic import BaseModel, Field, conint
+from pydantic import BaseModel, conint
 
 from sandpiper.config.models._field_types import SnowflakeField
 
@@ -60,4 +60,4 @@ class Bot(BaseModel):
 
         birthdays: _Birthdays = Factory(_Birthdays)
 
-    components: _Components = Field(_Components, alias="modules")
+    components: _Components = Factory(_Components, alias="modules")
