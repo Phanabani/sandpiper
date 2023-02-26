@@ -1,15 +1,13 @@
 __all__ = [
     "DEFAULT_FLAG",
-    "country_names",
-    "country_name_to_country_code",
+    "CountryProto",
     "timezone_to_country_code",
-    "to_regional_indicator",
-    "get_country_flag_emoji",
     "get_country_flag_emoji_from_timezone",
 ]
 
-from typing import Union
+from typing import Protocol, cast, get_args
 
+import pycountry
 import pytz
 
 from sandpiper.common.time import TimezoneType
@@ -17,8 +15,17 @@ from sandpiper.common.time import TimezoneType
 DEFAULT_FLAG = ":flag_white:"
 
 
-country_names = tuple(pytz.country_names.values())
-country_name_to_country_code = {name: code for code, name in pytz.country_names.items()}
+class CountryProto(Protocol):
+    alpha_2: str
+    alpha_3: str
+    flag: str
+    name: str
+    numeric: str
+    # This attr won't be `None` -- it won't exist, but I have no way of
+    # annotating that properly
+    official_name: str | None
+
+
 timezone_to_country_code = {
     tz: country_code
     for country_code, timezones in pytz.country_timezones.items()
@@ -26,24 +33,14 @@ timezone_to_country_code = {
 }
 
 
-def to_regional_indicator(char: str) -> str:
-    code = ord(char)
-    if code < 65 or code > 90:
-        raise ValueError("char must be a single char from A-Z")
-    return chr(code + 127397)
-
-
-def get_country_flag_emoji(country_id: str) -> str:
-    if len(country_id) != 2:
-        raise ValueError("country_id must be a 2-character string")
-    return "".join(to_regional_indicator(i) for i in country_id)
-
-
-def get_country_flag_emoji_from_timezone(tz: Union[str, TimezoneType]):
-    if isinstance(tz, TimezoneType.__args__):
+def get_country_flag_emoji_from_timezone(tz: str | TimezoneType) -> str:
+    if isinstance(tz, get_args(TimezoneType)):
         tz: str = tz.zone
     elif not isinstance(tz, str):
         raise TypeError(f"tz must be a str or pytz timezone, got {type(tz)}")
 
     code = timezone_to_country_code.get(tz)
-    return get_country_flag_emoji(code) if code is not None else DEFAULT_FLAG
+    country = cast(CountryProto, pycountry.countries.get(alpha_2=code))
+    if country is None:
+        return DEFAULT_FLAG
+    return country.flag
