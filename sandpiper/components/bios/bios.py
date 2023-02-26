@@ -2,8 +2,6 @@ __all__ = ["Bios"]
 
 import logging
 
-import discord.ext.commands as commands
-
 from sandpiper.common.component import Component
 from . import commands as bios_commands  # noqa
 
@@ -39,26 +37,3 @@ class Bios(Component):
         self.sandpiper.add_command(bios_commands.whois)
 
         logger.debug("Setup complete")
-
-    @commands.Cog.listener("on_command_completion")
-    async def notify_birthdays_component(self, ctx: commands.Context):
-        if ctx.command_failed:
-            # Not sure if this is possible here but might as well check
-            return
-
-        if ctx.command.qualified_name in (
-            "birthday set",
-            "timezone set",
-            "privacy all",
-            "privacy birthday",
-            "privacy timezone",
-        ):
-            logger.debug(
-                f"Notifying birthdays cog about change from command "
-                f"{ctx.command.qualified_name} (user_id={ctx.author.id})"
-            )
-            birthdays = self.sandpiper.components.birthdays
-            if birthdays is None:
-                logger.debug("No birthdays cog loaded; skipping change notification")
-                return
-            await birthdays.notify_change(ctx.author.id)

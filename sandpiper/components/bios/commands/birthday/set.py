@@ -12,11 +12,13 @@ from sandpiper.components.bios.strings import BirthdayExplanations
 from sandpiper.components.user_data import PrivacyType
 from .birthday_group import birthday_group
 from .._common.discord import get_id_and_db
+from .._common.notify_birthdays_component import notify_birthdays_component
 
 logger = logging.getLogger(__name__)
 
 
 @birthday_group.command()
+@notify_birthdays_component
 async def set(
     inter: discord.Interaction, new_birthday: Transform[dt.datetime, DateTransformer]
 ) -> None:

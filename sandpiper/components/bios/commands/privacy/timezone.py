@@ -8,11 +8,13 @@ from sandpiper.common.embeds import SuccessEmbed
 from sandpiper.components.user_data import PrivacyType
 from .privacy_group import privacy_group
 from .._common.discord import get_id_and_db
+from .._common.notify_birthdays_component import notify_birthdays_component
 
 logger = logging.getLogger(__name__)
 
 
 @privacy_group.command()
+@notify_birthdays_component
 async def timezone(inter: discord.Interaction, new_privacy: PrivacyType) -> None:
     """
     Set the privacy of your timezone to either 'private' or 'public'

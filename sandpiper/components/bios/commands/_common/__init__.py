@@ -1,1 +1,1 @@
-from . import discord
+from . import discord, notify_birthdays_component

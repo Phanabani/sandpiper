@@ -12,11 +12,13 @@ from sandpiper.components.bios.strings import PrivacyExplanation
 from sandpiper.components.user_data import PrivacyType
 from .timezone_group import timezone_group
 from .._common.discord import get_id_and_db
+from .._common.notify_birthdays_component import notify_birthdays_component
 
 logger = logging.getLogger(__name__)
 
 
 @timezone_group.command()
+@notify_birthdays_component
 async def set(
     inter: discord.Interaction,
     new_timezone: Transform[TimezoneType, TimezoneTransformer],
