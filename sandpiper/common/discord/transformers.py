@@ -33,7 +33,14 @@ class CountryTransformer(Transformer):
 
         if country_matches := fuzzy_match_country(value):
             return [
-                Choice(name=country.name, value=country.alpha_2)
+                Choice(
+                    name=(
+                        country.common_name
+                        if hasattr(country, "common_name")
+                        else country.name
+                    ),
+                    value=country.alpha_2,
+                )
                 for country in country_matches
             ][: self.MAX_MATCHES]
 
