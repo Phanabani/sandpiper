@@ -21,7 +21,7 @@ from sandpiper.components.user_data import DatabaseUnavailable
 if TYPE_CHECKING:
     from sandpiper import Sandpiper
 
-logger = logging.getLogger("sandpiper.unit_conversion")
+logger = logging.getLogger(__name__)
 
 conversion_pattern = regex.compile(
     # Skip anything inside a code block

@@ -22,7 +22,7 @@ from sandpiper.components.user_data import UserData
 from sandpiper.config import Bot as BotConfig
 from sandpiper.config.loader import load_config
 
-logger = logging.getLogger("sandpiper")
+logger = logging.getLogger(__name__)
 
 T_Component = TypeVar("T_Component", bound=Component)
 

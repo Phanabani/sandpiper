@@ -12,7 +12,7 @@ from sandpiper.common.misc import RuntimeMessages
 from sandpiper.common.time import *
 from sandpiper.components.user_data import Database
 
-logger = logging.getLogger("sandpiper.conversion.time_conversion")
+logger = logging.getLogger(__name__)
 
 T_ConvertedTimes = list[tuple[str, list[dt.datetime]]]
 T_ConvertedTimesGroupedUnderInputTimezones = list[

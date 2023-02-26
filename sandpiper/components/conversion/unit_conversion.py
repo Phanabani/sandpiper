@@ -15,7 +15,7 @@ from pint import (
 from sandpiper.common.misc import RuntimeMessages
 from sandpiper.components.conversion.unit_map import UnitMap
 
-logger = logging.getLogger("sandpiper.conversion.unit_conversion")
+logger = logging.getLogger(__name__)
 
 ureg = UnitRegistry(
     autoconvert_offset_to_baseunit=True, non_int_type=Decimal  # For temperatures
