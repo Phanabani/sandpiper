@@ -20,11 +20,13 @@ DEFAULT_FLAG = ":flag_white:"
 class Country(Protocol):
     alpha_2: str
     alpha_3: str
+    # This attr won't be `None` -- it won't exist, but I have no way of
+    # annotating that properly
+    common_name: str | None
     flag: str
     name: str
     numeric: str
-    # This attr won't be `None` -- it won't exist, but I have no way of
-    # annotating that properly
+    # May not exist
     official_name: str | None
 
 
