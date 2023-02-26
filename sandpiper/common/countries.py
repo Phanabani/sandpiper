@@ -4,6 +4,7 @@ __all__ = [
     "colloquial_country_names",
     "timezone_to_country_code",
     "get_country_flag_emoji_from_timezone",
+    "fuzzy_match_country",
 ]
 
 from typing import Protocol, cast, get_args
@@ -57,3 +58,11 @@ def get_country_flag_emoji_from_timezone(tz: str | TimezoneType) -> str:
     if country is None:
         return DEFAULT_FLAG
     return country.flag
+
+
+def fuzzy_match_country(name: str) -> list[CountryProto]:
+    name = colloquial_country_names.get(name.lower(), name)
+    try:
+        return cast(list[CountryProto], pycountry.countries.search_fuzzy(name))
+    except LookupError:
+        return []
