@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __all__ = [
     "MAX_AUTOCOMPLETE_CHOICES",
-    "AutoOrder",
     "LoggingCommandTree",
     "privacy_handler",
     "cheap_user_hash",
@@ -26,7 +25,7 @@ from discord.app_commands import (
     ContextMenu,
     TransformerError,
 )
-from discord.ext.commands import BadArgument, Command as ExtCommand
+from discord.ext.commands import BadArgument
 
 from sandpiper.common.embeds import ErrorEmbed, InfoEmbed
 from sandpiper.common.exceptions import UserError
@@ -43,39 +42,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 MAX_AUTOCOMPLETE_CHOICES = 25
-
-
-class AutoOrder:
-    """
-    Decorate commands/groups with an instance of this class to magically
-    order them in definition-order in Sandpiper's help command! You should use
-    a new instance of this class for each cog to ensure top-level
-    commands/groups get ordered correctly.
-
-    This can also be done manually by adding an ``order`` kwarg in the
-    command/group decorator call.
-
-    Technically, it adds an 'order' key to the command's __original_kwargs__
-    dict, as this is perhaps the only attribute that persists across command
-    copies (commands are apparently copied for each help command invocation,
-    therefore we lose any other attributes we may set, like a command.order).
-    """
-
-    def __init__(self):
-        self.top_level_order = 0
-
-    def __call__(self, command: ExtCommand):
-        if command.parent is None:
-            # Use state to order these top-level commands since the cog isn't
-            # bound yet and therefore we can't query the command count
-            order = self.top_level_order
-            self.top_level_order += 1
-        else:
-            # Order by parent's commands count
-            order = len(command.parent.commands) - 1
-
-        command.__original_kwargs__["order"] = order
-        return command
 
 
 class LoggingCommandTree(CommandTree):
