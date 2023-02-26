@@ -21,7 +21,6 @@ from sandpiper.components.upgrades import Upgrades
 from sandpiper.components.user_data import UserData
 from sandpiper.config import Bot as BotConfig
 from sandpiper.config.loader import load_config
-from sandpiper.help import HelpCommand
 
 logger = logging.getLogger("sandpiper")
 
@@ -146,7 +145,6 @@ class Sandpiper(discord.Client):
             log_handler=None,
             # Bot params
             description=config.description,
-            help_command=HelpCommand(),
         )
 
         self._sandpiper_listeners = defaultdict(list)
