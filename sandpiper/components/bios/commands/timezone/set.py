@@ -5,7 +5,8 @@ import logging
 import discord
 from discord.app_commands import Transform
 
-from sandpiper.common.discord import TimezoneTransformer
+from sandpiper.common.countries import Country
+from sandpiper.common.discord import CountryTransformer, TimezoneTransformer
 from sandpiper.common.embeds import SuccessEmbed
 from sandpiper.common.time import TimezoneType
 from sandpiper.components.bios.strings import PrivacyExplanation
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 @notify_birthdays_component
 async def set(
     inter: discord.Interaction,
+    country: Transform[Country, CountryTransformer],  # noqa: F841
     new_timezone: Transform[TimezoneType, TimezoneTransformer],
 ) -> None:
     """
