@@ -4,7 +4,6 @@ __all__ = ["DateTransformer", "TimezoneTransformer"]
 
 from datetime import date
 import logging
-from typing import List, Union
 
 from discord import Interaction
 from discord.app_commands import Choice, Transformer
@@ -37,24 +36,25 @@ class TimezoneTransformer(Transformer):
     LOWER_SCORE_CUTOFF = 75
 
     async def autocomplete(
-        self, interaction: Interaction, value: Union[int, float, str], /
-    ) -> List[Choice[int | float | str]]:
+        self, interaction: Interaction, value: int | float | str, /
+    ) -> list[Choice[str]]:
         if len(value) < 3:
             return []
 
-        tz_matches = fuzzy_match_timezone(
-            value,
-            best_match_threshold=self.BEST_MATCH_THRESHOLD,
-            lower_score_cutoff=self.LOWER_SCORE_CUTOFF,
-            limit=self.MAX_MATCHES,
-        )
-
-        if not tz_matches:
-            return []
-        return [Choice(name=tz[0], value=tz[0]) for tz in tz_matches.matches]
+        return self._get_by_tz_name(value)
 
     async def transform(self, interaction: Interaction, tz_name: str) -> TimezoneType:
         try:
             return pytz.timezone(tz_name)
         except UnknownTimeZoneError:
             raise UserError(f'Timezone "{tz_name}" does not exist')
+
+    def _get_by_tz_name(self, value: int | float | str) -> list[Choice[str]]:
+        if tz_matches := fuzzy_match_timezone(
+            value,
+            best_match_threshold=self.BEST_MATCH_THRESHOLD,
+            lower_score_cutoff=self.LOWER_SCORE_CUTOFF,
+            limit=self.MAX_MATCHES,
+        ):
+            return [Choice(name=tz[0], value=tz[0]) for tz in tz_matches.matches]
+        return []
