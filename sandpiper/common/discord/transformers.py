@@ -11,11 +11,13 @@ from discord.app_commands import Choice, Transformer
 import pycountry
 import pytz
 from pytz.exceptions import UnknownTimeZoneError
+from thefuzz import fuzz
+from thefuzz.process import extractBests
 
 from sandpiper.common.countries import Country, fuzzy_match_country
 from sandpiper.common.discord import MAX_AUTOCOMPLETE_CHOICES
 from sandpiper.common.exceptions import UserError
-from sandpiper.common.time import TimezoneType, fuzzy_match_timezone, parse_date
+from sandpiper.common.time import TimezoneType, parse_date
 
 logger = logging.getLogger(__name__)
 
@@ -60,27 +62,63 @@ class DateTransformer(Transformer):
 
 
 class TimezoneTransformer(Transformer):
-    MAX_MATCHES = 8
-    BEST_MATCH_THRESHOLD = 75
-    LOWER_SCORE_CUTOFF = 75
+    FUZZY_MAX_MATCHES = 8
+    FUZZY_SCORE_CUTOFF = 75
 
     async def autocomplete(
-        self, interaction: Interaction, value: int | float | str, /
+        self, interaction: Interaction, value: str, /
     ) -> list[Choice[str]]:
-        if len(value) < 3:
-            return []
-
-        if tz_matches := fuzzy_match_timezone(
-            value,
-            best_match_threshold=self.BEST_MATCH_THRESHOLD,
-            lower_score_cutoff=self.LOWER_SCORE_CUTOFF,
-            limit=self.MAX_MATCHES,
-        ):
-            return [Choice(name=tz[0], value=tz[0]) for tz in tz_matches.matches]
-        return []
+        if (country_code := interaction.namespace.country) is not None:
+            # NOTE: Discord caches autocomplete results based on each argument
+            # value, so if the user enters a country, starts autocompleting
+            # timezone, then changes country, the cache won't change. They need
+            # to restart the command entering process or type in a new value
+            # to set updated results.
+            return self._get_tz_by_country(value, country_code)
+        # No country supplied, so fuzzy match instead
+        return self._try_get_fuzzy_timezone(value)
 
     async def transform(self, interaction: Interaction, tz_name: str) -> TimezoneType:
         try:
             return pytz.timezone(tz_name)
         except UnknownTimeZoneError:
             raise UserError(f'Timezone "{tz_name}" does not exist')
+
+    @staticmethod
+    def _fuzzy_match(
+        name: str,
+        options: list[str],
+        *,
+        score_cutoff: int = FUZZY_SCORE_CUTOFF,
+        limit: int = FUZZY_MAX_MATCHES,
+    ) -> list[Choice[str]]:
+        matches = cast(
+            list[tuple[str, int]],
+            extractBests(
+                name,
+                options,
+                scorer=fuzz.partial_token_sort_ratio,
+                score_cutoff=score_cutoff,
+                limit=limit,
+            ),
+        )
+        return [Choice(name=i[0], value=i[0]) for i in matches]
+
+    def _get_tz_by_country(self, value: str, country_code: str):
+        # This dict lookup could possibly raise KeyError, which is handled
+        country_timezones = pytz.country_timezones[country_code]
+
+        if len(value) == 0:
+            return [Choice(name=tz, value=tz) for tz in country_timezones][
+                :MAX_AUTOCOMPLETE_CHOICES
+            ]
+
+        return self._fuzzy_match(
+            value, country_timezones, limit=MAX_AUTOCOMPLETE_CHOICES
+        )
+
+    def _try_get_fuzzy_timezone(self, value: str) -> list[Choice[str]]:
+        if len(value) < 3:
+            return []
+
+        return self._fuzzy_match(value, pytz.common_timezones)
