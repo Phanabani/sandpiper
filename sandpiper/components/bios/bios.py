@@ -3,7 +3,6 @@ __all__ = ["Bios"]
 import logging
 
 import discord
-from discord.ext.commands import BadArgument
 import discord.ext.commands as commands
 
 from sandpiper.common.component import Component
@@ -58,6 +57,7 @@ class Bios(Component):
         self.sandpiper.add_command(bios_commands.age_group)
         self.sandpiper.add_command(bios_commands.timezone_group)
         self.sandpiper.add_command(bios_commands.birthday_channel_group)
+        self.sandpiper.add_command(bios_commands.whois)
 
         logger.debug("Setup complete")
 
@@ -175,90 +175,5 @@ class Bios(Component):
         await SuccessEmbed("Birthday channel deleted!").send(ctx)
 
     # endregion
-    # endregion
-
-    # Extra commands
-
-    @auto_order
-    @commands.command(
-        name="whois",
-        brief="Search for a user.",
-        help=(
-            "Search for a user by one of their names. Outputs a list of "
-            "matching users, showing their preferred name, Discord username, "
-            "and nicknames in servers you share with them."
-        ),
-        example="whois phana",
-    )
-    async def whois(self, ctx: commands.Context, *, name: str):
-        if len(name) < 2:
-            raise BadArgument("Name must be at least 2 characters.")
-
-        db = await self._get_database()
-
-        user_strs = []
-        seen_users = set()
-
-        def should_skip_user(user_id: int, *, skip_guild_check=False):
-            """
-            Filter out users that have already been seen or who aren't in the
-            guild.
-
-            :param user_id: the target user that's been found by the search
-                functions
-            :param skip_guild_check: whether to skip the process of ensuring
-                the target and executor exist in mutual guilds (for
-                optimization)
-            """
-            if user_id in seen_users:
-                return True
-            seen_users.add(user_id)
-            if not skip_guild_check:
-                if ctx.guild:
-                    # We're in a guild, so don't allow users from other guilds
-                    # to be found
-                    if not ctx.guild.get_member(user_id):
-                        return True
-                else:
-                    # We're in DMs, so check if the executor shares a guild
-                    # with the target
-                    if not find_user_in_mutual_guilds(
-                        ctx.bot, ctx.author.id, user_id, short_circuit=True
-                    ):
-                        # Executor doesn't share a guild with target
-                        return True
-            return False
-
-        for user_id, preferred_name in await db.find_users_by_preferred_name(name):
-            # Get preferred names from database
-            if should_skip_user(user_id):
-                continue
-            names = await user_names_str(
-                ctx, db, user_id, preferred_name=preferred_name
-            )
-            user_strs.append(names)
-
-        for user_id, display_name in find_users_by_display_name(
-            ctx.bot, ctx.author.id, name, guild=ctx.guild
-        ):
-            # Get display names from guilds
-            # This search function filters out non-mutual-guild users as part
-            # of its optimization, so we don't need to do that again
-            if should_skip_user(user_id, skip_guild_check=True):
-                continue
-            names = await user_names_str(ctx, db, user_id, display_name=display_name)
-            user_strs.append(names)
-
-        for user_id, username in find_users_by_username(ctx.bot, name):
-            # Get usernames from client
-            if should_skip_user(user_id):
-                continue
-            names = await user_names_str(ctx, db, user_id, username=username)
-            user_strs.append(names)
-
-        if user_strs:
-            await InfoEmbed(user_strs).send(ctx)
-        else:
-            await ErrorEmbed("No users found with this name.").send(ctx)
 
     del auto_order
