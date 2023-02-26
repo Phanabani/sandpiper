@@ -3,7 +3,6 @@ from __future__ import annotations
 __all__ = [
     "MAX_AUTOCOMPLETE_CHOICES",
     "LoggingCommandTree",
-    "privacy_handler",
     "cheap_user_hash",
     "find_user_in_mutual_guilds",
     "find_users_by_display_name",
@@ -25,14 +24,12 @@ from discord.app_commands import (
     ContextMenu,
     TransformerError,
 )
-from discord.ext.commands import BadArgument
 
 from sandpiper.common.embeds import ErrorEmbed, InfoEmbed
 from sandpiper.common.exceptions import UserError
 from sandpiper.components.user_data import (
     DatabaseError,
     DatabaseUnavailable,
-    PrivacyType,
     UserNotInDatabase,
 )
 
@@ -97,15 +94,6 @@ class LoggingCommandTree(CommandTree):
 
 def cheap_user_hash(user_id: int) -> int:
     return user_id >> 22
-
-
-def privacy_handler(privacy_str: str) -> PrivacyType:
-    privacy_str = privacy_str.upper()
-    try:
-        return PrivacyType[privacy_str]
-    except KeyError:
-        privacy_names = [n.lower() for n in PrivacyType.__members__.keys()]
-        raise BadArgument(f"Privacy must be one of {privacy_names}")
 
 
 def find_user_in_mutual_guilds(
