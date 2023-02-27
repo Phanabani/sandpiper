@@ -92,33 +92,31 @@ class Conversion(Component):
             )
             return conversion_output.failed
 
-        if conversion_output.conversions:
-            # Send successful conversions
-            output = []
-            for conversion in conversion_output.conversions:
-                # There may be multiple input timezones
-                # We will group them under a header of that timezone name
-                if conversion.input_timezone_name is not None:
-                    # But if no input timezone was specified, don't print any
-                    # header
-                    output.append(
-                        f"Using timezone **{conversion.input_timezone_name}**"
-                    )
+        # Send successful conversions
+        output = []
+        for conversion in conversion_output.conversions:
+            # There may be multiple input timezones
+            # We will group them under a header of that timezone name
+            if conversion.input_timezone_name is not None:
+                # But if no input timezone was specified, don't print any
+                # header
+                output.append(f"Using timezone **{conversion.input_timezone_name}**")
 
-                for converted_time in conversion.converted_times:
-                    # Print the converted times for each timezone on a new line
-                    times = "  |  ".join(
-                        f"`{t.strftime(time_format)}`" for t in converted_time.datetimes
-                    )
-                    flag = get_country_flag_emoji_from_timezone(
-                        converted_time.output_timezone_name
-                    )
-                    output.append(
-                        f"{flag}  **{converted_time.output_timezone_name}**  -  {times}"
-                    )
+            for converted_time in conversion.converted_times:
+                # Print the converted times for each timezone on a new line
+                times = "  |  ".join(
+                    f"`{t.strftime(time_format)}`" for t in converted_time.datetimes
+                )
+                flag = get_country_flag_emoji_from_timezone(
+                    converted_time.output_timezone_name
+                )
+                output.append(
+                    f"{flag}  **{converted_time.output_timezone_name}**  -  {times}"
+                )
 
-                output.append("")
+            output.append("")
 
+        if output:
             await msg.channel.send("\n".join(output[:-1]))
 
         return conversion_output.failed
