@@ -22,8 +22,8 @@ pyyaml = "^6.0"
 regex = "2021.11.10"
 semver = "^2.13.0"
 SQLAlchemy = "^1.4.22"
-tzlocal = "^4.1"
 thefuzz = {extras = ["speedup"], version = "^0.19.0"}
+tzlocal = "^4.1"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^6.2"
