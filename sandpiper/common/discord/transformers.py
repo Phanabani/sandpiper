@@ -17,7 +17,7 @@ from thefuzz.process import extractBests
 from sandpiper.common.countries import Country, fuzzy_match_country
 from sandpiper.common.discord import MAX_AUTOCOMPLETE_CHOICES
 from sandpiper.common.exceptions import UserError
-from sandpiper.common.time import TimezoneType, parse_date
+from sandpiper.common.time import TimezoneType, get_tz_by_colloquial_name, parse_date
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +120,23 @@ class TimezoneTransformer(Transformer):
                 :MAX_AUTOCOMPLETE_CHOICES
             ]
 
-        return self._fuzzy_match(
-            value, country_timezones, limit=MAX_AUTOCOMPLETE_CHOICES
+        colloquial_match = get_tz_by_colloquial_name(value, country_code)
+
+        matches = self._fuzzy_match(
+            value,
+            country_timezones,
+            limit=MAX_AUTOCOMPLETE_CHOICES - bool(colloquial_match),
         )
+
+        if colloquial_match:
+            matches.insert(
+                0,
+                Choice(
+                    name=f'{colloquial_match} (AKA "{value}")', value=colloquial_match
+                ),
+            )
+
+        return matches
 
     def _try_get_fuzzy_timezone(self, value: str) -> list[Choice[str]]:
         if len(value) < 3:
