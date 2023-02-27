@@ -12,6 +12,7 @@ python = "^3.10"
 
 aiosqlite = "^0.18.0"
 alembic = "^1.7.5"
+attrs = "^22.2.0"
 "discord.py" = "^2"
 phanas-pydantic-helpers = "^2.1.0"
 Pint = "^0.20.1"
