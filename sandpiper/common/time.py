@@ -1,5 +1,7 @@
 __all__ = [
     "TimezoneType",
+    "colloquial_timezones",
+    "get_tz_by_colloquial_name",
     "no_zeropad",
     "time_format",
     "parse_time",
@@ -115,6 +117,29 @@ months = {
     "nov": 11,
     "dec": 12,
 }
+
+colloquial_timezones = {
+    None: {
+        "gmt": "UTC",
+    },
+    "US": {
+        **{k: "America/New_York" for k in ("eastern", "et", "est", "edt")},
+        **{k: "America/Chicago" for k in ("central", "ct", "cst", "cdt")},
+        **{k: "America/Denver" for k in ("mountain", "mt", "mst", "mdt")},
+        **{k: "America/Los_Angeles" for k in ("pacific", "pt", "pst", "pdt")},
+    },
+}
+
+
+def get_tz_by_colloquial_name(tz_name: str, country_name: str) -> str | None:
+    tz_name = tz_name.lower()
+    try:
+        # Colloquial timezones in the None-keyed dict take precedence over
+        # country-based timezones
+        return colloquial_timezones[None][tz_name]
+    except KeyError:
+        return colloquial_timezones.get(country_name, {}).get(tz_name, None)
+
 
 try:
     # Unix strip zero-padding
