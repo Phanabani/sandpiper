@@ -26,7 +26,11 @@ async def set(
     new_timezone: Transform[TimezoneType, TimezoneTransformer],
 ) -> None:
     """
-    Set your timezone (usually your nearest major city)
+    Set your timezone
+
+    :param inter: the interaction
+    :param country: Your timezone's country
+    :param new_timezone: Your timezone (usually your nearest major city)
     """
     user_id, db = await get_id_and_db(inter)
 

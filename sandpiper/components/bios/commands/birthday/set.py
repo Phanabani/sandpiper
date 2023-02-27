@@ -23,7 +23,11 @@ async def set(
     inter: discord.Interaction, new_birthday: Transform[dt.datetime, DateTransformer]
 ) -> None:
     """
-    Set your birthday. Birth year is optional. (e.g. "Aug 27 1997", "27 August", "1997-08-27")
+    Set your birthday
+
+    :param inter: the interaction
+    :param new_birthday: Your birthday (year is optional, e.g. "Aug 27 1997",
+        "27 August", "1997-08-27")
     """
     user_id, db = await get_id_and_db(inter)
 

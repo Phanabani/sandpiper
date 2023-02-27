@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 @pronouns_group.command()
 async def set(inter: discord.Interaction, new_pronouns: str) -> None:
     """
-    Set your pronouns (must be 64 characters or less)
+    Set your pronouns
+
+    :param inter: the interaction
+    :param new_pronouns: Your pronouns (must be 64 characters or fewer, e.g.
+        "She/They", "He/Him", "Xe/Xem/Xyr", "Void")
     """
     if len(new_pronouns) > 64:
         raise UserError(

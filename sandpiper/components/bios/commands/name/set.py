@@ -17,7 +17,10 @@ logger = logging.getLogger(__name__)
 @name_group.command()
 async def set(inter: discord.Interaction, new_name: str) -> None:
     """
-    Set your preferred name (must be 64 characters or less)
+    Set your preferred name
+
+    :param inter: the interaction
+    :param new_name: Your preferred name (must be 64 characters or fewer)
     """
     if len(new_name) > 64:
         raise UserError(f"Name must be 64 characters or less (yours: {len(new_name)}).")
