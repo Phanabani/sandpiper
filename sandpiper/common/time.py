@@ -30,7 +30,7 @@ time_pattern = re.compile(
     (?P<hour>[0-2]?\d)
     (?::?(?P<minute>\d{2}))?
     \s*
-    (?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?
+    (?:(?P<period_am>am?)|(?P<period_pm>pm?))?
     $
     """,
     re.I | re.X,
@@ -46,8 +46,8 @@ time_pattern_with_timezone = re.compile(
             (?P<minute>\d{2})
         )?
         (?:\ ?(?P<period>
-            (?P<period_am>a|am)
-            |(?P<period_pm>p|pm)
+            (?P<period_am>am?)
+            |(?P<period_pm>pm?)
         ))?
         |(?P<keyword>
             (?P<now>now)
