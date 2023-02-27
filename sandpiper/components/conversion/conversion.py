@@ -124,21 +124,22 @@ class Conversion(Component):
         return conversion_output.failed
 
     async def convert_measurements(
-        self, channel: discord.TextChannel, quantity_strs: list[RawQuantity]
+        self, channel: discord.TextChannel, raw_quantities: list[RawQuantity]
     ) -> NoReturn:
         """
         Convert a list of quantity strings (like "5 km") between imperial and
         metric and reply with the conversions.
 
         :param channel: Discord channel to send conversions message to
-        :param quantity_strs: a list of strings that may be valid quantities
+        :param raw_quantities: a list of `RawQuantity`s that may be valid
+            quantities
         :returns: a list of strings that could not be converted
         """
 
         conversions = []
         failed: list[RawQuantity] = []
         runtime_msgs = RuntimeMessages()
-        for raw_quantity in quantity_strs:
+        for raw_quantity in raw_quantities:
             q = unit_conversion.convert_measurement(
                 raw_quantity.quantity, raw_quantity.suffix, runtime_msgs=runtime_msgs
             )
