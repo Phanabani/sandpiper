@@ -17,5 +17,5 @@ class BirthdayChannelGroup(app_commands.Group):
 
 # Admins only
 birthday_channel_group = BirthdayChannelGroup(
-    name="birthday_channel", default_permissions=None, guild_only=True
+    name="birthday-channel", default_permissions=None, guild_only=True
 )
