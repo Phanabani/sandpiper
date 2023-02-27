@@ -25,69 +25,80 @@ import tzlocal
 TimezoneType = Union[pytz.tzinfo.StaticTzInfo, pytz.tzinfo.DstTzInfo]
 
 time_pattern = re.compile(
-    r"^"
-    r"(?P<hour>[0-2]?\d)"
-    r"(?::?(?P<minute>\d{2}))?"
-    r"\s*"
-    r"(?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?"
-    r"$",
-    re.I,
+    r"""
+    ^
+    (?P<hour>[0-2]?\d)
+    (?::?(?P<minute>\d{2}))?
+    \s*
+    (?:(?P<period_am>a|am)|(?P<period_pm>p|pm))?
+    $
+    """,
+    re.I | re.X,
 )
 
 time_pattern_with_timezone = re.compile(
-    r"^"
-    r"(?:"
-    r"(?P<hour>[0-2]?\d)"
-    r"(?:"
-    r"(?P<colon>:)?"
-    r"(?P<minute>\d{2})"
-    r")?"
-    r"(?: ?(?P<period>"
-    r"(?P<period_am>a|am)"
-    r"|(?P<period_pm>p|pm)"
-    r"))?"
-    r"|(?P<keyword>"
-    r"(?P<now>now)"
-    r"|(?P<noon>noon)"
-    r"|(?P<midnight>midnight)"
-    r")"
-    r")"
-    r"(?(period)"
-    r" (?P<timezone1>\S.*)"
-    r"|(?(colon)"
-    r" (?P<timezone2>\S.*)"
-    r"|(?(keyword)"
-    r" (?P<timezone_keyword>\S.*)"
-    r")"
-    r")"
-    r")?"
-    r"$",
-    re.I,
+    r"""
+    ^
+    (?:
+        (?P<hour>[0-2]?\d)
+        (?:
+            (?P<colon>:)?
+            (?P<minute>\d{2})
+        )?
+        (?:\ ?(?P<period>
+            (?P<period_am>a|am)
+            |(?P<period_pm>p|pm)
+        ))?
+        |(?P<keyword>
+            (?P<now>now)
+            |(?P<noon>noon)
+            |(?P<midnight>midnight)
+        )
+    )
+    (?(period)
+        \ (?P<timezone1>\S.*)
+        |(?(colon)
+            \ (?P<timezone2>\S.*)
+            |(?(keyword)
+                \ (?P<timezone_keyword>\S.*)
+            )
+        )
+    )?
+    $
+    """,
+    re.I | re.X,
 )
 
 date_pattern_simple = re.compile(
-    r"^(?P<year>\d{4})" r"[/-](?P<month>\d\d)" r"[/-](?P<day>\d\d)$"
+    r"""
+    ^(?P<year>\d{4})
+    [/-](?P<month>\d\d)
+    [/-](?P<day>\d\d)$
+    """,
+    re.X,
 )
 
 date_pattern_words = re.compile(
-    r"^(?:(?P<day1>\d{1,2}) )?"
-    r"(?P<month>"
-    r"jan(?:uary)?"
-    r"|feb(?:ruary)?"
-    r"|mar(?:ch)?"
-    r"|apr(?:il)?"
-    r"|may"
-    r"|june?"
-    r"|july?"
-    r"|aug(?:ust)?"
-    r"|sep(?:t(?:ember)?)?"
-    r"|oct(?:ober)?"
-    r"|nov(?:ember)?"
-    r"|dec(?:ember)?"
-    r")"
-    r"(?: (?P<day2>\d{1,2}))?"
-    r"(?: (?P<year>\d{4}))?$",
-    re.I,
+    r"""
+    ^(?:(?P<day1>\d{1,2})\ )?
+    (?P<month>
+        jan(?:uary)?
+        |feb(?:ruary)?
+        |mar(?:ch)?
+        |apr(?:il)?
+        |may
+        |june?
+        |july?
+        |aug(?:ust)?
+        |sep(?:t(?:ember)?)?
+        |oct(?:ober)?
+        |nov(?:ember)?
+        |dec(?:ember)?
+    )
+    (?:\ (?P<day2>\d{1,2}))?
+    (?:\ (?P<year>\d{4}))?$
+    """,
+    re.I | re.X,
 )
 
 months = {
