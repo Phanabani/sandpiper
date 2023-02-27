@@ -49,12 +49,13 @@ class Conversion(Component):
         if msg.author == self.sandpiper.user:
             return
 
-        conversion_strs = conversion_pattern.findall(msg.content)
-        if not conversion_strs:
+        matches = conversion_pattern.findall(msg.content)
+        if not matches:
             return
 
-        conversion_strs = await self.convert_time(msg, conversion_strs)
-        await self.convert_measurements(msg.channel, conversion_strs)
+        raw_quantities = [RawQuantity(*m) for m in matches]
+        raw_quantities = await self.convert_time(msg, raw_quantities)
+        await self.convert_measurements(msg.channel, raw_quantities)
 
     async def convert_time(
         self, msg: discord.Message, raw_quantities: list[RawQuantity]
