@@ -107,38 +107,6 @@ async def _convert_times(
     return converted_times
 
 
-async def convert_time_to_user_timezones(
-    db: Database,
-    user_id: int,
-    guild: discord.Guild,
-    raw_quantities: list[RawQuantity],
-    *,
-    runtime_msgs: RuntimeMessages,
-) -> TimeConversionOutput:
-    """
-    Convert times.
-
-    :param db: the Database adapter for getting user timezones
-    :param user_id: the id of the user asking for a time conversion
-    :param guild: the guild the conversion is occurring in
-    :param raw_quantities: a list of `RawQuantity`s that may be valid times
-    :param runtime_msgs: A collection of messages that were generated during
-        runtime. These may be reported back to the user.
-    :returns: a `TimeConversionOutput` object with details about this conversion
-    """
-    out = TimeConversionOutput()
-
-    out_timezone_map = await _parse_input(
-        db, user_id, raw_quantities, runtime_msgs, out
-    )
-    if not out_timezone_map:
-        return out
-
-    await _do_conversions(db, guild, out_timezone_map, out)
-
-    return out
-
-
 async def _parse_input(
     db: Database,
     user_id: int,
@@ -263,3 +231,35 @@ async def _do_conversions(
         conversion_output.conversions.append(
             TimeConversion(cast(TimezoneType, times[0].tzinfo).zone, converted)
         )
+
+
+async def convert_time_to_user_timezones(
+    db: Database,
+    user_id: int,
+    guild: discord.Guild,
+    raw_quantities: list[RawQuantity],
+    *,
+    runtime_msgs: RuntimeMessages,
+) -> TimeConversionOutput:
+    """
+    Convert times.
+
+    :param db: the Database adapter for getting user timezones
+    :param user_id: the id of the user asking for a time conversion
+    :param guild: the guild the conversion is occurring in
+    :param raw_quantities: a list of `RawQuantity`s that may be valid times
+    :param runtime_msgs: A collection of messages that were generated during
+        runtime. These may be reported back to the user.
+    :returns: a `TimeConversionOutput` object with details about this conversion
+    """
+    out = TimeConversionOutput()
+
+    out_timezone_map = await _parse_input(
+        db, user_id, raw_quantities, runtime_msgs, out
+    )
+    if not out_timezone_map:
+        return out
+
+    await _do_conversions(db, guild, out_timezone_map, out)
+
+    return out
