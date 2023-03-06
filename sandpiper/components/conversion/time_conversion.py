@@ -107,13 +107,16 @@ async def _convert_times(
     return converted_times
 
 
+T_TimezoneOuts = dict[TimezoneType | None, list[dt.datetime]]
+
+
 async def _parse_input(
     db: Database,
     user_id: int,
     raw_quantities: list[RawQuantity],
     runtime_msgs: RuntimeMessages,
     conversion_output: TimeConversionOutput,
-) -> dict[TimezoneType | None, list[dt.datetime]]:
+) -> T_TimezoneOuts:
     """
     Attempt to parse the strings as times and populate success and failure
     lists accordingly
@@ -127,7 +130,7 @@ async def _parse_input(
     :return: a dict mapping timezone keys to datetimes
     """
 
-    timezone_outs: dict[TimezoneType | None, list[dt.datetime]] = defaultdict(list)
+    timezone_outs: T_TimezoneOuts = defaultdict(list)
     user_tz = None
     for raw_quantity in raw_quantities:
         time_raw = raw_quantity.quantity
@@ -190,7 +193,7 @@ async def _parse_input(
 async def _do_conversions(
     db: Database,
     guild: discord.Guild,
-    timezone_outs: dict[TimezoneType | None, list[dt.datetime]],
+    timezone_outs: T_TimezoneOuts,
     conversion_output: TimeConversionOutput,
 ) -> None:
     """
