@@ -127,7 +127,7 @@ async def _parse_input(
     :return: a dict mapping timezone keys to datetimes
     """
 
-    out_timezone_map: dict[TimezoneType | None, list[dt.datetime]] = defaultdict(list)
+    timezone_outs: dict[TimezoneType | None, list[dt.datetime]] = defaultdict(list)
     user_tz = None
     for raw_quantity in raw_quantities:
         time_raw = raw_quantity.quantity
@@ -183,14 +183,14 @@ async def _parse_input(
             timezone_out = None
 
         local_dt = localize_time_to_datetime(parsed_time, timezone_in)
-        out_timezone_map[timezone_out].append(local_dt)
-    return out_timezone_map
+        timezone_outs[timezone_out].append(local_dt)
+    return timezone_outs
 
 
 async def _do_conversions(
     db: Database,
     guild: discord.Guild,
-    out_timezone_map: dict[TimezoneType | None, list[dt.datetime]],
+    timezone_outs: dict[TimezoneType | None, list[dt.datetime]],
     conversion_output: TimeConversionOutput,
 ) -> None:
     """
@@ -198,19 +198,19 @@ async def _do_conversions(
 
     :param db: the Database adapter for getting user timezones
     :param guild: the guild the conversion is occurring in
-    :param out_timezone_map: a dict mapping timezone keys to datetimes. Each
+    :param timezone_outs: a dict mapping timezone keys to datetimes. Each
         datetime under a given timezone will be converted to that timezone
         only. The None key is a special case, where each datetime it maps to
         will be converted to all user timezones in the database.
     :param conversion_output: the container for conversion output
     """
 
-    if out_timezone_map[None]:
+    if timezone_outs[None]:
         # No specific output timezone, so use all the timezones in the guild
         converted = await _convert_times(
-            out_timezone_map[None], await _get_guild_timezones(db, guild)
+            timezone_outs[None], await _get_guild_timezones(db, guild)
         )
-        if len(out_timezone_map) == 1:
+        if len(timezone_outs) == 1:
             # If there aren't any other out timezones, don't print the timezone
             # name header
             conversion_output.conversions.append(TimeConversion(None, converted))
@@ -221,7 +221,7 @@ async def _do_conversions(
             )
 
     # Handle any other output timezones
-    for timezone_out, times in out_timezone_map.items():
+    for timezone_out, times in timezone_outs.items():
         if timezone_out is None:
             # We already did this first
             continue
@@ -254,12 +254,10 @@ async def convert_time_to_user_timezones(
     """
     out = TimeConversionOutput()
 
-    out_timezone_map = await _parse_input(
-        db, user_id, raw_quantities, runtime_msgs, out
-    )
-    if not out_timezone_map:
+    timezone_outs = await _parse_input(db, user_id, raw_quantities, runtime_msgs, out)
+    if not timezone_outs:
         return out
 
-    await _do_conversions(db, guild, out_timezone_map, out)
+    await _do_conversions(db, guild, timezone_outs, out)
 
     return out
