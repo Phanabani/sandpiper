@@ -152,38 +152,29 @@ async def _parse_input(
             )
             continue
 
-        if timezone_in_str is not None:
-            # User supplied a source timezone
-            timezone_in = _get_timezone(timezone_in_str)
-            if timezone_in is None:
-                # If we matched timezone_in, we already know time_raw is
-                # definitely a time
-                runtime_msgs += TimezoneNotFound(timezone_in_str)
-                continue
-        else:
-            # Use the user's timezone
-            if user_tz is None:
-                # Only get this once
-                user_tz = await db.get_timezone(user_id)
-                if user_tz is None:
-                    runtime_msgs.add_type_once(UserTimezoneUnset())
+        if timezone_in_str is None:
+            # Use the user's timezone; only get it once in the loop
+            if user_tz is None and (user_tz := await db.get_timezone(user_id)) is None:
+                runtime_msgs.add_type_once(UserTimezoneUnset())
             timezone_in = user_tz
+        # Try to parse input timezone
+        elif (timezone_in := _get_timezone(timezone_in_str)) is None:
+            # User supplied a source timezone and we matched timezone_in, so
+            # we already know time_raw is definitely a time
+            runtime_msgs += TimezoneNotFound(timezone_in_str)
+            continue
 
-        if timezone_out_str:
-            # Parse the output timezone specified by the user
-            timezone_out = _get_timezone(timezone_out_str)
-            if timezone_out is None:
-                if definitely_time:
-                    # We know this is a time, so this unfound timezone should
-                    # be reported and not passed on to unit conversion
-                    runtime_msgs += TimezoneNotFound(timezone_out_str)
-                else:
-                    # This might be a unit
-                    conversion_output.failed.append(
-                        RawQuantity(time_raw, timezone_out_str)
-                    )
-        else:
+        if not timezone_out_str:
             timezone_out = None
+        # Try to parse output timezone
+        elif (timezone_out := _get_timezone(timezone_out_str)) is None:
+            if definitely_time:
+                # We know this is a time, so this unfound timezone should
+                # be reported and not passed on to unit conversion
+                runtime_msgs += TimezoneNotFound(timezone_out_str)
+            else:
+                # This might be a unit
+                conversion_output.failed.append(RawQuantity(time_raw, timezone_out_str))
 
         local_dt = localize_time_to_datetime(parsed_time, timezone_in)
         timezone_outs[timezone_out].append(local_dt)
