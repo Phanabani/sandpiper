@@ -153,6 +153,8 @@ async def _parse_input(
             )
             continue
 
+        # Input timezone stuff
+
         if timezone_in_str is None:
             # Use the user's timezone; only get it once in the loop
             if user_tz is None and (user_tz := await db.get_timezone(user_id)) is None:
@@ -164,6 +166,8 @@ async def _parse_input(
             # we already know time_raw is definitely a time
             runtime_msgs += TimezoneNotFound(timezone_in_str)
             continue
+
+        # Output timezone stuff
 
         if not timezone_out_str:
             timezone_out = None
@@ -177,8 +181,10 @@ async def _parse_input(
                 # This might be a unit
                 conversion_output.failed.append(RawQuantity(time_raw, timezone_out_str))
 
+        # Do stuff with our parsed data
         local_dt = localize_time_to_datetime(parsed_time, timezone_in)
         timezone_outs[timezone_out].append(local_dt)
+
     return timezone_outs
 
 
