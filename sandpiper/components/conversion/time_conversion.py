@@ -208,20 +208,20 @@ async def _do_conversions(
             converted = await _convert_times(
                 times, await _get_guild_timezones(db, guild)
             )
-            if len(timezone_outs) == 1:
+            assert len(timezone_outs) != 0
+            if len(timezone_outs) > 1:
+                input_timezone_name = "All timezones"
+            else:
                 # If there aren't any other out timezones, don't print the timezone
                 # name header
-                conversion_output.conversions.append(TimeConversion(None, converted))
-            else:
-                # Otherwise, print this header to distinguish it from the others
-                conversion_output.conversions.append(
-                    TimeConversion("All timezones", converted)
-                )
+                input_timezone_name = None
         else:
             converted = await _convert_times(times, timezone_out)
-            conversion_output.conversions.append(
-                TimeConversion(cast(TimezoneType, times[0].tzinfo).zone, converted)
-            )
+            input_timezone_name = cast(TimezoneType, times[0].tzinfo).zone
+
+        conversion_output.conversions.append(
+            TimeConversion(input_timezone_name, converted)
+        )
 
 
 async def convert_time_to_user_timezones(
