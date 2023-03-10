@@ -135,6 +135,7 @@ async def _parse_input(
     for raw_quantity in raw_quantities:
         time_raw = raw_quantity.quantity
         timezone_out_str = raw_quantity.suffix
+
         try:
             parsed_time, timezone_in_str, definitely_time = parse_time(time_raw)
         except ValueError as e:
@@ -198,33 +199,29 @@ async def _do_conversions(
         will be converted to all user timezones in the database.
     :param conversion_output: the container for conversion output
     """
-
-    if timezone_outs[None]:
-        # No specific output timezone, so use all the timezones in the guild
-        converted = await _convert_times(
-            timezone_outs[None], await _get_guild_timezones(db, guild)
-        )
-        if len(timezone_outs) == 1:
-            # If there aren't any other out timezones, don't print the timezone
-            # name header
-            conversion_output.conversions.append(TimeConversion(None, converted))
-        else:
-            # Otherwise, print this header to distinguish it from the others
-            conversion_output.conversions.append(
-                TimeConversion("All timezones", converted)
-            )
-
-    # Handle any other output timezones
     for timezone_out, times in timezone_outs.items():
-        if timezone_out is None:
-            # We already did this first
-            continue
         if not times:
             continue
-        converted = await _convert_times(times, timezone_out)
-        conversion_output.conversions.append(
-            TimeConversion(cast(TimezoneType, times[0].tzinfo).zone, converted)
-        )
+
+        if timezone_out is None:
+            # No specific output timezone, so use all the timezones in the guild
+            converted = await _convert_times(
+                times, await _get_guild_timezones(db, guild)
+            )
+            if len(timezone_outs) == 1:
+                # If there aren't any other out timezones, don't print the timezone
+                # name header
+                conversion_output.conversions.append(TimeConversion(None, converted))
+            else:
+                # Otherwise, print this header to distinguish it from the others
+                conversion_output.conversions.append(
+                    TimeConversion("All timezones", converted)
+                )
+        else:
+            converted = await _convert_times(times, timezone_out)
+            conversion_output.conversions.append(
+                TimeConversion(cast(TimezoneType, times[0].tzinfo).zone, converted)
+            )
 
 
 async def convert_time_to_user_timezones(
