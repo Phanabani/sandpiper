@@ -102,17 +102,15 @@ class Conversion(Component):
                 # header
                 output.append(f"Using timezone **{conversion.input_timezone_name}**")
 
-            for converted_time in conversion.converted_times:
+            for converted_time in conversion.localized_times:
                 # Print the converted times for each timezone on a new line
                 times = "  |  ".join(
                     f"`{t.strftime(time_format)}`" for t in converted_time.datetimes
                 )
                 flag = get_country_flag_emoji_from_timezone(
-                    converted_time.output_timezone_name
+                    converted_time.timezone_name
                 )
-                output.append(
-                    f"{flag}  **{converted_time.output_timezone_name}**  -  {times}"
-                )
+                output.append(f"{flag}  **{converted_time.timezone_name}**  -  {times}")
 
             output.append("")
 
