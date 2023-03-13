@@ -7,10 +7,10 @@ __all__ = [
     "convert_time_to_user_timezones",
 ]
 
-from collections import defaultdict
 from collections.abc import Iterable
 import datetime as dt
 import logging
+import typing
 from typing import Optional, Union, cast
 
 from attr import Factory, define
@@ -96,7 +96,7 @@ async def _convert_times(
     :return: a list of tuples of (timezone_name, converted_times), where
         ``converted_times`` is a list of datetimes converted to that timezone
     """
-    if isinstance(out_timezones, TimezoneType.__args__):
+    if isinstance(out_timezones, typing.get_args(TimezoneType)):
         out_timezones = (out_timezones,)
 
     localized_times: list[LocalizedTimes] = []
