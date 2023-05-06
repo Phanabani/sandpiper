@@ -2,7 +2,6 @@ __all__ = [
     "UserTimezoneUnset",
     "TimezoneNotFound",
     "LocalizedTimes",
-    "TimeConversion",
     "TimeConversionOutput",
     "convert_time_to_user_timezones",
 ]
@@ -10,8 +9,7 @@ __all__ = [
 from collections.abc import Iterable
 import datetime as dt
 import logging
-import typing
-from typing import Optional, Union, cast
+from typing import Optional
 
 from attr import Factory, define
 import discord
@@ -40,21 +38,20 @@ class TimezoneNotFound(Exception):
         return f'Timezone "{self.timezone}" not found'
 
 
-@define
+@define(kw_only=True)
 class LocalizedTimes:
-    timezone_name: str
+    # Input
+    input_timezone: TimezoneType | None
+    is_explicit_input_timezone: bool
+    input_datetimes: list[dt.datetime] = Factory(list)
+    # Localized
+    timezone: TimezoneType | None
     datetimes: list[dt.datetime] = Factory(list)
 
 
 @define
-class TimeConversion:
-    input_timezone_name: str | None
-    localized_times: list[LocalizedTimes] = Factory(list)
-
-
-@define
 class TimeConversionOutput:
-    conversions: list[TimeConversion] = Factory(list)
+    conversions: list[LocalizedTimes] = Factory(list)
     # Strings that should pass on to unit conversion
     failed: list[RawQuantity] = Factory(list)
 
@@ -85,29 +82,25 @@ async def _get_guild_timezones(db: Database, guild: discord.Guild) -> set[Timezo
     }
 
 
-async def _convert_times(
-    times: list[dt.datetime], out_timezones: Union[TimezoneType, Iterable[TimezoneType]]
-) -> list[LocalizedTimes]:
+async def _localize_times(
+    localized_times: LocalizedTimes, out_timezones: Iterable[TimezoneType] | None = None
+) -> None:
     """
     Convert a list of datetimes to the given timezones.
 
-    :param times: a list of timezone-aware datetimes to convert
-    :param out_timezones: one or more timezones to convert each datetime to
-    :return: a list of tuples of (timezone_name, converted_times), where
-        ``converted_times`` is a list of datetimes converted to that timezone
+    :param localized_times: a `LocalizedTimes` whose `input_datetimes` should
+        be localized
+    :param out_timezones: timezones to convert each datetime to, or `None` to
+        use the timezone from `LocalizedTimes`
     """
-    if isinstance(out_timezones, typing.get_args(TimezoneType)):
-        out_timezones = (out_timezones,)
+    if out_timezones is None:
+        out_timezones = (localized_times.timezone,)
 
-    localized_times: list[LocalizedTimes] = []
     for tz in out_timezones:
-        times = [time.astimezone(tz) for time in times]
-        localized_times.append(LocalizedTimes(tz.zone, times))
-    localized_times.sort(key=lambda c: cast(LocalizedTimes, c).datetimes[0].utcoffset())
-    return localized_times
-
-
-T_TimeConversions = dict[TimezoneType | None, list[dt.datetime]]
+        datetimes = [time.astimezone(tz) for time in localized_times.input_datetimes]
+        localized_times.datetimes = datetimes
+    # TODO this shouldn't be done here
+    # localized_times.datetimes.sort(key=lambda c: cast(dt.datetime, c).utcoffset())
 
 
 async def _parse_input(
@@ -116,7 +109,7 @@ async def _parse_input(
     raw_quantities: list[RawQuantity],
     runtime_msgs: RuntimeMessages,
     conversion_output: TimeConversionOutput,
-) -> T_TimeConversions:
+) -> list[LocalizedTimes]:
     """
     Attempt to parse the strings as times and populate success and failure
     lists accordingly
@@ -127,9 +120,10 @@ async def _parse_input(
     :param runtime_msgs: a collection of messages that were generated during
         runtime. These may be reported back to the user.
     :param conversion_output: the container for conversion output
-    :return: a dict mapping timezone keys to datetimes
+    :return: a list of `TimeConversion`s
     """
-    time_conversions: T_TimeConversions = defaultdict(list)
+    localized_times: dict[TimezoneType, LocalizedTimes] = {}
+
     user_tz = None
     for raw_quantity in raw_quantities:
         time_raw = raw_quantity.quantity
@@ -159,12 +153,16 @@ async def _parse_input(
             if user_tz is None and (user_tz := await db.get_timezone(user_id)) is None:
                 runtime_msgs.add_type_once(UserTimezoneUnset())
             timezone_in = user_tz
-        # Try to parse input timezone
-        elif (timezone_in := _get_timezone(timezone_in_str)) is None:
-            # User supplied a source timezone and we matched timezone_in, so
-            # we already know time_raw is definitely a time
-            runtime_msgs += TimezoneNotFound(timezone_in_str)
-            continue
+            is_explicit_timezone = False
+        else:
+            # Try to parse input timezone
+            timezone_in = _get_timezone(timezone_in_str)
+            if timezone_in is None:
+                # User supplied a source timezone and we matched timezone_in, so
+                # we already know time_raw is definitely a time
+                runtime_msgs += TimezoneNotFound(timezone_in_str)
+                continue
+            is_explicit_timezone = True
 
         # Output timezone stuff
 
@@ -182,15 +180,21 @@ async def _parse_input(
 
         # Do stuff with our parsed data
         local_dt = localize_time_to_datetime(parsed_time, timezone_in)
-        time_conversions[timezone_out].append(local_dt)
+        if timezone_out not in localized_times:
+            localized_times[timezone_out] = LocalizedTimes(
+                timezone=timezone_out,
+                input_timezone=timezone_in,
+                is_explicit_input_timezone=is_explicit_timezone,
+            )
+        localized_times[timezone_out].input_datetimes.append(local_dt)
 
-    return time_conversions
+    return list(localized_times.values())
 
 
 async def _do_conversions(
     db: Database,
     guild: discord.Guild,
-    time_conversions: T_TimeConversions,
+    localized_times: list[LocalizedTimes],
     conversion_output: TimeConversionOutput,
 ) -> None:
     """
@@ -198,35 +202,25 @@ async def _do_conversions(
 
     :param db: the Database adapter for getting user timezones
     :param guild: the guild the conversion is occurring in
-    :param time_conversions: a dict mapping timezone keys to datetimes. Each
+    :param localized_times: a dict mapping timezone keys to datetimes. Each
         datetime under a given timezone will be converted to that timezone
         only. The None key is a special case, where each datetime it maps to
         will be converted to all user timezones in the database.
     :param conversion_output: the container for conversion output
     """
-    for timezone_out, times in time_conversions.items():
-        if not times:
+    for localized_times_i in localized_times:
+        if not localized_times_i.input_datetimes:
             continue
 
-        if timezone_out is None:
+        if localized_times_i.timezone is None:
             # No specific output timezone, so use all the timezones in the guild
-            converted = await _convert_times(
-                times, await _get_guild_timezones(db, guild)
+            await _localize_times(
+                localized_times_i, await _get_guild_timezones(db, guild)
             )
-            assert len(time_conversions) != 0
-            if len(time_conversions) > 1:
-                input_timezone_name = "All timezones"
-            else:
-                # If there aren't any other out timezones, don't print the timezone
-                # name header
-                input_timezone_name = None
         else:
-            converted = await _convert_times(times, timezone_out)
-            input_timezone_name = cast(TimezoneType, times[0].tzinfo).zone
+            await _localize_times(localized_times_i)
 
-        conversion_output.conversions.append(
-            TimeConversion(input_timezone_name, converted)
-        )
+        conversion_output.conversions.append(localized_times_i)
 
 
 async def convert_time_to_user_timezones(

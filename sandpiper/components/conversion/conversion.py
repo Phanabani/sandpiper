@@ -94,25 +94,25 @@ class Conversion(Component):
 
         # Send successful conversions
         output = []
+        input_timezones_seen = set()
         for conversion in conversion_output.conversions:
             # There may be multiple input timezones
             # We will group them under a header of that timezone name
-            if conversion.input_timezone_name is not None:
-                # But if no input timezone was specified, don't print any
-                # header
-                output.append(f"Using timezone **{conversion.input_timezone_name}**")
+            if (
+                conversion.is_explicit_input_timezone
+                and conversion.input_timezone not in input_timezones_seen
+            ):
+                if len(input_timezones_seen) > 0:
+                    output.append("")
+                output.append(f"Using timezone **{conversion.input_timezone.zone}**")
+                input_timezones_seen.add(conversion.input_timezone)
 
-            for converted_time in conversion.localized_times:
-                # Print the converted times for each timezone on a new line
-                times = "  |  ".join(
-                    f"`{t.strftime(time_format)}`" for t in converted_time.datetimes
-                )
-                flag = get_country_flag_emoji_from_timezone(
-                    converted_time.timezone_name
-                )
-                output.append(f"{flag}  **{converted_time.timezone_name}**  -  {times}")
-
-            output.append("")
+            # Print the converted times for each timezone on a new line
+            times = "  |  ".join(
+                f"`{t.strftime(time_format)}`" for t in conversion.datetimes
+            )
+            flag = get_country_flag_emoji_from_timezone(conversion.timezone)
+            output.append(f"{flag}  **{conversion.timezone.zone}**  -  {times}")
 
         if output:
             await msg.channel.send("\n".join(output[:-1]))
